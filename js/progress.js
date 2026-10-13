@@ -1,0 +1,129 @@
+/* ═══ Filters, Category Bar, Daily Frog, List Footer ═══ */
+
+import { state } from './state.js';
+import { $, faNum, startOfToday } from './utils.js';
+import { CATS } from './constants.js';
+import { subscribe } from './bus.js';
+import { renderList, collapse } from './tasks.js';
+
+/* ── Footer counter ──
+   The progress ring and the sentence under it moved to the stats page
+   (js/stats.js), where they answer for the window the reader has chosen there
+   instead of for the whole list. What is left here is the list's own footer. */
+
+function updateProgress() {
+  const total = state.tasks.length;
+  const done = state.tasks.filter(t => t.done).length;
+
+  $('#counter').textContent = total ? `${faNum(total - done)} کار باقی‌مانده` : '';
+  $('#clearBtn').style.visibility = done ? 'visible' : 'hidden';
+}
+
+/* ── Category bar ── */
+function buildCatBar() {
+  const wrap = $('#cats');
+  const mk = (key, label, color) => {
+    const b = document.createElement('button');
+    b.className = 'cat-chip' + (key === 'all' ? ' active' : '');
+    b.dataset.cat = key;
+    b.style.setProperty('--cc', color);
+    b.innerHTML = `<span class="dot"></span>${label}<span class="cnt"></span>`;
+    return b;
+  };
+  wrap.appendChild(mk('all', 'همه', 'var(--accent)'));
+  CATS.forEach(c => wrap.appendChild(mk(c.key, c.label, c.color)));
+  wrap.addEventListener('click', e => {
+    const b = e.target.closest('.cat-chip');
+    if (!b || b.classList.contains('active')) return;
+    wrap.querySelector('.active').classList.remove('active');
+    b.classList.add('active');
+    state.catFilter = b.dataset.cat;
+    renderList();
+  });
+}
+
+function updateCatCounts() {
+  document.querySelectorAll('.cats .cat-chip').forEach(ch => {
+    const k = ch.dataset.cat;
+    const n = k === 'all'
+      ? state.tasks.filter(t => !t.done).length
+      : state.tasks.filter(t => !t.done && (t.cat || 'misc') === k).length;
+    ch.querySelector('.cnt').textContent = n ? faNum(n) : '';
+  });
+}
+
+/* ── Filters ── */
+function movePill() {
+  const act = document.querySelector('.filters button.active'), pill = $('#pill');
+  if (!act || !pill) return;
+  pill.style.width = act.offsetWidth + 'px';
+  pill.style.transform = `translateX(${act.offsetLeft}px)`;
+}
+
+/* Measuring the active filter forces layout; a resize fires many events per
+   second, so the measurement is taken once per frame instead of once per event. */
+let pillFrame = 0;
+function schedulePill() {
+  if (pillFrame) return;
+  pillFrame = requestAnimationFrame(() => { pillFrame = 0; movePill(); });
+}
+
+/* ── Daily frog ── */
+export function frogScore(t) {
+  let s = 0;
+  if (t.p === 'high') s += 3; else if (t.p === 'mid') s += 1.5;
+  if (t.dueDate) {
+    const diff = Math.round((new Date(t.dueDate + 'T00:00:00') - startOfToday()) / 864e5);
+    if (diff < 0) s += 4; else if (diff === 0) s += 2.5; else if (diff <= 1) s += 1;
+  }
+  return s;
+}
+
+export function findFrog() {
+  const pool = state.tasks.filter(t => !t.done);
+  if (!pool.length) return null;
+  return pool.slice().sort((a, b) => frogScore(b) - frogScore(a))[0];
+}
+
+function updateFrog() {
+  const el = $('#frog');
+  if (!el) return; // Frog now lives on the Today page
+  const frog = findFrog();
+  if (!frog) { el.hidden = true; return; }
+  el.hidden = false;
+  $('#frogName').textContent = frog.text;
+}
+
+/* ── Init ── */
+export function initProgress() {
+  buildCatBar();
+  $('#frog')?.addEventListener('click', () => {
+    const frog = findFrog();
+    if (frog) {
+      const el = $('#taskList').querySelector(`[data-id="${frog.id}"]`);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        el.classList.add('flash');
+        setTimeout(() => el.classList.remove('flash'), 1600);
+      }
+    }
+  });
+
+  $('#filters').addEventListener('click', e => {
+    const btn = e.target.closest('button[data-filter]');
+    if (!btn || btn.classList.contains('active')) return;
+    document.querySelector('.filters .active').classList.remove('active');
+    btn.classList.add('active');
+    state.filter = btn.dataset.filter;
+    movePill();
+    renderList();
+  });
+  addEventListener('resize', schedulePill);
+  movePill();
+
+  $('#clearBtn').onclick = () => {
+    [...$('#taskList').querySelectorAll('.task.done')].forEach((el, i) => setTimeout(() => collapse(el, el.dataset.id), i * 80));
+  };
+
+  subscribe(() => { updateProgress(); updateCatCounts(); updateFrog(); });
+}
