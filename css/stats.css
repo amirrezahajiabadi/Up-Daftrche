@@ -177,6 +177,11 @@
    is what does it — the width follows the ratio from there. */
 .share-panel[data-card-layout="hero"] .share-preview img{max-width:min(100%,280px);max-height:min(32dvh,280px)}
 .share-panel[data-card-layout="dense"] .share-preview img{max-width:min(100%,210px);max-height:min(42dvh,400px)}
+@media (max-width:480px), (max-height:720px){
+  .share-preview img{max-height:28dvh;object-fit:contain}
+  .share-panel[data-card-layout="hero"] .share-preview img{max-height:26dvh}
+  .share-panel[data-card-layout="dense"] .share-preview img{max-height:30dvh}
+}
 /* A new card rises into place. The picture is replaced, not cross-faded — two
    bitmaps of the same card would blend into a third card that was never drawn —
    so the motion is on the frame it lands in. */
@@ -273,8 +278,14 @@
 }
 
 @media (max-width:400px){
+  .stat-range{gap:3px;padding:3px}
   .stat-range-btn{font-size:11.5px;padding:8px 1px}
   .stat-head .stat-chip b{font-size:18px}
+}
+@media (max-width:360px){
+  .stat-range-btn{font-size:11px;padding:7px 0}
+  .stat-head{gap:6px}
+  .stat-chip{padding:10px 10px}
 }
 
 @media (prefers-reduced-motion:reduce){

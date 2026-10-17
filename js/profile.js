@@ -3,7 +3,7 @@
    has not changed: every render used to replace the character sprite, the four
    stat chips and the six badges with identical markup, which is visible as a
    blink on a theme flip or a rename. */
-import { safeSet } from './store.js';
+import { safeSet, safeRemove, readString, readJSON } from './store.js';
 import { $, dayKey } from './utils.js';
 import { state } from './state.js';
 import { QORQORI_AVATAR, qorqoriMarkup } from './qorqori.js';
@@ -63,8 +63,9 @@ let charCache = null;
 
 export function getAvatar() {
   if (charCache) return charCache;
-  let stored = null;
-  try { stored = JSON.parse(localStorage.getItem(AV_KEY)); } catch { /* malformed value */ }
+  /* A malformed value falls back to the default companion, as it always did â€”
+     through the guarded reader so an unreadable store is not a throw either. */
+  const stored = readJSON(AV_KEY, null);
   if (stored && typeof stored === 'object' && stored.type === 'char' && AVATARS.some(x => x.id === stored.id)) {
     charCache = stored;
   } else {
@@ -101,7 +102,7 @@ let photoCache;
 
 export function getPhoto() {
   if (photoCache === undefined) {
-    try { photoCache = localStorage.getItem(PHOTO_KEY) || ''; } catch { photoCache = ''; }
+    photoCache = readString(PHOTO_KEY, '');
   }
   return photoCache;
 }
@@ -111,11 +112,7 @@ export function getPhoto() {
    rather than pretending it was saved. */
 function setPhoto(url) {
   photoCache = url || '';
-  let saved = true;
-  try {
-    if (photoCache) localStorage.setItem(PHOTO_KEY, photoCache);
-    else localStorage.removeItem(PHOTO_KEY);
-  } catch { saved = false; }
+  const saved = photoCache ? safeSet(PHOTO_KEY, photoCache) : safeRemove(PHOTO_KEY);
   renderProfile();
   return saved;
 }
@@ -258,10 +255,11 @@ export function renderProfile() {
   syncGridSelection();
   const name = $('#profileName'); if (name) name.textContent = state.userName || 'بدون اسم';
 
-  if (!localStorage.getItem(SEEN_KEY)) safeSet(SEEN_KEY, dayKey(new Date()));
+  let firstSeen = readString(SEEN_KEY, '');
+  if (!firstSeen) { firstSeen = dayKey(new Date()); safeSet(SEEN_KEY, firstSeen); }
   const sub = $('#profileSub');
   if (sub) {
-    const d = new Date(localStorage.getItem(SEEN_KEY) + 'T00:00:00');
+    const d = new Date(firstSeen + 'T00:00:00');
     sub.textContent = 'عضو دفترچه از ' + d.toLocaleDateString('fa-IR', { month: 'long', year: 'numeric' });
   }
 

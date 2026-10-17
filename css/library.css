@@ -1,201 +1,667 @@
 /* ═══ Library: Header & Add Button ═══ */
-.import-btn{display:inline-flex;align-items:center;gap:6px;border:none;background:var(--accent);color:#fff;font-family:var(--font-ui);font-size:13px;font-weight:600;padding:9px var(--space-4);border-radius:var(--radius-pill);cursor:pointer;box-shadow:0 3px 0 0 rgba(120,55,20,.35);transition:transform var(--duration-fast),box-shadow var(--duration-fast);flex-shrink:0}
+.import-btn{display:inline-flex;align-items:center;gap:6px;border:none;background:var(--accent);color:var(--color-text-on-accent);font-family:var(--font-ui);font-size:13px;font-weight:600;padding:9px var(--space-4);border-radius:var(--radius-pill);cursor:pointer;box-shadow:var(--shadow-accent);transition:transform var(--duration-fast),box-shadow var(--duration-fast);flex-shrink:0;touch-action:manipulation;-webkit-tap-highlight-color:transparent;position:relative}
 .import-btn svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.5;stroke-linecap:round}
-/* Touch ergonomics for the shelf: the import button is a primary action, its
-   tap feedback is instant (no sticky hover on touch); .b-go / .b-del / .b-ghost
-   get invisible hit-area extensions via the shared ::after inset below. */
-.import-btn{touch-action:manipulation;-webkit-tap-highlight-color:transparent;position:relative}
 .import-btn::after{content:'';position:absolute;inset:-4px}
-/* Hover lift + tint are desktop enhancements only (sticky-hover guard). */
+
 @media (hover:hover){
   .import-btn:hover{transform:translateY(-2px)}
-  .lastread:hover{transform:translateY(-1px)}
-  .b-ghost:hover{color:var(--accent);border-color:var(--accent)}
-  .b-del:hover{color:var(--color-danger);background:rgba(228,88,79,.12)}
+  .lastread:hover{transform:translateY(-1px);box-shadow:var(--shadow-lg)}
+  .b-icon-btn:hover{opacity:1;color:var(--accent);border-color:color-mix(in srgb,var(--accent) 35%,var(--border));background:var(--accent-soft)}
+  .b-icon-btn.b-del:hover{opacity:1;color:var(--color-danger);border-color:rgba(228,88,79,.35);background:rgba(228,88,79,.12)}
+  .b-rename:hover{color:var(--accent)}
+  .r-tool-btn:hover{background:color-mix(in srgb,var(--accent-soft) 60%,transparent);color:var(--accent)}
+  .r-back:hover{transform:translateY(-1px);box-shadow:var(--shadow-sm)}
+  .goal-chip:hover{color:var(--accent);background:var(--accent-soft)}
+  .subribbon-clear:hover{background:color-mix(in srgb,var(--color-danger) 18%,var(--surface))}
+  .shelf-sort-select:hover{border-color:var(--accent)}
 }
+.b-rename:active{transform:scale(.92)}
 .b-del:active{color:var(--color-danger)}
 
+/* ═══ Library: Single Notebook Summary Strip (#libraryStatsBar) ═══ */
+.lib-stats-strip{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));align-items:stretch;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px 16px;margin-bottom:var(--space-4);box-shadow:var(--shadow-1);position:relative;animation:taskIn var(--duration-slow) var(--ease-out)}
+.lib-stats-strip[hidden]{display:none!important}
+.lib-stat-item{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:3px;min-width:0;width:100%}
+.lib-stat-item:not(:first-child){border-inline-start:1px dashed var(--border)}
+.lib-stat-num{font-family:var(--font-personality);font-size:18px;font-weight:700;color:var(--accent);line-height:1.2;white-space:nowrap}
+.lib-stat-label{font-family:var(--font-ui);font-size:12px;font-weight:600;color:var(--text);white-space:nowrap}
+.lib-stat-sub{font-size:11px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.lib-stat-sep{display:none!important}
+@media (max-width:540px){
+  .lib-stats-strip{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 14px;padding:12px 14px}
+  .lib-stat-item:not(:first-child){border-inline-start:none}
+  .lib-stat-item:nth-child(2n){border-inline-start:1px dashed var(--border)}
+  .lib-stat-item{align-items:center;text-align:center}
+}
+@media (max-width:360px){
+  .lib-stats-strip{gap:10px 10px;padding:10px 10px}
+  .lib-stat-num{font-size:16px}
+  .lib-stat-label{font-size:11px}
+}
+
+/* ═══ Library: Unified Search, Filter & Sort (#shelfControls) ═══ */
+.shelf-controls{display:flex;flex-direction:column;gap:10px;margin-bottom:14px;animation:taskIn var(--duration-slow) var(--ease-out)}
+.shelf-controls[hidden]{display:none!important}
+
+.shelf-bar{position:relative;display:flex;align-items:center;background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius-pill);padding:3px 6px 3px 12px;gap:8px;transition:border-color var(--duration-fast),box-shadow var(--duration-fast);box-shadow:var(--shadow-sm);min-height:42px;box-sizing:border-box}
+.shelf-bar:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.shelf-search-icon{color:var(--muted);flex-shrink:0;margin-inline-start:6px;pointer-events:none}
+.shelf-search-input{flex:1;border:none;background:transparent;color:var(--text);font-family:var(--font-ui);font-size:16px;outline:none;min-width:70px;padding:6px 4px}
+.shelf-search-clear{border:none;background:transparent;color:var(--muted);width:26px;height:26px;border-radius:50%;cursor:pointer;display:grid;place-items:center;font-size:12px;flex-shrink:0;transition:color var(--duration-fast),background var(--duration-fast)}
+.shelf-search-clear[hidden]{display:none!important}
+.shelf-search-clear:hover{color:var(--text);background:var(--accent-soft)}
+
+.shelf-sort-wrap{flex-shrink:0;display:flex;align-items:center;border-inline-start:1px dashed var(--border);padding-inline-start:6px}
+.shelf-sort-select{border:1px solid transparent;background:color-mix(in srgb,var(--surface) 80%,var(--bg));color:var(--text);font-family:var(--font-ui);font-size:12.5px;font-weight:600;padding:4px 8px;border-radius:var(--radius-pill);outline:none;cursor:pointer;transition:border-color var(--duration-fast),background var(--duration-fast);height:32px;line-height:1.4}
+.shelf-sort-select:focus{border-color:var(--accent);background:var(--surface)}
+@media (max-width:380px){
+  .shelf-bar{flex-wrap:wrap;padding:6px 10px;border-radius:var(--radius-lg)}
+  .shelf-search-input{min-width:130px}
+  .shelf-sort-wrap{width:100%;justify-content:flex-end;margin-top:2px;border-inline-start:none;border-block-start:1px dashed var(--border);padding-top:4px}
+  .shelf-sort-select{width:100%;font-size:13px;padding:6px 10px}
+}
+
+.shelf-filter-chips{display:flex;gap:6px;flex-wrap:nowrap;align-items:center;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;padding:2px 1px}
+.shelf-filter-chips::-webkit-scrollbar{display:none}
+.s-filter-chip{border:1px solid var(--border);background:var(--surface);color:var(--muted);font-family:var(--font-ui);font-size:12px;font-weight:600;padding:0 14px;border-radius:var(--radius-pill);cursor:pointer;transition:all var(--duration-fast);height:36px;min-height:36px;display:inline-flex;align-items:center;justify-content:center;position:relative;white-space:nowrap;flex-shrink:0}
+.s-filter-chip::after{content:'';position:absolute;inset:-3px}
+.s-filter-chip.on{background:var(--accent-soft);color:var(--color-accent-text);border-color:color-mix(in srgb,var(--accent) 35%,var(--border))}
+
 .shelf-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.shelf-head[hidden]{display:none}
 .shelf-head strong{font-family:var(--font-ui);font-size:15px;font-weight:600}
 .shelf-head span{font-size:11px;color:var(--muted);background:var(--surface);border:1px solid var(--border);padding:4px 10px;border-radius:var(--radius-pill);font-weight:500}
 
-/* ═══ Empty state CTA ═══ */
+/* ═══ Empty State CTA ═══ */
+.empty[hidden]{display:none!important}
 .empty-sub{font-size:12px;color:var(--muted);margin:4px 0 0;font-weight:400}
-.empty-cta{margin-top:14px;border:none;background:var(--accent);color:#fff;font-family:var(--font-ui);font-size:13px;font-weight:600;padding:11px 24px;border-radius:var(--radius-pill);cursor:pointer;box-shadow:0 3px 0 0 rgba(120,55,20,.35);transition:transform var(--duration-fast),box-shadow var(--duration-fast)}
-.empty-cta:active{transform:translateY(2px);box-shadow:0 1px 0 0 rgba(120,55,20,.35)}
+.empty-cta{margin-top:14px;border:none;background:var(--accent);color:var(--color-text-on-accent);font-family:var(--font-ui);font-size:13px;font-weight:600;padding:11px 24px;border-radius:var(--radius-pill);cursor:pointer;box-shadow:var(--shadow-accent);transition:transform var(--duration-fast),box-shadow var(--duration-fast)}
+.empty-cta:active{transform:translateY(2px);box-shadow:0 1px 0 0 color-mix(in srgb,var(--color-accent-strong) 35%,transparent)}
 
-/* ═══ Currently Reading Card — dominant element of Library Home ═══ */
-.lastread{position:relative;display:flex;gap:14px;align-items:center;background:var(--surface);border:1px solid color-mix(in srgb,var(--accent) 26%,var(--border));border-radius:var(--radius-lg);padding:18px 16px;box-shadow:var(--shadow-lg);margin-bottom:var(--space-4);cursor:pointer;transition:transform var(--duration-base),box-shadow var(--duration-base);overflow:hidden;animation:taskIn var(--duration-slow) var(--ease-out)}
-.lastread::before{content:'';position:absolute;inset-inline-start:0;top:0;bottom:0;width:4px;background:var(--accent)}
-/* Flex-wrap lets the title/progress column drop below the cover on very narrow
-   screens (<360px) instead of squeezing or overlapping the artwork. */
-@media (max-width:359px){
-  .lastread{flex-wrap:wrap}
-  .lastread img{width:44px;height:60px}
-  .lr-info{flex-basis:100%;order:3}
-  .lr-top{flex-wrap:wrap;gap:4px}
+/* ═══ Currently Reading Desk Card (.lastread) ═══ */
+.lastread{position:relative;display:flex;gap:16px;align-items:center;background:var(--surface);border:1px solid color-mix(in srgb,var(--accent) 26%,var(--border));border-radius:var(--radius-lg);padding:16px 18px;box-shadow:var(--shadow-1);margin-bottom:var(--space-4);cursor:pointer;transition:transform var(--duration-base),box-shadow var(--duration-base);overflow:hidden;animation:taskIn var(--duration-slow) var(--ease-out);min-width:0}
+.lastread::before{content:'';position:absolute;inset-inline-start:0;inset-block:0;width:4px;background:var(--accent)}
+@media (max-width:480px){
+  .lastread{
+    display:grid;
+    grid-template-columns:auto 1fr;
+    grid-template-rows:auto auto;
+    gap:12px;
+    padding:14px;
+  }
+  .lastread img,.lastread .book-cover,.lastread .book-cover-notebook{
+    grid-column:1;
+    grid-row:1;
+    width:52px;
+    height:72px;
+    flex-shrink:0;
+  }
+  .lr-info{
+    grid-column:2;
+    grid-row:1;
+    min-width:0;
+  }
+  .lr-btn{
+    grid-column:1 / -1;
+    grid-row:2;
+    width:100%;
+    text-align:center;
+    min-height:40px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+  }
   .lr-title{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .lr-sub{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 }
 .lr-kicker{font-size:11px;font-weight:700;color:var(--accent)}
-.lr-goal{font-size:11px;color:var(--text);background:color-mix(in srgb,var(--accent) 9%,var(--surface));border:1px solid color-mix(in srgb,var(--accent) 22%,transparent);padding:3px 10px;border-radius:var(--radius-pill);align-self:flex-start;font-weight:500;width:fit-content}
-.lastread img{width:56px;height:76px;object-fit:cover;border-radius:var(--radius-xs);border:1px solid var(--border);flex-shrink:0;box-shadow:var(--shadow-sm)}
+.lr-goal{font-size:11px;color:var(--text);background:color-mix(in srgb,var(--accent) 9%,var(--surface));border:1px solid color-mix(in srgb,var(--accent) 22%,transparent);padding:3px 10px;border-radius:var(--radius-pill);align-self:flex-start;font-weight:500;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lastread img{width:60px;height:82px;object-fit:cover;border-start-start-radius:3px;border-end-start-radius:3px;border-start-end-radius:10px;border-end-end-radius:10px;border:1px solid var(--border);flex-shrink:0;box-shadow:var(--shadow-sm)}
+.lastread .book-cover-notebook{width:60px;height:82px;border-start-start-radius:3px;border-end-start-radius:3px;border-start-end-radius:10px;border-end-end-radius:10px}
 .lr-info{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
-.lr-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
-.lr-title{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.lr-pct{font-family:var(--font-personality);font-size:13px;color:var(--accent);flex-shrink:0;font-weight:700}
+.lr-top{display:flex;justify-content:space-between;align-items:center;gap:8px;min-width:0}
+.lr-title{font-size:14.5px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text);flex:1;min-width:0}
+.lr-pct{font-family:var(--font-personality);font-size:14px;color:var(--accent);flex-shrink:0;font-weight:700}
 .lr-track{height:5px;border-radius:var(--radius-pill);background:var(--border);overflow:hidden}
 .lr-track i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--accent-2));border-radius:var(--radius-pill);transition:width var(--duration-slow) ease}
-.lr-sub{font-size:11px;color:var(--muted);font-weight:400}
-.lr-btn{border:none;background:var(--accent);color:#fff;font-family:var(--font-ui);font-size:12px;font-weight:600;padding:9px 16px;border-radius:var(--radius-pill);cursor:pointer;box-shadow:0 3px 0 0 rgba(120,55,20,.35);flex-shrink:0;transition:transform var(--duration-fast),box-shadow var(--duration-fast)}
-.lr-btn:active{transform:translateY(2px);box-shadow:0 1px 0 0 rgba(120,55,20,.35)}
+.lr-sub{font-size:11.5px;color:var(--muted);font-weight:400;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.lr-btn{border:none;background:var(--accent);color:var(--color-text-on-accent);font-family:var(--font-ui);font-size:12px;font-weight:600;padding:9px 18px;border-radius:var(--radius-pill);cursor:pointer;box-shadow:var(--shadow-accent);flex-shrink:0;white-space:nowrap;transition:transform var(--duration-fast),box-shadow var(--duration-fast)}
+.lr-btn:active{transform:translateY(2px);box-shadow:0 1px 0 0 color-mix(in srgb,var(--color-accent-strong) 35%,transparent)}
 
-/* ═══ Book Shelf — fluid column count (no single 430px breakpoint) ═══
-   auto-fill + minmax lets the grid settle at 2/3/4 columns smoothly as the
-   viewport grows, instead of jumping at one arbitrary width. */
+/* ═══ Book Shelf Grid & Realistic Bound Book Cards ═══ */
 .shelf-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px}
 @media (min-width:768px){.shelf-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:16px}}
 
-.book-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:10px;box-shadow:var(--shadow-1);display:flex;flex-direction:column;gap:8px;transition:transform var(--duration-base),box-shadow var(--duration-base);animation:taskIn var(--duration-slow) var(--ease-out) backwards}
-/* Hover lift + cover zoom are desktop enhancements only (see base.css). */
+.book-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px;box-shadow:var(--shadow-1);display:flex;flex-direction:column;gap:8px;transition:transform var(--duration-base),box-shadow var(--duration-base);animation:taskIn var(--duration-slow) var(--ease-out) backwards;overflow:hidden;box-sizing:border-box}
 @media (hover:hover){
-  .book-card:hover{transform:translateY(-1px);box-shadow:var(--shadow-lg)}
+  .book-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg)}
   .book-card:hover .book-cover img{transform:scale(1.03)}
 }
-.book-cover{position:relative;aspect-ratio:3/4;border-radius:var(--radius-sm);overflow:hidden;background:linear-gradient(160deg,var(--accent-soft),var(--bg));display:grid;place-items:center;border:1px solid var(--border)}
-.book-cover img{width:100%;height:100%;object-fit:cover;transition:transform var(--duration-slow) var(--ease-out)}
+.book-cover{position:relative;aspect-ratio:3/4;border-start-start-radius:4px;border-end-start-radius:4px;border-start-end-radius:14px;border-end-end-radius:14px;overflow:hidden;background:linear-gradient(160deg,var(--accent-soft),var(--bg));display:grid;place-items:center;border:1px solid var(--border);box-shadow:var(--shadow-sm);cursor:pointer}
+/* 3D Physical book spine crease along inset-inline-start */
+.book-cover::before{content:'';position:absolute;inset-block:0;inset-inline-start:0;width:10px;background:linear-gradient(to left,rgba(0,0,0,.18),rgba(255,255,255,.15) 40%,rgba(0,0,0,.06));z-index:2;pointer-events:none}
+.book-cover img{width:100%;height:100%;object-fit:cover;border-start-start-radius:4px;border-end-start-radius:4px;border-start-end-radius:14px;border-end-end-radius:14px;transition:transform var(--duration-slow) var(--ease-out)}
 .book-cover svg{width:40px;height:40px;stroke:var(--muted);fill:none;stroke-width:1.5;opacity:.5}
-.book-prog{position:absolute;bottom:0;left:0;height:4px;background:linear-gradient(90deg,var(--accent),var(--accent-2));border-radius:0 4px 4px 0;transition:width var(--duration-slow)}
-.book-pct-badge{position:absolute;top:6px;inset-inline-start:6px;background:rgba(0,0,0,.55);color:#fff;font-family:var(--font-personality);font-size:11px;font-weight:700;padding:2px 8px;border-radius:var(--radius-pill);backdrop-filter:blur(4px)}
-.book-title{font-size:13px;font-weight:600;line-height:1.6;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:2.6em}
-.book-meta{font-size:11px;color:var(--muted);display:flex;gap:6px;flex-wrap:wrap;font-weight:400}
-.book-actions{display:flex;gap:6px;align-items:center}
-.b-go{flex:1;border:none;background:var(--accent);color:#fff;font-family:var(--font-ui);font-size:11px;font-weight:600;padding:7px 8px;border-radius:var(--radius-pill);cursor:pointer;box-shadow:0 2px 0 0 rgba(120,55,20,.3);transition:transform var(--duration-fast);position:relative}
-.b-go::after{content:'';position:absolute;inset:-7px}
-.b-go:active{transform:scale(.94)}
-.b-ghost{border:1.5px solid var(--border);background:transparent;color:var(--muted);font-family:var(--font-ui);font-size:11px;font-weight:500;padding:6px 10px;border-radius:var(--radius-pill);cursor:pointer;transition:all var(--duration-fast);position:relative}
-.b-ghost::after{content:'';position:absolute;inset:-7px}
-.b-del{border:none;background:transparent;color:var(--muted);width:28px;height:28px;border-radius:var(--radius-xs);cursor:pointer;display:grid;place-items:center;flex-shrink:0;transition:all var(--duration-fast);position:relative}
-/* Visual size stays subtle; the touch target is what must clear 44px.
-   Without the invisible expansion a thumb tap next to the icon lands on the
-   card (opening the book) instead of the delete button. */
-.b-del::after{content:'';position:absolute;inset:-9px}
-.b-del svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 
-/* Completed books — kept, visually quieter */
-.book-done{opacity:.78}
+/* Tactile notebook cover fallback */
+.book-cover-notebook{width:100%;height:100%;display:flex;flex-direction:column;justify-content:space-between;padding:12px 10px 12px 16px;background:linear-gradient(135deg,color-mix(in srgb,var(--accent-soft) 85%,var(--surface)),var(--surface));box-sizing:border-box;position:relative;overflow:hidden;border-start-start-radius:4px;border-end-start-radius:4px;border-start-end-radius:14px;border-end-end-radius:14px}
+.book-cover-notebook .nb-pattern{position:absolute;inset:0;opacity:.06;background-image:repeating-linear-gradient(0deg,var(--text) 0,var(--text) 1px,transparent 1px,transparent 14px);pointer-events:none}
+.book-cover-notebook .nb-header{display:flex;align-items:center;justify-content:space-between;font-size:11px;color:var(--accent);font-weight:700}
+.book-cover-notebook .nb-title{font-family:var(--font-personality);font-size:11.5px;font-weight:700;color:var(--text);line-height:1.45;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;background:color-mix(in srgb,var(--surface) 85%,transparent);padding:4px 6px;border-radius:var(--radius-xs);border:1px dashed color-mix(in srgb,var(--accent) 30%,var(--border))}
+.book-cover-notebook .nb-footer{display:flex;align-items:center;justify-content:flex-end;opacity:.45}
+
+.book-prog{position:absolute;bottom:0;inset-inline-start:0;height:4px;background:linear-gradient(90deg,var(--accent),var(--accent-2));border-radius:0 4px 4px 0;transition:width var(--duration-slow);z-index:2}
+.book-pct-badge{position:absolute;top:6px;inset-inline-start:6px;background:color-mix(in srgb,var(--color-text-primary) 62%,transparent);color:var(--color-surface);font-family:var(--font-personality);font-size:11px;font-weight:700;padding:2px 8px;border-radius:var(--radius-pill);backdrop-filter:blur(4px);z-index:3}
+.book-title{font-size:13px;font-weight:600;line-height:1.6;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;min-height:2.6em;cursor:pointer;color:var(--text)}
+.book-meta{font-size:11px;color:var(--muted);display:flex;gap:6px;flex-wrap:wrap;font-weight:400;align-items:center}
+
+/* Decluttered card actions: full-width primary CTA stacked cleanly above 3-button utility row */
+.book-actions{display:flex;flex-direction:column;gap:6px;width:100%;margin-top:auto}
+.b-go{width:100%;border:none;background:var(--accent);color:var(--color-text-on-accent);font-family:var(--font-ui);font-size:11.5px;font-weight:600;padding:6px 10px;border-radius:var(--radius-pill);cursor:pointer;box-shadow:var(--shadow-accent);transition:transform var(--duration-fast);position:relative;white-space:nowrap;text-align:center;display:inline-flex;align-items:center;justify-content:center;min-height:32px;box-sizing:border-box}
+.b-go::after{content:'';position:absolute;inset:-4px}
+.b-go:active{transform:scale(.95)}
+
+/* Goal and Rename are the two things a reader reaches for on a book; Delete is
+   not, and it used to sit in the same evenly-spaced row as them — one wrong
+   thumb on a 30px button and the book and every note in it were gone. The two
+   frequent actions now stay together at the inline start and the trash is pushed
+   to the far end behind a hairline, so reaching for «هدف» or «تغییر نام» cannot
+   land on it. */
+.b-sub-actions{display:flex;align-items:center;justify-content:flex-start;gap:4px;width:100%}
+.b-icon-btn{border:1px solid var(--border);background:transparent;color:var(--muted);width:30px;height:30px;border-radius:var(--radius-pill);cursor:pointer;display:grid;place-items:center;flex:1;max-width:36px;opacity:.75;transition:all var(--duration-fast);position:relative;padding:0}
+.b-icon-btn::after{content:'';position:absolute;inset:-6px}
+.b-icon-btn svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+/* The trash keeps its own size (a flex:1 it would grow with the row) and the
+   auto margin does the separating. */
+.b-del{flex:0 0 auto;margin-inline-start:auto}
+.b-del::before{content:'';position:absolute;inset-block:5px;inset-inline-start:-9px;width:1px;background:var(--color-border-strong)}
+
+@media (max-width:480px){
+  .shelf-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+  .book-card{padding:10px 8px}
+  .book-actions{gap:5px}
+  .b-go{font-size:11px;min-height:30px;padding:5px 6px}
+  .b-icon-btn{height:28px;max-width:32px}
+  .b-icon-btn svg{width:13px;height:13px}
+}
+
+/* Rename book modal */
+.rename-input{width:100%;border:1.5px solid var(--border);background:var(--bg);border-radius:var(--radius-sm);padding:10px var(--space-3);font-family:var(--font-ui);font-size:16px;color:var(--text);outline:none;margin:10px 0}
+.rename-input:focus{border-color:var(--accent)}
+
+/* Completed books */
+.book-done{opacity:.82}
 .book-done .book-title{text-decoration:line-through;text-decoration-color:color-mix(in srgb,var(--muted) 55%,transparent);text-decoration-thickness:1.5px}
-.book-done-badge{position:absolute;top:6px;inset-inline-start:6px;background:var(--green);color:#fff;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:700}
+.book-done-badge{position:absolute;top:6px;inset-inline-start:6px;background:var(--green);color:var(--color-text-on-success);width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:12px;font-weight:700;z-index:3}
 .book-done .b-go{background:color-mix(in srgb,var(--green) 18%,var(--surface));color:var(--green);box-shadow:none;cursor:default}
+#doneShelf[hidden]{display:none!important}
 
-/* ═══ Focus Page Background Scenes (Restored) ═══ */
+/* ═══ Focus Page Background Scenes ═══ */
 .scenes{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
 .scene{position:absolute;inset:0;opacity:0;transition:opacity var(--duration-slow) ease}
 #page-focus.scene-rain .scene-rain{opacity:1}
 #page-focus.scene-sea .scene-sea{opacity:1}
 #page-focus.scene-forest .scene-forest{opacity:1}
-
-/* Rain */
 .scene-rain{background:linear-gradient(180deg,rgba(96,125,180,.16),rgba(96,125,180,.04) 55%,transparent)}
 .rain-drops i{position:absolute;top:-12%;width:2px;height:16px;border-radius:2px;background:rgba(96,125,180,.4);animation:fall linear infinite}
-/* Scene loops are ambient, not interaction: they keep their own slow cadence
-   and are never compressed onto the UI motion tokens. */
 @keyframes fall{to{transform:translateY(115vh)}}
-
-/* Sea */
 .scene-sea{background:linear-gradient(0deg,rgba(64,150,160,.18),rgba(64,150,160,.05) 45%,transparent 70%)}
-.waves{position:absolute;bottom:0;left:0;width:100%;height:160px;overflow:hidden}
-.waves svg{position:absolute;bottom:0;left:0;width:200%;height:100%}
+.waves{position:absolute;bottom:0;inset-inline-start:0;width:100%;height:160px;overflow:hidden}
+.waves svg{position:absolute;bottom:0;inset-inline-start:0;width:200%;height:100%}
 .waves svg:first-child{animation:waveMove 11s linear infinite}
 .waves svg:last-child{animation:waveMove 17s linear infinite reverse}
 .w1{fill:rgba(64,150,160,.22)}
 .w2{fill:rgba(64,150,160,.14)}
 @keyframes waveMove{to{transform:translateX(-50%)}}
-
-/* Forest */
 .scene-forest{background:linear-gradient(0deg,rgba(90,140,90,.16),rgba(90,140,90,.04) 50%,transparent 75%)}
-.trees{position:absolute;bottom:0;left:0;width:100%;height:140px}
+.trees{position:absolute;bottom:0;inset-inline-start:0;width:100%;height:140px}
 .trees path{fill:rgba(70,120,80,.22)}
 .flies i{position:absolute;width:5px;height:5px;border-radius:50%;background:rgba(255,220,120,.8);box-shadow:0 0 8px 2px rgba(255,220,120,.5);animation:flyFloat 8s ease-in-out infinite,twinkle 4s ease-in-out infinite}
 @keyframes flyFloat{0%,100%{transform:translate(0,0)}25%{transform:translate(14px,-10px)}50%{transform:translate(-8px,-18px)}75%{transform:translate(-16px,-6px)}}
-
-/* Only the selected ambience is allowed to animate. The unselected scenes stay
-   mounted so the cross-fade still works, but their loops are paused — otherwise
-   Focus, which must be the calmest view, carries all three scenes at once.
-   Declared after the scene loops so the shorthand `animation` declarations above
-   cannot reset animation-play-state back to running. */
 .scene .rain-drops i,.scene .waves svg,.scene .flies i{animation-play-state:paused}
 #page-focus.scene-rain .scene-rain .rain-drops i,
 #page-focus.scene-sea .scene-sea .waves svg,
 #page-focus.scene-forest .scene-forest .flies i{animation-play-state:running}
 
-/* ═══ Reading View ═══ */
-#readerView{position:fixed;inset:0;z-index:90;background:var(--bg);display:flex;flex-direction:column;padding-bottom:calc(var(--nav-height) + var(--sab))}
-#readerView[hidden]{display:none}
+/* ═══ Reading View: Floating Craft Islands Architecture ═══ */
+#readerView{position:fixed;inset:0;z-index:98;background:var(--bg);display:flex;flex-direction:column;padding-bottom:var(--sab)}
+#readerView[hidden]{display:none!important}
 
-/* Safe-area-aware header: on notched phones the title and back button would
-   otherwise sit under the cutout; on devices without one, max() keeps the
-   familiar 10px rhythm. */
-.reader-top{display:flex;align-items:center;gap:10px;padding:calc(10px + var(--sat)) 12px 10px;padding-top:max(10px,var(--sat));background:color-mix(in srgb,var(--surface) 82%,transparent);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-bottom:1px solid var(--border)}
-.r-back{border:none;background:var(--accent-soft);color:var(--accent);font-family:var(--font-ui);font-size:12px;font-weight:600;padding:8px 14px;border-radius:var(--radius-pill);cursor:pointer;flex-shrink:0;transition:transform var(--duration-fast)}
-.r-back:active{transform:scale(.94)}
-.reader-thumb{width:30px;height:40px;object-fit:cover;border-radius:6px;border:1px solid var(--border);flex-shrink:0}
-.reader-thumb[hidden]{display:none}
-.reader-titles{flex:1;min-width:0}
-.reader-title{font-size:14px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.reader-sub{font-size:11px;color:var(--muted);margin-top:2px;font-weight:400}
-.r-icon{border:none;background:transparent;color:var(--muted);width:36px;height:36px;border-radius:var(--radius-sm);cursor:pointer;display:grid;place-items:center;font-size:16px;transition:all var(--duration-fast);flex-shrink:0;position:relative}
-.r-icon::after{content:'';position:absolute;inset:-5px}
-@media (hover:hover){
-  .r-icon:hover{color:var(--accent);background:var(--accent-soft)}
-  .fallback-note button:hover{background:var(--accent-soft)}
+/* ── Reader-scoped colour tokens ──
+   The paper stage, the two swatch palettes and the ink set are the reader's own
+   furniture, not part of the app's theme palette — so their values live here,
+   scoped to the surfaces that read them, instead of being spliced into :root
+   (which tests/themes.test.mjs locks to the sixteen palette slots).
+
+   The values are the ones the reader has always painted; naming them is what
+   lets the markup stop carrying a raw #hex on every swatch. The swatch classes
+   are the single source: `.hl-*` for the highlighter palette, `.ink-*` for the
+   pen, and `--hl`/`--ink` are what the dot and the live indicator already read. */
+#readerView{
+  --reader-stage-paper:#fff;
+  --reader-stage-sepia:#efe3cd;
+  --reader-stage-sepia-wash:#efdec0;
+  --reader-stage-night:#141118;
+  --reader-page-night:#1b1b1b;
+
+  --hl-yellow:#f6c445;
+  --hl-green:#7ed992;
+  --hl-blue:#74b9ff;
+  --hl-pink:#f78fb3;
+  --hl-purple:#b892ff;
+  --hl-orange:#ff9f68;
+  --hl-teal:#48dbfb;
+  --hl-red:#ff6b6b;
+
+  --ink-black:#1e242b;
+  --ink-blue:#1d4ed8;
+  --ink-red:#dc2626;
+  --ink-green:#15803d;
+  --ink-purple:#6d28d9;
+  --ink-brown:#854d0e;
+  --ink-orange:#ea580c;
+  --ink-white:#f8fafc;
 }
 
-.goal-bar{padding:8px 14px;background:var(--surface);border-bottom:1px solid var(--border);font-size:11px;color:var(--muted);font-weight:400}
-.goal-line{display:flex;justify-content:space-between;align-items:center;gap:8px}
-.goal-line button{border:none;background:none;color:var(--accent);font-family:var(--font-ui);font-size:11px;font-weight:600;cursor:pointer}
-.goal-track{height:4px;border-radius:var(--radius-pill);background:var(--border);margin-top:6px;overflow:hidden}
-.goal-track i{display:block;height:100%;background:linear-gradient(90deg,var(--green),var(--accent-2));border-radius:var(--radius-pill);transition:width var(--duration-slow) ease}
+/* The swatch classes carry the colour, so a dot in the markup is
+   `class="hl-dot hl-yellow"` and never `style="--hl:#f6c445"`. Nesting the
+   palettes under #penPop and #hlBar keeps one tool's palette from leaking into
+   the other's bar. */
+#penPop .hl-yellow,#hlBar .hl-yellow{--hl:var(--hl-yellow)}
+#penPop .hl-green,#hlBar .hl-green{--hl:var(--hl-green)}
+#penPop .hl-blue,#hlBar .hl-blue{--hl:var(--hl-blue)}
+#penPop .hl-pink,#hlBar .hl-pink{--hl:var(--hl-pink)}
+#penPop .hl-purple,#hlBar .hl-purple{--hl:var(--hl-purple)}
+#penPop .hl-orange,#hlBar .hl-orange{--hl:var(--hl-orange)}
+#penPop .hl-teal,#hlBar .hl-teal{--hl:var(--hl-teal)}
+#penPop .hl-red,#hlBar .hl-red{--hl:var(--hl-red)}
 
-/* Reading scene + modes */
-/* Reading scene + modes */
-/* The extra bottom padding keeps the last lines of a zoomed page clear of the
-   floating study dock. */
-.reader-stage{flex:1;overflow:auto;display:flex;justify-content:center;padding:16px 14px 92px;position:relative;transition:background var(--duration-base);overscroll-behavior-y:contain;--reader-bright:1;--reader-fx:brightness(1)}
-.reader-stage.mode-sepia{background:#efe3cd;--reader-fx:sepia(.3) saturate(.94)}
-.reader-stage.mode-dark{background:#141118;--reader-fx:invert(.92) hue-rotate(180deg) contrast(.92)}
-/* Optical filters act on the rendered page itself — the pdf.js canvas, or the
-   fallback iframe — never on the container, so the page frame's shadow and
-   every reader control keep their true colours. Highlights are deliberately
-   left out: they carry their own authored colour and already switch blend mode
-   with the theme, while an inverted highlight would lose its hue.
-   The rule only turns on when a mode or a brightness change actually alters
-   something, which keeps plain light mode completely filter-free. */
+#penPop .ink-black{--hl:var(--ink-black)}
+#penPop .ink-blue{--hl:var(--ink-blue)}
+#penPop .ink-red{--hl:var(--ink-red)}
+#penPop .ink-green{--hl:var(--ink-green)}
+#penPop .ink-purple{--hl:var(--ink-purple)}
+#penPop .ink-brown{--hl:var(--ink-brown)}
+#penPop .ink-orange{--hl:var(--ink-orange)}
+#penPop .ink-white{--hl:var(--ink-white)}
+
+
+.reader-ribbon{position:sticky;top:0;z-index:30;width:100%;background:transparent;border:none;box-shadow:none;display:flex;flex-direction:column;flex-shrink:0;pointer-events:none}
+.reader-ribbon-row.reader-top{position:relative;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:max(10px,var(--sat)) 16px 8px;background:transparent;pointer-events:none;width:100%;max-width:1160px;margin-inline:auto;box-sizing:border-box}
+
+/* ═══ Structured Stationery Command Bar (Solid Matte Paper) ═══ */
+.reader-island-book,
+.reader-island-tools,
+.reader-island-meta{
+  pointer-events:auto;
+  display:inline-flex;
+  align-items:center;
+  background:var(--color-surface);
+  border:1px solid var(--color-border-strong);
+  border-radius:var(--radius-sm);
+  box-shadow:0 2px 10px rgba(0,0,0,.06),0 1px 3px rgba(0,0,0,.04);
+  padding:5px 8px;
+  /* One height for all three islands. They are separate boxes with different
+     contents, so without a shared floor the book island (a two-line title) sat
+     ~10px taller than the tool and meta islands and the row's top and bottom
+     edges never lined up. 48px is the tallest control inside them (36px) plus
+     the 5px padding on both sides. */
+  min-height:48px;
+  box-sizing:border-box;
+  position:relative;
+  transition:box-shadow var(--duration-fast),border-color var(--duration-fast);
+  backdrop-filter:none;
+  -webkit-backdrop-filter:none;
+}
+
+/* Dark Mode Matte Paper Override: strictly NO glass, NO white inset borders, NO heavy blur */
+html[data-mode="dark"] .reader-island-book,
+html[data-mode="dark"] .reader-island-tools,
+html[data-mode="dark"] .reader-island-meta,
+html[data-mode="dark"] .reader-subribbon#penPop,
+html[data-mode="dark"] .dock-pop.reader-page-pop#pagePop,
+html[data-mode="dark"] #hlBar{
+  background:var(--color-surface);
+  border:1px solid var(--color-border-strong);
+  backdrop-filter:none;
+  -webkit-backdrop-filter:none;
+  box-shadow:0 4px 18px rgba(0,0,0,.45);
+}
+
+/* ── Island 1: Book Identity & Goal (.reader-island-book) ── */
+.reader-island-book{gap:8px;min-width:0;flex-shrink:1;padding-block:4px;padding-inline:6px 10px}
+.r-back{border:none;background:var(--color-accent-soft);color:var(--color-accent-text);font-family:var(--font-ui);font-size:12px;font-weight:600;padding:0 10px;height:36px;border-radius:var(--radius-xs);cursor:pointer;flex-shrink:0;transition:transform var(--duration-fast);touch-action:manipulation;white-space:nowrap;display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box}
+.r-back:active{transform:scale(.94)}
+.reader-thumb{width:26px;height:34px;object-fit:cover;border-radius:4px;border:1px solid var(--color-border);flex-shrink:0;box-shadow:var(--shadow-sm)}
+.reader-thumb[hidden]{display:none!important}
+.reader-titles{min-width:0;max-width:180px;display:flex;flex-direction:column;gap:1px;flex:1}
+/* The title and its sub-row are held to a known height rather than to whatever
+   the inherited 1.6 line-height happens to give them. Two stacked text lines at
+   that leading made the book island 8px taller than the other two, which is
+   what the shared 48px floor could not fix from the outside. */
+.reader-title{font-size:13px;line-height:1.3;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--color-text-primary)}
+.reader-sub-row{display:flex;align-items:center;gap:4px;height:20px;font-size:11px;line-height:20px;color:var(--color-text-muted);white-space:nowrap;overflow:hidden}
+.reader-sub{font-size:11px;color:var(--color-text-muted);font-weight:400;font-variant-numeric:tabular-nums;white-space:nowrap}
+.reader-sub-sep{color:var(--color-border-strong);font-weight:700}
+
+/* Goal button */
+.goal-chip{border:none;background:transparent;color:var(--color-text-muted);font-family:var(--font-ui);font-size:11px;font-weight:600;height:20px;padding:0 6px;border-radius:var(--radius-xs);cursor:pointer;white-space:nowrap;flex-shrink:0;transition:all var(--duration-fast);position:relative;max-width:110px;overflow:hidden;text-overflow:ellipsis;display:inline-flex;align-items:center;justify-content:center}
+.goal-chip::after{content:'';position:absolute;inset:-4px}
+.goal-chip:hover{color:var(--color-accent);background:var(--color-accent-soft)}
+.goal-chip:active{transform:scale(.95)}
+
+/* Delicate 2.5px micro Goal progress track along bottom edge of Island 1 */
+.goal-bar.reader-goal-line{position:absolute;inset-block-end:0;inset-inline:10px;height:2.5px;padding:0;background:transparent;border:none;overflow:hidden;pointer-events:none}
+.goal-bar.reader-goal-line .goal-track{height:100%;margin:0;border-radius:var(--radius-xs);background:color-mix(in srgb,var(--color-border) 60%,transparent);overflow:hidden}
+.goal-bar.reader-goal-line .goal-track i{display:block;height:100%;border-radius:var(--radius-xs);background:linear-gradient(90deg,var(--color-success),var(--color-accent));transition:width var(--duration-slow) ease}
+
+/* ── Island 2: The Craft & Page Dock (.reader-island-tools) ── */
+.reader-island-tools{gap:4px;flex-shrink:0;padding-inline:6px}
+.r-tool-group{display:flex;align-items:center;gap:3px;flex-shrink:0}
+
+/* Tool buttons: structured 36px x 36px with 8px radius */
+.r-tool-btn{border:1px solid transparent;background:transparent;color:var(--color-text-primary);width:36px;height:36px;min-width:36px;padding:0;border-radius:var(--radius-xs);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;position:relative;transition:all var(--duration-fast);flex-shrink:0;touch-action:manipulation;box-sizing:border-box}
+.r-tool-btn::after{content:'';position:absolute;inset:-3px}
+.r-tool-btn:hover:not(:disabled){background:var(--color-surface-hover);color:var(--color-accent)}
+.r-tool-btn:active:not(:disabled){transform:scale(.92)}
+.r-tool-btn.on{background:var(--color-accent-soft);color:var(--color-accent);border-color:color-mix(in srgb,var(--color-accent) 40%,var(--color-border))}
+.r-tool-btn svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+/* Clear Disabled States for buttons */
+.r-tool-btn:disabled,
+.dock-page:disabled,
+.mark-read:disabled,
+.zoom-pill:disabled,
+.subribbon-clear:disabled,
+.r-nav-step:disabled,
+.page-quick-jump:disabled{
+  opacity:.32;
+  cursor:not-allowed;
+  pointer-events:none;
+}
+
+/* Notes badge: strictly hidden when count is 0! */
+.r-notes-badge{position:absolute;top:2px;inset-inline-end:2px;background:var(--color-accent);color:var(--color-text-on-accent);font-family:var(--font-personality);font-size:11px;font-weight:700;min-width:16px;height:16px;padding:0 4px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;line-height:1;box-shadow:0 0 0 1.5px var(--color-surface)}
+.r-notes-badge[hidden]{display:none!important}
+
+/* Section A: Page Stepper */
+.r-nav-step{width:32px;min-width:32px;font-size:18px;color:var(--color-accent)}
+.dock-page{display:inline-flex;align-items:center;justify-content:center;gap:4px;min-width:60px;height:36px;border:1px solid var(--color-border-strong);background:var(--color-surface);color:var(--color-text-primary);font-family:var(--font-ui);font-size:12px;font-weight:600;padding:0 8px;border-radius:var(--radius-xs);cursor:pointer;position:relative;font-variant-numeric:tabular-nums;transition:all var(--duration-fast);flex-shrink:0;box-sizing:border-box}
+.dock-page::after{content:'';position:absolute;inset:-3px}
+.dock-page:hover:not(:disabled){background:var(--color-surface-hover);border-color:var(--color-accent)}
+.dock-page.on{background:var(--color-accent-soft);color:var(--color-accent);border-color:color-mix(in srgb,var(--color-accent) 40%,var(--color-border))}
+.dock-page.is-read::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--color-success);flex-shrink:0}
+
+/* Stable Tactile Mark Read Button: fixed 36px icon button matching neighbors */
+.mark-read{border:1px solid var(--color-border-strong);background:var(--color-surface);color:var(--color-text-muted);width:36px;min-width:36px;height:36px;padding:0;border-radius:var(--radius-xs);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;transition:all var(--duration-fast);position:relative;flex-shrink:0;box-sizing:border-box}
+.mark-read::after{content:'';position:absolute;inset:-3px}
+.mark-read:hover:not(:disabled){background:var(--color-surface-hover);color:var(--color-text-primary);border-color:var(--color-accent)}
+.mark-read:active:not(:disabled){transform:scale(.94)}
+.mark-read.is-read{background:var(--color-success);color:var(--color-text-on-success);border-style:solid;border-color:var(--color-success);animation:markPop var(--duration-fast) var(--ease-out)}
+@keyframes markPop{0%{transform:scale(.88)}50%{transform:scale(1.1)}100%{transform:scale(1)}}
+
+/* Dashed notebook line separators */
+.bar-sep{width:0;height:18px;border-inline-start:1px dashed var(--color-border-strong);flex-shrink:0;margin-inline:4px}
+.dock-sep{width:0;height:18px;border-inline-start:1px dashed var(--color-border-strong);flex-shrink:0;margin-inline:4px}
+
+/* Section C: Zoom Controls */
+.r-zoom-btn{width:32px;min-width:32px;height:36px;font-size:18px;color:var(--color-text-muted);box-sizing:border-box}
+.zoom-pill{border:1px solid var(--color-border-strong);background:var(--color-surface);color:var(--color-text-primary);font-family:var(--font-ui);font-size:11.5px;font-weight:700;padding:0 8px;min-width:44px;height:36px;border-radius:var(--radius-xs);cursor:pointer;font-variant-numeric:tabular-nums;transition:all var(--duration-fast);flex-shrink:0;display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box}
+.zoom-pill:hover:not(:disabled){color:var(--color-accent);border-color:var(--color-accent);background:var(--color-accent-soft)}
+.zoom-pill:active:not(:disabled){transform:scale(.95)}
+
+/* ── Island 3: Lamp, Timer & Settings (.reader-island-meta) ── */
+.reader-island-meta{gap:4px;flex-shrink:0;padding-inline:6px}
+.reader-timer{display:inline-flex;align-items:center;justify-content:center;gap:5px;border:1px solid var(--color-border-strong);background:var(--color-surface);color:var(--color-text-muted);font-family:var(--font-ui);font-size:11.5px;font-weight:600;font-variant-numeric:tabular-nums;padding:0 10px;height:36px;border-radius:var(--radius-xs);cursor:pointer;flex-shrink:0;position:relative;transition:all var(--duration-fast);box-sizing:border-box}
+.reader-timer::after{content:'';position:absolute;inset:-4px}
+.reader-timer:hover{color:var(--color-accent);border-color:var(--color-accent);background:var(--color-surface-hover)}
+.reader-timer.on{color:var(--color-accent);border-color:color-mix(in srgb,var(--color-accent) 40%,var(--color-border));background:var(--color-accent-soft)}
+
+/* Mode icons */
+.r-tool-btn .m-sepia,.r-tool-btn .m-moon{display:none}
+.r-tool-btn.mode-sepia .m-sun{display:none}
+.r-tool-btn.mode-sepia .m-sepia{display:block}
+.r-tool-btn.mode-dark .m-sun,.r-tool-btn.mode-dark .m-sepia{display:none}
+.r-tool-btn.mode-dark .m-moon{display:block}
+.r-tool-btn.mode-sepia,.r-tool-btn.mode-dark{color:var(--color-accent)}
+
+/* ── Contextual Sub-Popovers (#penPop & #pagePop) ── */
+.reader-subribbon#penPop{
+  position:absolute;
+  top:calc(100% + 8px);
+  inset-inline:0;
+  margin-inline:auto;
+  /* `max-content` rather than `fit-content`: the bar is one row of swatches and
+     settings, and `fit-content` let it collapse towards its smallest content
+     width and then grow unevenly around the centred margin. The cap keeps it
+     inside the viewport on a phone without letting it stretch across a desktop. */
+  width:max-content;
+  max-width:min(680px,calc(100vw - 24px));
+  box-sizing:border-box;
+  overflow-x:auto;
+  background:var(--color-surface);
+  border:1px solid var(--color-border-strong);
+  border-radius:var(--radius-sm);
+  padding:8px 12px;
+  box-shadow:0 4px 18px rgba(0,0,0,.12);
+  z-index:32;
+  animation:dockPopIn var(--duration-fast) var(--ease-out);
+  /* The bar floats over the page it belongs to, and on a desktop it lands on the
+     page's first lines. Its own body therefore never takes a pointer: only the
+     controls inside it do, so a stroke that begins on the bar's padding or
+     between two swatches falls through to the page underneath, folds the bar
+     (js/reader.js collapses it on stroke start) and draws — instead of dying on
+     an inert panel. */
+  pointer-events:none;
+  backdrop-filter:none;
+  -webkit-backdrop-filter:none;
+}
+.reader-subribbon#penPop :is(button,label,input,.subribbon-inner > *){pointer-events:auto}
+.reader-subribbon[hidden]{display:none!important}
+
+/* On a phone the bar is open *over* the page, and it is a colour picker first:
+   its own padding, the labels and the header row are all weight the page pays
+   for. Tightening them keeps the open footprint to roughly the swatch row. */
+@media (max-width:640px){
+  .reader-subribbon#penPop{padding:5px 8px;top:calc(100% + 6px)}
+  #penPop .subribbon-inner{gap:5px}
+  #penPop .subribbon-label,
+  #penPop .subribbon-tab span{display:none}
+  #penPop .subribbon-tab{padding-inline:8px}
+  #penPop .hl-dot{width:20px;height:20px}
+  #penPop .pen-width{width:26px;height:26px}
+}
+@keyframes dockPopIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+
+.subribbon-inner{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center}
+.subribbon-label{font-size:11px;color:var(--color-text-muted);font-weight:600}
+
+/* Sub-Ribbon mode switcher */
+.subribbon-tools-nav{display:flex;align-items:center;gap:3px;background:var(--color-bg);padding:3px;border-radius:var(--radius-xs);border:1px solid var(--color-border)}
+.subribbon-tab{display:inline-flex;align-items:center;gap:5px;height:28px;padding-inline:8px 12px;border-radius:calc(var(--radius-xs) - 2px);font-size:11.5px;font-weight:600;font-family:var(--font-ui);border:1px solid transparent;background:transparent;color:var(--color-text-muted);cursor:pointer;transition:all var(--duration-fast)}
+.subribbon-tab:hover{color:var(--color-text-primary)}
+.subribbon-tab.on{background:var(--color-surface);color:var(--color-accent-text);border-color:var(--color-border-strong);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+
+/* Swatches & Palettes */
+.subribbon-colors{display:flex;align-items:center;gap:6px}
+.subribbon-colors[hidden]{display:none!important}
+.palette-swatches{display:flex;align-items:center;gap:6px}
+.palette-swatches[hidden]{display:none!important}
+
+.subribbon-clear{border:1px solid color-mix(in srgb,var(--color-danger) 35%,var(--color-border));background:color-mix(in srgb,var(--color-danger) 8%,var(--color-surface));color:var(--color-danger);font-family:var(--font-ui);font-size:11px;font-weight:600;padding:4px 8px;border-radius:var(--radius-xs);cursor:pointer;transition:all var(--duration-fast);position:relative;display:inline-flex;align-items:center;gap:4px;white-space:nowrap;height:28px;box-sizing:border-box}
+.subribbon-clear::after{content:'';position:absolute;inset:-4px}
+.subribbon-clear:active:not(:disabled){transform:scale(.95)}
+.subribbon-clear .clear-icon{font-size:13px;line-height:1}
+.subribbon-clear .clear-label{font-size:11px}
+@media (max-width:540px){
+  .subribbon-clear .clear-label{display:none}
+  .subribbon-clear{padding:4px 7px}
+}
+
+/* Fold the colour bar away. It is the last thing touched before drawing, and the
+   bar is what covers the first lines of the page — so this is the button that
+   gets out of the way of the tool it belongs to. */
+.subribbon-fold{display:inline-flex;align-items:center;justify-content:center;width:26px;height:28px;padding:0;border:1px solid var(--color-border-strong);background:var(--color-surface);color:var(--color-text-muted);border-radius:var(--radius-xs);cursor:pointer;flex-shrink:0;transition:all var(--duration-fast)}
+.subribbon-fold:hover{color:var(--color-accent-text);border-color:var(--color-accent);background:var(--color-accent-soft)}
+.subribbon-fold:active{transform:scale(.92)}
+
+.hl-dot{width:22px;height:22px;border-radius:50%;border:2px solid transparent;cursor:pointer;background:var(--hl);transition:transform var(--duration-fast),border-color var(--duration-fast);position:relative;flex-shrink:0}
+.hl-dot::after{content:'';position:absolute;inset:-6px;border-radius:50%}
+@media (hover:hover){.hl-dot:hover{transform:scale(1.15)}}
+.hl-dot.sel{border-color:var(--color-text-primary);box-shadow:0 0 0 2px var(--color-surface)}
+
+/* Custom Color Picker Swatch */
+.custom-color-swatch{width:22px;height:22px;border-radius:50%;border:1.5px solid var(--color-border-strong);display:inline-flex;align-items:center;justify-content:center;position:relative;cursor:pointer;background:conic-gradient(var(--hl-red),var(--hl-yellow),var(--hl-green),var(--hl-teal),var(--hl-blue),var(--hl-purple),var(--hl-pink),var(--hl-red));box-shadow:0 0 0 1px var(--color-surface);flex-shrink:0;overflow:hidden;transition:transform var(--duration-fast)}
+.custom-color-swatch:hover{transform:scale(1.15)}
+.custom-color-swatch input[type=color]{position:absolute;inset:-10px;width:calc(100% + 20px);height:calc(100% + 20px);opacity:0;cursor:pointer}
+
+/* 4 Nib Sizes */
+.pen-widths{display:flex;align-items:center;gap:3px}
+.pen-width{display:grid;place-items:center;width:30px;height:30px;border:1px solid transparent;background:transparent;border-radius:var(--radius-xs);cursor:pointer;position:relative;transition:all var(--duration-fast)}
+.pen-width::after{content:'';position:absolute;inset:-6px;border-radius:var(--radius-xs)}
+.pen-width i{display:block;border-radius:50%;background:currentColor;color:var(--color-text-muted);transition:color var(--duration-fast)}
+.pen-width:hover{background:var(--color-surface-hover)}
+.pen-width.on{background:var(--color-accent-soft);border-color:color-mix(in srgb,var(--color-accent) 30%,var(--color-border))}
+.pen-width.on i{color:var(--color-accent)}
+
+/* Live tool indicator dots/bars */
+.hl-indicator{position:absolute;inset-block-end:4px;inset-inline:7px;height:3px;border-radius:2px;background:var(--hl,var(--hl-yellow));transition:background var(--duration-fast)}
+.pen-indicator{position:absolute;inset-block-end:4px;inset-inline-start:6px;width:6px;height:6px;border-radius:50%;background:var(--ink,var(--ink-black));box-shadow:0 0 0 1.5px var(--color-surface);transition:background var(--duration-fast)}
+
+/* Direct Jump & Page Popover (#pagePop) */
+.dock-pop.reader-page-pop#pagePop{
+  position:absolute;
+  top:calc(100% + 8px);
+  bottom:auto;
+  inset-inline:0;
+  margin-inline:auto;
+  z-index:35;
+  background:var(--color-surface);
+  border:1px solid var(--color-border-strong);
+  border-radius:var(--radius-sm);
+  padding:12px;
+  box-shadow:0 6px 22px rgba(0,0,0,.15);
+  width:min(300px,calc(100vw - 24px));
+  max-width:calc(100vw - 24px);
+  box-sizing:border-box;
+  overflow-x:auto;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  animation:dockPopIn var(--duration-fast) var(--ease-out);
+  pointer-events:auto;
+  backdrop-filter:none;
+  -webkit-backdrop-filter:none;
+}
+.dock-pop.reader-page-pop[hidden]{display:none!important}
+.page-jump-row{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;width:100%;box-sizing:border-box}
+.page-quick-jump{border:1px solid var(--color-border);background:var(--color-surface);color:var(--color-text-muted);font-family:var(--font-ui);font-size:11.5px;font-weight:600;padding:6px 10px;border-radius:var(--radius-xs);cursor:pointer;transition:all var(--duration-fast);white-space:nowrap;flex-shrink:0}
+.page-quick-jump:hover:not(:disabled){color:var(--color-accent);border-color:var(--color-accent);background:var(--color-accent-soft)}
+.page-quick-jump:active:not(:disabled){transform:scale(.95)}
+.page-jump-input{flex:1;min-width:0;max-width:56px;border:1.5px solid var(--color-border);background:var(--color-bg);color:var(--color-text-primary);font-family:var(--font-ui);font-size:16px;padding:5px 6px;border-radius:var(--radius-xs);outline:none;text-align:center;box-sizing:border-box}
+.page-jump-input:focus{border-color:var(--color-accent)}
+.page-jump-go{border:none;background:var(--color-accent);color:var(--color-text-on-accent);font-family:var(--font-ui);font-size:12px;font-weight:600;padding:6px 12px;border-radius:var(--radius-xs);cursor:pointer;flex-shrink:0}
+.page-jump-go:active{transform:scale(.95)}
+#pageRange{width:100%;box-sizing:border-box;margin:0}
+
+/* ═══ Mobile Responsiveness: 2-Row Stack ═══ */
+@media (max-width:820px){
+  .reader-ribbon-row.reader-top{
+    display:grid;
+    /* Two columns, and the book island is given exactly what is left rather than
+       a `calc(100vw - 130px)` guess: the guess was wider than the real gap at
+       320–375px, so the island ran under the meta island and covered the title
+       and the goal chip. `minmax(0,1fr)` lets the column shrink below its
+       content's intrinsic width — without it a long title would push the second
+       column off the row again. */
+    grid-template-columns:minmax(0,1fr) auto;
+    grid-template-rows:auto auto;
+    gap:6px;
+    align-items:stretch;
+    padding:max(8px,var(--sat)) 12px 6px;
+  }
+  .reader-island-book{
+    grid-column:1;
+    grid-row:1;
+    min-width:0;
+    width:100%;
+    overflow:hidden;
+  }
+  .reader-island-meta{
+    grid-column:2;
+    grid-row:1;
+    justify-self:end;
+  }
+  .reader-island-tools{
+    grid-column:1 / -1;
+    grid-row:2;
+    width:100%;
+    max-width:100%;
+    overflow-x:auto;
+    scroll-behavior:smooth;
+    scrollbar-width:none;
+    -webkit-overflow-scrolling:touch;
+    justify-content:flex-start;
+    padding:4px 10px;
+    box-sizing:border-box;
+  }
+  .reader-island-tools::-webkit-scrollbar{display:none}
+}
+
+/* Below the width where the control row genuinely overflows (the row is ~597px
+   of controls plus padding, and the island has the full row width), the two
+   edges are softened. A hidden scrollbar used to leave Zoom, Notes and the
+   eraser with no sign at all that they were off-screen; the fade is that sign.
+   It is symmetric on purpose: the bar is RTL, so the edge that still has
+   content behind it is the inline-start one, and a both-edges fade needs no
+   direction to say so. */
+@media (max-width:640px){
+  .reader-island-tools{
+    -webkit-mask-image:linear-gradient(to right,transparent 0,#000 12px,#000 calc(100% - 12px),transparent 100%);
+    mask-image:linear-gradient(to right,transparent 0,#000 12px,#000 calc(100% - 12px),transparent 100%);
+  }
+}
+
+/* ═══ Physical Paper Stage (#readerStage & #pageWrap) ═══ */
+.reader-stage{flex:1;overflow:auto;display:flex;justify-content:center;padding:16px 14px calc(24px + var(--sab));position:relative;transition:background var(--duration-base);overscroll-behavior-y:contain;--reader-bright:1;--reader-fx:brightness(1)}
+.reader-stage.mode-sepia{background:var(--reader-stage-sepia);--reader-fx:sepia(.3) saturate(.94)}
+.reader-stage.mode-dark{background:var(--reader-stage-night);--reader-fx:invert(.92) hue-rotate(180deg) contrast(.92)}
 .reader-stage.has-fx :is(#pdfCanvas,#pdfFrame){filter:var(--reader-fx) brightness(var(--reader-bright))}
-/* Sepia paper tone. The sepia() filter can only warm a white page by a couple of
-   units — the paper colour itself comes from a colour-only multiply overlay,
-   which never resamples the page, so glyphs stay exactly as crisp as pdf.js drew
-   them while the blue channel drops enough to matter in low light. */
-.reader-stage.mode-sepia .page-wrap::after{content:'';position:absolute;inset:0;pointer-events:none;background:#efdec0;mix-blend-mode:multiply;opacity:.62}
-.mode-dark .page-wrap{background:#1b1b1b}
+.reader-stage.mode-sepia .page-wrap::after{content:'';position:absolute;inset:0;pointer-events:none;background:var(--reader-stage-sepia-wash);mix-blend-mode:multiply;opacity:.62}
+.mode-dark .page-wrap{background:var(--reader-page-night)}
 
 .reader-loading{position:absolute;inset:0;display:grid;place-items:center;background:rgba(0,0,0,.06);z-index:5}
-.reader-loading[hidden]{display:none}
+.reader-loading[hidden]{display:none!important}
 .spinner{width:34px;height:34px;border-radius:50%;border:3px solid var(--border);border-top-color:var(--accent);animation:spin .8s linear infinite}
 
-.page-wrap{position:relative;isolation:isolate;margin:auto;box-shadow:var(--shadow-lg);border-radius:4px;background:#fff;width:100%;height:100%;overflow:hidden;flex-shrink:0;direction:ltr}
+/* Layered Paper Shadow & Desk Feel */
+.page-wrap{position:relative;isolation:isolate;margin:auto;box-shadow:0 1px 3px rgba(0,0,0,.06),0 10px 28px -8px rgba(80,60,30,.22),0 0 0 1px var(--border);border-radius:4px;background:var(--reader-stage-paper);width:100%;height:100%;overflow:hidden;flex-shrink:0;direction:ltr}
+
+/* Tactile corner bookmark ribbon when page is marked read */
+.page-wrap.is-read::before{
+  content:'';
+  position:absolute;
+  inset-block-start:0;
+  inset-inline-end:16px;
+  width:20px;
+  height:32px;
+  background:var(--color-success);
+  clip-path:polygon(0 0, 100% 0, 100% 100%, 50% 78%, 0 100%);
+  z-index:10;
+  box-shadow:0 2px 6px rgba(0,0,0,.22);
+  pointer-events:none;
+  animation:bookmarkDrop var(--duration-fast) var(--ease-out);
+}
+@keyframes bookmarkDrop{from{transform:translateY(-14px);opacity:0}to{transform:translateY(0);opacity:1}}
+
 #pdfCanvas{display:block;position:absolute;inset:0}
 #pdfFallback{position:absolute;inset:0;display:flex;flex-direction:column}
-#pdfFallback[hidden]{display:none}
-#pdfFrame{flex:1;min-height:0;width:100%;border:none;display:block;border-radius:4px;background:#fff}
+#pdfFallback[hidden]{display:none!important}
+#pdfFrame{flex:1;min-height:0;width:100%;border:none;display:block;border-radius:4px;background:var(--reader-stage-paper)}
 .fallback-note{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-shrink:0;margin-bottom:6px;padding:7px 10px;border-radius:var(--radius-sm);background:color-mix(in srgb,var(--surface) 90%,transparent);border:1px solid var(--border);font-size:11px;color:var(--muted)}
-.fallback-note button{border:none;background:transparent;color:var(--accent);font-family:var(--font-ui);font-size:11.5px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0;padding:6px 9px;border-radius:var(--radius-xs);transition:background var(--duration-fast) var(--ease-out)}
+.fallback-note button{border:none;background:transparent;color:var(--accent);font-family:var(--font-ui);font-size:11.5px;font-weight:700;cursor:pointer;white-space:nowrap;flex-shrink:0;padding:6px 9px;border-radius:var(--radius-xs);transition:background var(--duration-fast)}
 
-/* pdf.js text layer — source of truth for text selection.
-   Follows the upstream contract: geometry is driven by --scale-factor, and PDF
-   typography stays independent from UI typography, so the inherited font
-   metrics that would shift glyph advances are pinned back to their defaults.
-   The page area is LTR: each run carries its own `dir` from pdf.js, and the
-   surrounding RTL shell must not influence bidi inside the document. */
+/* Text Layer & Highlights */
 #textLayer{--scale-factor:1;position:absolute;inset:0;z-index:0;overflow:clip;text-align:initial;line-height:1;text-size-adjust:none;-webkit-text-size-adjust:none;forced-color-adjust:none;transform-origin:0 0;caret-color:CanvasText;letter-spacing:normal;word-spacing:normal;font-kerning:normal;font-variant-ligatures:normal;font-feature-settings:normal;text-rendering:auto;cursor:text;user-select:text;-webkit-user-select:text}
 #textLayer :is(span,br){color:transparent;position:absolute;white-space:pre;cursor:text;transform-origin:0 0}
 #textLayer>:not(.markedContent),#textLayer .markedContent span:not(.markedContent){z-index:1}
@@ -203,164 +669,50 @@
 #textLayer ::selection{background:color-mix(in srgb,var(--accent) 32%,transparent)}
 #textLayer br::selection{background:transparent}
 
-/* Highlights overlay */
 #highlightLayer{position:absolute;inset:0;pointer-events:none;mix-blend-mode:multiply}
 #highlightLayer i{position:absolute;border-radius:2px}
-html[data-mode="dark"] #highlightLayer{mix-blend-mode:screen}
+/* `multiply` is what makes a highlight read as ink on paper — but it needs paper
+   to multiply onto, and the reader stage can go dark on its own (the night
+   scene) while the app itself is still in a light theme. Screen is the blend
+   that reads on a dark page, so it is chosen from the stage the highlights
+   actually sit on: the app's mode when the stage is left alone, and the stage's
+   own mode when it has been overridden. */
+html[data-mode="dark"] .reader-stage:not(.mode-light):not(.mode-sepia) #highlightLayer,
+.reader-stage.mode-dark #highlightLayer{mix-blend-mode:screen}
 
-/* Freehand pen — the optional draw surface. It sits between the text layer and
-   the highlight layer; when the pen is off it is pointer-transparent so
-   selection keeps working exactly as before. */
 #drawLayer{position:absolute;inset:0;pointer-events:none;z-index:0}
 #drawLayer.pen-on{pointer-events:auto;touch-action:none;cursor:crosshair;z-index:1}
 #textLayer.pen-off{pointer-events:none}
 #drawLayer.eraser-on{pointer-events:auto;touch-action:none;cursor:cell;z-index:1}
 
-/* Live eraser halo: follows the pointer while erasing so the user sees the
-   exact kill zone. The element is created on gesture start and removed on
-   gesture end — never left behind between books or engines. */
-.eraser-cursor{position:fixed;width:56px;height:56px;margin:-28px 0 0 -28px;border-radius:50%;
-  border:1.5px dashed var(--accent);background:color-mix(in srgb,var(--surface) 55%,transparent);
-  pointer-events:none;z-index:30;will-change:left,top}
+.eraser-cursor{position:fixed;width:56px;height:56px;transform:translate(-50%,-50%);border-radius:50%;border:1.5px dashed var(--accent);background:color-mix(in srgb,var(--surface) 55%,transparent);pointer-events:none;z-index:30}
 
-/* One-time hint that the pen can highlight anything on the page (internal
-   renderer only) */
 .reader-hint{position:absolute;top:10px;inset-inline:14px;z-index:4;text-align:center;padding:8px 12px;border-radius:var(--radius-pill);background:color-mix(in srgb,var(--surface) 92%,transparent);border:1px solid var(--border);box-shadow:var(--shadow-lg);font-size:11.5px;color:var(--muted);animation:hlbarIn var(--duration-fast) var(--ease-out)}
-.reader-hint[hidden]{display:none}
+.reader-hint[hidden]{display:none!important}
 
-/* Contextual highlight toolbar */
-/* Contextual selection toolbar (kept for text-selection highlights; the hand
-   tool and the popover share the colour swatches with it) */
-#hlBar{position:absolute;z-index:6;display:flex;align-items:center;gap:7px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-pill);padding:6px 12px;box-shadow:var(--shadow-lg);animation:hlbarIn var(--duration-fast) var(--ease-out)}
-#hlBar[hidden]{display:none}
+#hlBar{position:absolute;z-index:6;display:flex;align-items:center;gap:7px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-pill);padding:6px 12px;box-shadow:var(--shadow-lg);animation:hlbarIn var(--duration-fast) var(--ease-out);max-width:calc(100vw - 16px);flex-wrap:wrap}
+#hlBar[hidden]{display:none!important}
 @keyframes hlbarIn{from{opacity:0;transform:translateY(4px)}}
-.hlbar-label{font-size:11px;color:var(--muted);font-weight:500}
-/* Color dots: the 22px swatch stays compact, but each dot owns a 36px touch
-   disc so a thumb picks a color without retrying. */
-.hl-dot{width:22px;height:22px;border-radius:50%;border:2px solid transparent;cursor:pointer;background:var(--hl);transition:transform var(--duration-fast);position:relative}
-.hl-dot::after{content:'';position:absolute;inset:-7px;border-radius:50%}
-@media (hover:hover){.hl-dot:hover{transform:scale(1.15)}}
-.hl-dot.sel{border-color:var(--text)}
-.hlbar-note{border:none;background:transparent;color:var(--accent);font-family:var(--font-ui);font-size:12px;font-weight:600;cursor:pointer;padding:4px 6px}
+.hlbar-note{border:1px solid var(--border);background:var(--surface);color:var(--accent);font-family:var(--font-ui);font-size:13px;font-weight:600;cursor:pointer;padding:0;width:28px;height:28px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;transition:all var(--duration-fast);flex-shrink:0}
+.hlbar-note:hover{background:var(--accent-soft);border-color:var(--accent);transform:scale(1.1)}
+.hlbar-note:active{transform:scale(.92)}
 
-/* Pen toggle inside the pen popover */
-.dock-tool{display:inline-flex;align-items:center;gap:5px;border:none;background:transparent;color:var(--muted);font-family:var(--font-ui);font-size:12px;font-weight:700;padding:8px 10px;border-radius:var(--radius-xs);cursor:pointer;white-space:nowrap;position:relative;transition:color var(--duration-fast) var(--ease-out),background var(--duration-fast) var(--ease-out)}
-.dock-tool::after{content:'';position:absolute;inset:-4px -2px}
-.dock-tool.on{background:var(--accent-soft);color:var(--accent)}
-
-/* Nib-size picker: three dots at true relative sizes, each with a grown hit
-   area, so the choice is self-explanatory without labels. */
-.pen-widths{display:flex;align-items:center;gap:2px}
-.pen-width{display:grid;place-items:center;width:30px;height:30px;border:none;background:transparent;border-radius:50%;cursor:pointer;position:relative;transition:background var(--duration-fast) var(--ease-out)}
-.pen-width::after{content:'';position:absolute;inset:-7px;border-radius:50%}
-.pen-width i{display:block;border-radius:50%;background:currentColor;color:var(--muted);transition:color var(--duration-fast) var(--ease-out)}
-.pen-width.on{background:var(--accent-soft)}
-.pen-width.on i{color:var(--accent)}
-@media (hover:hover){.pen-width:hover i{color:var(--accent)}}
-
-/* Manual page completion */
-.mark-read{border:1.5px solid color-mix(in srgb,var(--green) 55%,transparent);background:color-mix(in srgb,var(--green) 12%,var(--surface));color:var(--green);font-family:var(--font-ui);font-size:12px;font-weight:700;padding:7px 14px;border-radius:var(--radius-pill);cursor:pointer;white-space:nowrap;flex-shrink:0;transition:transform var(--duration-fast),background var(--duration-fast),color var(--duration-fast);position:relative}
-.mark-read::after{content:'';position:absolute;inset:-5px}
-.mark-read:active{transform:scale(.96)}
-.mark-read.is-read{background:var(--green);color:#fff;border-color:var(--green)}
-
-/* Book completion reaction — brief, small */
+/* Completion animation */
 .done-pop{position:absolute;inset:0;z-index:8;display:grid;place-items:center;background:color-mix(in srgb,var(--bg) 45%,transparent);animation:hlbarIn var(--duration-base) var(--ease-out)}
-.done-pop[hidden]{display:none}
+.done-pop[hidden]{display:none!important}
 .done-pop-card{display:flex;flex-direction:column;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:26px 38px;box-shadow:var(--shadow-2);text-align:center}
 .done-pop-card .jingool{width:88px;height:88px}
 .done-pop-card p{margin:0;font-family:var(--font-personality);font-size:16px;font-weight:700;color:var(--text)}
 
-/* Goal overlay — reading goal choices */
-.goal-choices{display:flex;gap:8px;margin:10px 0 4px}
-.goal-choice{flex:1;border:1.5px solid var(--border);background:var(--bg);color:var(--text);font-family:var(--font-ui);font-size:12px;font-weight:600;padding:10px 8px;border-radius:var(--radius-sm);cursor:pointer;transition:border-color var(--duration-fast),background var(--duration-fast)}
-.goal-choice.sel{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 10%,var(--bg))}
-.goal-text-input{width:100%;border:1.5px solid var(--border);background:var(--bg);border-radius:var(--radius-sm);padding:10px var(--space-3);font-family:var(--font-ui);font-size:16px;color:var(--text);outline:none;margin-bottom:8px}
-.goal-text-input:focus{border-color:var(--accent)}
-.goal-daily{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted);margin-bottom:10px}
-.goal-daily input{width:80px;border:1.5px solid var(--border);background:var(--bg);border-radius:var(--radius-sm);padding:7px 10px;font-family:var(--font-ui);font-size:16px;color:var(--text);outline:none}
-.goal-name{color:var(--text);font-weight:600}
+/* Backward compatibility bridges */
+.reader-dock-bridge[hidden],.reader-float-bridge[hidden]{display:none!important}
 
-#readerView .reader-stage{user-select:none}
-#readerView .reader-stage #textLayer{user-select:text;-webkit-user-select:text}
-
-/* Reader bottom bar — glass style matching the nav dock.
-   Bottom margin clears the home indicator (max keeps the 10px rhythm on
-   devices without one). */
-/* Header timer — a quiet glass capsule that only reports elapsed time.
-   It stays low-opacity until it is running or focused, so the reading surface
-   keeps the attention. */
-.reader-timer{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--border);background:color-mix(in srgb,var(--surface) 64%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);color:var(--muted);font-family:var(--font-ui);font-size:11px;font-weight:600;font-variant-numeric:tabular-nums;padding:8px 12px;border-radius:var(--radius-pill);cursor:pointer;flex-shrink:0;opacity:.66;position:relative;transition:opacity var(--duration-fast) var(--ease-out),color var(--duration-fast) var(--ease-out),border-color var(--duration-fast) var(--ease-out),background var(--duration-fast) var(--ease-out)}
-/* The capsule stays visually quiet, but its hit area is grown to the 44px
-   touch minimum the rest of the reader follows. */
-.reader-timer::after{content:'';position:absolute;inset:-5px}
-.reader-timer.on{opacity:1;color:var(--accent);border-color:color-mix(in srgb,var(--accent) 38%,var(--border));background:var(--accent-soft)}
-@media (hover:hover){.reader-timer:hover{opacity:1}}
-.reader-timer:focus-visible{opacity:1}
-
-/* ═══ Floating Study Dock ═══
-   One pill replaces the old full-width bar: page stepping and the three tools
-   that belong to reading. The wrapper is fixed only to anchor the pill to the
-   viewport and clear the home indicator; it is pointer-transparent, so page
-   gestures and text selection pass straight through to the document. */
-.reader-dock{position:fixed;inset-inline:0;bottom:calc(var(--nav-height) + var(--sab) + 14px);z-index:20;display:flex;justify-content:center;pointer-events:none;opacity:1;transform:translateY(0);transition:transform var(--duration-base) var(--ease-out),opacity var(--duration-base) var(--ease-out)}
-/* Zen: the dock steps aside while the reader scrolls forward and returns on a
-   tap, so no control ever floats over the lines being read. */
-.reader-dock.zen{opacity:0;transform:translateY(calc(100% + 28px))}
-/* A hidden dock must not keep an invisible tab stop below the viewport. */
-.reader-dock.zen .dock-pill{pointer-events:none}
-.dock-pill{pointer-events:auto;display:flex;align-items:center;gap:4px;padding:6px 8px;border-radius:var(--radius-pill);background:linear-gradient(135deg,rgba(255,252,245,.72),rgba(255,252,245,.46));backdrop-filter:blur(22px) saturate(1.7);-webkit-backdrop-filter:blur(22px) saturate(1.7);border:1px solid rgba(255,255,255,.6);box-shadow:0 16px 38px -16px rgba(122,80,35,.34),inset 0 1px 0 rgba(255,255,255,.65)}
-html[data-mode="dark"] .dock-pill{background:linear-gradient(135deg,rgba(34,29,23,.7),rgba(34,29,23,.48));border-color:rgba(255,220,180,.14);box-shadow:0 16px 38px -16px rgba(0,0,0,.74),inset 0 1px 0 rgba(255,255,255,.1)}
-/* 42px visual + 3px hit-area ring keeps every dock control above the 44px
-   touch minimum. */
-.dock-btn{border:none;background:transparent;color:var(--muted);width:42px;height:42px;border-radius:var(--radius-pill);cursor:pointer;display:grid;place-items:center;font-size:19px;font-family:var(--font-ui);font-weight:700;line-height:1;position:relative;transition:background var(--duration-fast) var(--ease-out),color var(--duration-fast) var(--ease-out)}
-.dock-btn::after{content:'';position:absolute;inset:-3px;border-radius:inherit}
-.dock-btn.on{background:var(--accent-soft);color:var(--accent)}
-
-/* Pen indicator dot: mirrors the live nib — colour of the stroke, size of the
-   nib. Sits in the button's corner so the icon stays readable. */
-.pen-indicator{position:absolute;inset-block-end:5px;inset-inline-start:7px;width:7px;height:7px;border-radius:50%;background:var(--muted);box-shadow:0 0 0 2px var(--surface);transition:background var(--duration-fast) var(--ease-out),transform var(--duration-fast) var(--ease-out);transform:scale(.9)}
-.pen-indicator.w-thin{width:4px;height:4px}
-.pen-indicator.w-medium{width:7px;height:7px}
-.pen-indicator.w-thick{width:10px;height:10px;transform:scale(1)}
-.dock-nav{color:var(--accent)}
-.dock-page{pointer-events:auto;display:inline-flex;align-items:center;justify-content:center;gap:6px;min-width:64px;border:none;background:transparent;color:var(--text);font-family:var(--font-ui);font-size:12px;font-weight:600;padding:12px 10px;border-radius:var(--radius-pill);cursor:pointer;position:relative;transition:background var(--duration-fast) var(--ease-out),color var(--duration-fast) var(--ease-out)}
-.dock-page::after{content:'';position:absolute;inset:-4px 0;border-radius:inherit}
-.dock-page.on{background:var(--accent-soft);color:var(--accent)}
-/* Page state is never colour-only: a dot marks a page that is already done. */
-.dock-page.is-read::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--green);flex-shrink:0}
-.dock-sep{width:1px;height:20px;background:var(--border);flex-shrink:0;margin:0 2px}
-.bar-sep{width:1px;height:22px;background:var(--border);flex-shrink:0}
-
-/* Dock popovers — one small menu at a time, anchored to the pill */
-/* The centring translate lives inside the keyframes as well: an entrance
-   animation that only animates transform would otherwise override the
-   centring for its whole duration and park the menu off to one side. */
-.dock-pop{position:absolute;bottom:calc(100% + 10px);inset-inline-start:50%;transform:translateX(50%);pointer-events:auto;display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:var(--radius-pill);background:var(--surface);border:1px solid var(--border);box-shadow:var(--shadow-lg);animation:dockPopIn var(--duration-fast) var(--ease-out)}
-@keyframes dockPopIn{from{opacity:0;transform:translateX(50%) translateY(6px)}to{opacity:1;transform:translateX(50%)}}
-.dock-pop[hidden]{display:none}
-.dock-pop-label{font-size:11px;color:var(--muted);font-weight:500}
-.dock-pop-btn{border:none;background:transparent;color:var(--accent);font-family:var(--font-ui);font-size:12px;font-weight:600;padding:8px;border-radius:var(--radius-xs);cursor:pointer;white-space:nowrap;position:relative}
-.dock-pop-btn::after{content:'';position:absolute;inset:-6px -2px}
-.dock-pop-page{flex-direction:column;align-items:stretch;gap:12px;width:min(300px,86vw);padding:14px}
-.dock-pop-page input[type=range]{width:100%;-webkit-appearance:none;appearance:none;height:6px;border-radius:var(--radius-pill);background:var(--border);outline:none}
-.dock-pop-page input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:22px;height:22px;border-radius:50%;background:var(--surface);border:2.5px solid var(--accent);cursor:grab}
-.dock-pop-page input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:var(--surface);border:2.5px solid var(--accent);cursor:grab}
-
-@media (max-width:400px){
-  #hlBar{gap:5px;padding:5px 9px}
-}
-/* ═══ Reading settings sheet ═══
-   Light mode, brightness, zoom and the renderer switch live together here so
-   the dock only keeps what is used while reading. */
-/* The sheet is anchored to the viewport bottom, and the app's bottom nav floats
-   above it — so the content carries the nav's clearance itself, otherwise the
-   last row would sit behind the nav and be untappable. */
+/* Settings Sheet */
 .settings-body{overflow:auto;padding:14px 18px calc(20px + var(--nav-height) + var(--sab));display:flex;flex-direction:column;gap:14px;overscroll-behavior-y:contain}
 .set-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .set-label{font-size:12px;font-weight:600;color:var(--text)}
 .set-chips{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
-.set-chip{display:inline-flex;align-items:center;justify-content:center;border:1.5px solid var(--border);background:var(--bg);color:var(--text);font-family:var(--font-ui);font-size:12px;font-weight:600;min-height:44px;padding:0 16px;border-radius:var(--radius-pill);cursor:pointer;transition:border-color var(--duration-fast) var(--ease-out),background var(--duration-fast) var(--ease-out),color var(--duration-fast) var(--ease-out)}
+.set-chip{display:inline-flex;align-items:center;justify-content:center;border:1.5px solid var(--border);background:var(--bg);color:var(--text);font-family:var(--font-ui);font-size:12px;font-weight:600;min-height:44px;padding:0 16px;border-radius:var(--radius-pill);cursor:pointer;transition:border-color var(--duration-fast),background var(--duration-fast),color var(--duration-fast)}
 .set-chip.on{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
 .set-chip.wide{padding:0 22px}
 .set-val{font-size:11px;color:var(--muted);font-weight:600;min-width:42px;text-align:center;font-variant-numeric:tabular-nums}
@@ -370,67 +722,87 @@ html[data-mode="dark"] .dock-pill{background:linear-gradient(135deg,rgba(34,29,2
 .set-hint{margin:0;font-size:11px;line-height:1.9;color:var(--muted)}
 .set-hint-inline{font-size:11px;color:var(--muted)}
 
-/* ═══ Floating zoom & page-mode stack ═══
-   Zoom and the page tint are the two controls used mid-reading, so they get a
-   quiet stack on the page margin instead of hiding behind a menu. It keeps out
-   of the way of the pen trail: vertical column, far side of the page. */
-.reader-float{position:fixed;inset-inline-end:10px;bottom:calc(var(--nav-height) + var(--sab) + 96px);z-index:20;display:flex;flex-direction:column;align-items:center;gap:6px;pointer-events:none;opacity:1;transform:translateY(0);transition:transform var(--duration-base) var(--ease-out),opacity var(--duration-base) var(--ease-out)}
-.reader-dock.zen ~ .reader-float,.reader-float.zen{opacity:0;transform:translateY(14px);pointer-events:none}
-.float-btn{pointer-events:auto;width:42px;height:42px;border:none;border-radius:var(--radius-pill);background:var(--surface);color:var(--accent);font-family:var(--font-ui);font-size:19px;font-weight:700;cursor:pointer;display:grid;place-items:center;box-shadow:var(--shadow-lg);border:1px solid var(--border);position:relative;transition:transform var(--duration-fast) var(--ease-out),background var(--duration-fast) var(--ease-out),color var(--duration-fast) var(--ease-out)}
-.float-btn::after{content:'';position:absolute;inset:-3px;border-radius:inherit}
-.float-btn:active{transform:scale(.92)}
-.float-btn.mode-light{color:var(--accent);background:var(--accent-soft);border-color:color-mix(in srgb,var(--accent) 30%,var(--border))}
-.float-btn svg{display:block}
-.float-val{pointer-events:none;background:var(--surface);border:1px solid var(--border);color:var(--muted);font-family:var(--font-ui);font-size:11px;font-weight:700;padding:3px 6px;border-radius:var(--radius-pill);font-variant-numeric:tabular-nums}
-/* The single mode button rotates through the three tints; only the active
-   glyph is visible. */
-.float-btn .m-sepia,.float-btn .m-moon{display:none}
-.float-btn.mode-sepia .m-sun{display:none}
-.float-btn.mode-sepia .m-sepia{display:block}
-.float-btn.mode-dark .m-sun,.float-btn.mode-dark .m-sepia{display:none}
-.float-btn.mode-dark .m-moon{display:block}
-.float-btn.mode-sepia,.float-btn.mode-dark{background:var(--surface);color:var(--accent)}
-
-@media (max-width:400px){
-  .float-btn{width:38px;height:38px;font-size:17px}
+@media (min-width:900px){
+  .reader-ribbon{padding-inline:max(16px,calc((100vw - 1100px) / 2))}
 }
-
-/* ═══ Notes Panel ═══ */
-/* Small-viewport height units: svh = the keyboard-closed viewport, dvh = the
-   live one. With a plain vh cap the sheet ignores the keyboard and its bottom
-   rows land underneath it; with dvh-only, a fast keyboard animation can clip
-   the sheet's top. svh-closed, dvh-open is the pairing that stays usable. */
-.sheet{position:fixed;bottom:0;left:0;right:0;z-index:95;background:var(--surface);border-radius:var(--radius-xl) var(--radius-xl) 0 0;box-shadow:var(--shadow-2);max-height:85vh;max-height:85svh;max-height:85dvh;display:flex;flex-direction:column;animation:sheetUp var(--duration-base) var(--ease-out);padding-bottom:var(--sab)}
-.sheet[hidden]{display:none}
-@keyframes sheetUp{from{transform:translateY(100%)}}
-.sheet-head{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:16px 18px;border-bottom:1.5px dashed var(--border)}
-.sheet-head strong{font-family:var(--font-ui);font-size:15px;font-weight:600}
-.sheet-head div{display:flex;align-items:center;gap:6px}
-.notes-list{overflow:auto;padding:12px 16px calc(12px + var(--nav-height) + var(--sab));display:flex;flex-direction:column;gap:10px;overscroll-behavior-y:contain}
-.notes-empty{text-align:center;color:var(--muted);font-size:12px;padding:20px 0;font-weight:400}
-.note-item{display:flex;gap:10px;align-items:flex-start;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px var(--space-3);cursor:pointer;transition:transform var(--duration-fast),border-color var(--duration-fast)}
-.note-item .dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-top:4px}
-.note-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
-.note-text{font-size:12px;line-height:1.7;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-weight:400}
-.note-text .free-tag{font-style:italic;color:var(--muted);font-weight:500}
-.note-note{font-size:11px;color:var(--accent);line-height:1.6;font-weight:500}
-.note-page{font-size:11px;color:var(--muted);flex-shrink:0;font-weight:500}
-.note-del{border:none;background:none;color:var(--muted);cursor:pointer;font-size:12px;flex-shrink:0}
-
-#noteInput{width:100%;border:1.5px solid var(--border);background:var(--bg);border-radius:var(--radius-sm);padding:10px var(--space-3);font-family:var(--font-ui);font-size:16px;font-weight:400;color:var(--text);outline:none;resize:vertical;margin-bottom:10px}
-#noteInput:focus{border-color:var(--accent)}
-
-/* The 400px block shrinks visuals, never ergonomics: every control keeps its
-   invisible hit-area expansion, so the effective touch target stays ≥44px. */
 @media (max-width:400px){
   .shelf-grid{gap:10px}
   .book-title{font-size:12px}
-  .lastread{padding:10px}
-  .lastread img{width:44px;height:60px}
+  .lastread{padding:12px}
+  .lastread img{width:46px;height:64px}
   .lr-btn{padding:7px 12px;font-size:11px}
-  .dock-pill{gap:2px;padding:5px 6px}
-  .dock-btn{width:38px;height:38px;font-size:17px}
-  .dock-page{min-width:56px;padding:11px 8px}
-  .r-icon{width:32px;height:32px}
-  .reader-top{gap:8px}
+  /* Buy back as much of the ~597px control row as a 320–400px screen will give:
+     tighter gaps and a 34px button close the overflow distance instead of
+     relying on the scroll affordance alone. */
+  .reader-island-tools{gap:2px;padding:4px 6px}
+  .reader-island-tools .r-tool-group{gap:2px}
+  .reader-island-tools .r-tool-btn,
+  .reader-island-tools .mark-read,
+  .reader-island-tools .reader-timer,
+  .reader-island-tools .zoom-pill,
+  .reader-island-tools .dock-page{height:34px}
+  .reader-island-tools .r-tool-btn,
+  .reader-island-tools .mark-read{width:34px;min-width:34px}
+  .reader-island-tools .bar-sep,
+  .reader-island-tools .dock-sep{margin-inline:2px}
+}
+
+/* The narrowest phones: the two header islands share one 320px row, so anything
+   either of them can do without buys the title and the goal chip real room.
+   The thumbnail is the only decorative thing in the book island and the meta
+   island's own padding is the only slack in it — both go here, which is what
+   lets elementFromPoint on #goalChip land on #goalChip at 320px. */
+@media (max-width:380px){
+  .reader-thumb{display:none!important}
+  .reader-island-meta{padding:4px 6px;gap:2px}
+  /* The book island has 130.9px of the row at 320px, and between the back
+     button and the two text lines that is not enough for the goal chip to sit
+     under its own hit area — elementFromPoint at the chip's centre landed on the
+     island instead. Shrinking the gap and the back button's padding buys the
+     ~13px that puts the chip back on top of itself. */
+  .reader-island-book{gap:4px}
+  .r-back{padding:0 7px;font-size:11px}
+}
+
+/* ═══ Empty Search & Filter State ═══ */
+.shelf-no-result{grid-column:1/-1;text-align:center;padding:36px 16px;display:flex;flex-direction:column;align-items:center;gap:12px;background:color-mix(in srgb,var(--surface) 65%,transparent);border:1px dashed var(--border);border-radius:var(--radius-lg);margin-block:12px}
+.shelf-no-result[hidden]{display:none!important}
+.shelf-no-result-text{color:var(--muted);font-size:13px;margin:0;font-weight:500}
+.shelf-reset-btn{border:1px solid var(--border);background:var(--surface);color:var(--accent);font-family:var(--font-ui);font-size:12px;font-weight:600;padding:8px 18px;border-radius:var(--radius-pill);cursor:pointer;transition:all var(--duration-fast);position:relative}
+.shelf-reset-btn::after{content:'';position:absolute;inset:-4px}
+.shelf-reset-btn:hover{background:var(--accent-soft);border-color:color-mix(in srgb,var(--accent) 35%,var(--border))}
+.shelf-reset-btn:active{transform:scale(.95)}
+
+/* ═══ Comprehensive Focus-Visible Indicators (WCAG 2.2 AAA) ═══ */
+.import-btn:focus-visible,
+.empty-cta:focus-visible,
+.lr-btn:focus-visible,
+.b-go:focus-visible,
+.b-icon-btn:focus-visible,
+.b-ghost:focus-visible,
+.b-rename:focus-visible,
+.b-del:focus-visible,
+.s-filter-chip:focus-visible,
+.shelf-sort-select:focus-visible,
+.shelf-reset-btn:focus-visible,
+.shelf-search-clear:focus-visible,
+.r-back:focus-visible,
+.goal-chip:focus-visible,
+.r-tool-btn:focus-visible,
+.dock-page:focus-visible,
+.mark-read:focus-visible,
+.zoom-pill:focus-visible,
+.subribbon-clear:focus-visible,
+.page-jump-go:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* ═══ Reduced Motion Preference ═══ */
+@media (prefers-reduced-motion: reduce){
+  .lib-stats-strip,
+  .book-card,
+  .lastread,
+  .reader-subribbon,
+  .dock-pop.reader-page-pop,
+  #hlBar,
+  .mark-read.is-read,
+  .page-wrap.is-read::before{animation:none!important;transition:none!important}
 }

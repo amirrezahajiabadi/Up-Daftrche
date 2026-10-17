@@ -21,6 +21,8 @@ import { clearUserAudioData } from './audio.js';
 import { renderBirthdayRow } from './birthday.js';
 import { openShortcuts } from './shortcuts.js';
 import { collectBackup, parseBackup, applyBackup, mergeBackup, backupFileName, BACKUP_MAX_CHARS } from './backup.js';
+import { confirmDialog, showNotice } from './dialog.js';
+import { clearAll } from './store.js';
 
 /* What the page says about itself, painted on entry. The picker is marked here
    as well as by js/theme.js because the two halves of the table are remembered
@@ -178,14 +180,30 @@ export function initSettings() {
      finish is reported instead of being reloaded away as a success. */
   const cl = $('#profClear');
   if (cl) cl.onclick = async () => {
-    if (!confirm('همهٔ داده‌ها پاک بشه؟ این کار قابل برگشت نیست.')) return;
+    /* The most destructive action in the app, in the app's own dialog: a native
+       confirm cannot say «برگشت‌ناپذیر» in the notebook's voice, and its two
+       buttons are laid out for a left-to-right box, so «تأیید» and «انصراف»
+       land in the opposite order from every other confirm on this page. */
+    const ok = await confirmDialog({
+      title: 'همهٔ داده‌ها پاک بشه؟',
+      body: 'همهٔ کارها، آمار، کتاب‌ها و موسیقی‌ها پاک می‌شن. این کار قابل برگشت نیست.',
+      confirmLabel: 'پاک کن',
+      cancelLabel: 'انصراف',
+      danger: true,
+    });
+    if (!ok) return;
     const [booksCleared, audioCleared] = await Promise.all([
       clearLibraryData(),
       clearUserAudioData(),
     ]);
-    localStorage.clear();
+    clearAll();
     if (!booksCleared || !audioCleared) {
-      alert('فایل‌های کتاب یا موسیقی پاک نشدن؛ اگه تب دیگه‌ای از دفترچه بازه ببندش و دوباره امتحان کن.');
+      /* Nothing left to reload into a toast on this page — the wipe may have
+         taken the storage the toast would have been painted over — so the
+         message is a notice and the reload waits for it to have been read. */
+      showNotice('فایل‌های کتاب یا موسیقی پاک نشدن؛ اگه تب دیگه‌ای از دفترچه بازه ببندش و دوباره امتحان کن.', { actionLabel: 'باشه' });
+      setTimeout(() => location.reload(), 400);
+      return;
     }
     location.reload();
   };

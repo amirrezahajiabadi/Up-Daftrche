@@ -42,6 +42,12 @@ export const dueKeyFromOffset = off => {
 export const normalizeFa = s =>
   String(s).toLowerCase().replace(/ي/g, 'ی').replace(/ك/g, 'ک');
 
+/* A collision-safe id: the clock alone collides when two records are made in
+   the same millisecond (an import finishing twice, two quick highlights), and
+   a collision means one record quietly replaces another. */
+export const nextId = () =>
+  `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+
 /* ═══ Estimated Duration ═══ */
 
 export const DUR_MIN = 1;

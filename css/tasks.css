@@ -1,15 +1,14 @@
-.frog{display:flex;align-items:center;gap:12px;background:rgba(127,176,105,.12);border:1.5px dashed rgba(127,176,105,.55);border-radius:var(--radius-lg);padding:var(--space-3) var(--space-4);cursor:pointer;transition:transform var(--duration-base),box-shadow var(--duration-base);animation:taskIn var(--duration-slow) var(--ease-out)}
+.frog{display:flex;align-items:center;gap:12px;background:color-mix(in srgb,var(--color-success) 12%,transparent);border:1.5px dashed color-mix(in srgb,var(--color-success) 55%,transparent);border-radius:var(--radius-lg);padding:var(--space-3) var(--space-4);cursor:pointer;transition:transform var(--duration-base),box-shadow var(--duration-base);animation:taskIn var(--duration-slow) var(--ease-out)}
 .frog:hover{transform:translateY(-2px);box-shadow:var(--shadow-sm)}
 .frog-ico{width:42px;height:42px;border-radius:var(--radius-sm);background:var(--surface);display:grid;place-items:center;color:var(--green);flex-shrink:0}
 .frog-ico svg{animation:drift 4s ease-in-out infinite}
 .frog-txt{flex:1;min-width:0}
-.frog-txt strong{display:block;font-family:var(--font-personality);font-size:14px;font-weight:700;color:#5f8f4d;line-height:1.5}
-html[data-mode="dark"] .frog-txt strong{color:#9ccc86}
+.frog-txt strong{display:block;font-family:var(--font-personality);font-size:14px;font-weight:700;color:var(--color-success);line-height:1.5}
 .frog-txt span{display:block;font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
-.frog-go{border:none;background:var(--green);color:var(--color-text-on-success);font-family:var(--font-ui);font-size:13px;font-weight:600;padding:8px 14px;border-radius:var(--radius-pill);cursor:pointer;box-shadow:0 3px 0 0 rgba(90,130,75,.5);transition:transform var(--duration-fast);flex-shrink:0}
+.frog-go{border:none;background:var(--green);color:var(--color-text-on-success);font-family:var(--font-ui);font-size:13px;font-weight:600;padding:8px 14px;border-radius:var(--radius-pill);cursor:pointer;box-shadow:0 3px 0 0 color-mix(in srgb,var(--color-success) 50%,transparent);transition:transform var(--duration-fast);flex-shrink:0}
 .frog-go:active{transform:translateY(2px);box-shadow:none}
 .frog-close{border:none;background:transparent;color:var(--green);opacity:.5;width:26px;height:26px;border-radius:var(--radius-xs);cursor:pointer;display:grid;place-items:center;flex-shrink:0;transition:all var(--duration-fast)}
-.frog-close:hover{opacity:1;background:rgba(127,176,105,.2)}
+.frog-close:hover{opacity:1;background:color-mix(in srgb,var(--color-success) 20%,transparent)}
 
 .tasks{list-style:none}
 /* ═══ Priority 8.5: Tasks Experience — task information first, controls second ═══ */
@@ -42,7 +41,9 @@ html[data-mode="dark"] .frog-txt strong{color:#9ccc86}
 .task.dragging{opacity:.45;transform:scale(1.02);cursor:grabbing}
 
 .pri-dot{width:11px;height:11px;border-radius:50%;background:var(--pr);border:none;cursor:pointer;flex-shrink:0;position:relative;transition:transform var(--duration-fast),background var(--duration-base)}
-.pri-dot::after{content:'';position:absolute;inset:-10px;border-radius:50%;display:block}
+/* 41px of finger around an 11px dot. It used to stop at 31px, so the one control
+   that cycles priority was the smallest thing in the row by a wide margin. */
+.pri-dot::after{content:'';position:absolute;inset:-15px;border-radius:50%;display:block}
 .pri-dot:hover{transform:scale(1.35)}
 /* The "this one matters" halo on high-priority dots.
    It used to animate box-shadow, which is a paint-only property: every
@@ -63,7 +64,7 @@ html[data-mode="dark"] .frog-txt strong{color:#9ccc86}
 .check::after{content:'';position:absolute;inset:-9px;border-radius:var(--radius-sm)}
 .check:hover{border-color:var(--green)}
 .check:active{transform:scale(.9)}
-.check svg{width:14px;height:14px;stroke:#fff;stroke-width:3;fill:none;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:24;stroke-dashoffset:24;transition:stroke-dashoffset var(--duration-fast) ease .05s}
+.check svg{width:14px;height:14px;stroke:var(--color-text-on-success);stroke-width:3;fill:none;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:24;stroke-dashoffset:24;transition:stroke-dashoffset var(--duration-fast) ease .05s}
 /* Completion sequence: press → checked → reduced visual weight.
    Transform/opacity only — no layout shift. */
 .task.done .check{background:var(--green);border-color:transparent;box-shadow:0 4px 10px -5px var(--green);animation:pop var(--duration-base) var(--ease-out)}
@@ -90,11 +91,9 @@ html[data-mode="dark"] .frog-txt strong{color:#9ccc86}
 .due-chip.today{color:var(--color-accent-text);background:var(--accent-soft);border-color:color-mix(in srgb,var(--color-accent) 30%,transparent);font-weight:600}
 .due-chip.soon,.due-chip.far{color:var(--color-text-secondary);background:var(--bg);border-color:var(--border)}
 .due-chip.late{color:var(--color-danger);background:color-mix(in srgb,var(--color-danger) 10%,transparent);border-color:color-mix(in srgb,var(--color-danger) 32%,transparent);font-weight:600}
-html[data-mode="dark"] .due-chip.late{color:#ff8f8f}
 .due-chip.flipped{animation:chipFlip var(--duration-base) ease}
 
-.dur-chip{position:relative;min-height:26px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;font-family:var(--font-ui);font-size:11px;font-weight:600;line-height:1.4;padding:3px 10px;border-radius:var(--radius-pill);border:1px solid transparent;cursor:pointer;transition:transform var(--duration-fast);color:#7b6fd8;background:color-mix(in srgb,#7b6fd8 10%,transparent);border-color:color-mix(in srgb,#7b6fd8 28%,transparent)}
-html[data-mode="dark"] .dur-chip{color:#a79bf5}
+.dur-chip{position:relative;min-height:26px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;font-family:var(--font-ui);font-size:11px;font-weight:600;line-height:1.4;padding:3px 10px;border-radius:var(--radius-pill);border:1px solid transparent;cursor:pointer;transition:transform var(--duration-fast);color:var(--color-accent-text);background:var(--accent-soft);border-color:color-mix(in srgb,var(--accent) 28%,transparent)}
 .dur-chip:hover{transform:scale(1.04)}
 .dur-chip.flipped{animation:chipFlip var(--duration-base) ease}
 .dur-chip.none{border:1px dashed var(--border);opacity:.65;background:transparent;color:var(--muted)}
@@ -112,7 +111,7 @@ html[data-mode="dark"] .dur-chip{color:#a79bf5}
 .task-more-btn{border:none;background:transparent;color:var(--muted);width:32px;height:32px;border-radius:var(--radius-xs);cursor:pointer;display:grid;place-items:center;position:relative;transition:all var(--duration-fast)}
 .task-more-btn::after{content:'';position:absolute;inset:-8px;border-radius:var(--radius-xs)}
 .task:hover .task-more-btn,.task-more-btn:focus-visible{color:var(--color-text-primary);background:var(--accent-soft)}
-.task-menu{position:absolute;top:calc(100% + 4px);inset-inline-start:0;inset-inline-end:auto;z-index:90;min-width:140px;background:var(--color-surface);border:1px solid var(--color-border-strong);border-radius:var(--radius-sm);box-shadow:var(--shadow-2);padding:4px;display:flex;flex-direction:column;gap:2px;animation:popIn var(--duration-fast) var(--ease-out)}
+.task-menu{position:absolute;top:calc(100% + 4px);inset-inline-end:0;inset-inline-start:auto;z-index:90;min-width:140px;background:var(--color-surface);border:1px solid var(--color-border-strong);border-radius:var(--radius-sm);box-shadow:var(--shadow-2);padding:4px;display:flex;flex-direction:column;gap:2px;animation:popIn var(--duration-fast) var(--ease-out)}
 /* A row whose menu is open lifts above its neighbours so the menu never sits
    under the next row's hit area. `contain:layout` on .task would otherwise trap
    that z-index inside the row's own stacking context. */
@@ -123,7 +122,7 @@ html[data-mode="dark"] .dur-chip{color:#a79bf5}
 .task-menu[hidden]{display:none}
 .task-menu-item{display:flex;align-items:center;gap:8px;width:100%;padding:8px 10px;border:none;background:transparent;border-radius:var(--radius-xs);color:var(--color-text-primary);font-family:var(--font-ui);font-size:12.5px;font-weight:500;cursor:pointer;text-align:start;transition:background var(--duration-fast),color var(--duration-fast)}
 .task-menu-item:hover,.task-menu-item:focus-visible{background:var(--accent-soft);color:var(--color-accent-strong)}
-.task-menu-item.danger:hover,.task-menu-item.danger:focus-visible{background:rgba(228,88,79,.12);color:var(--danger)}
+.task-menu-item.danger:hover,.task-menu-item.danger:focus-visible{background:color-mix(in srgb,var(--color-danger) 12%,transparent);color:var(--danger)}
 .task-menu-item svg{flex-shrink:0}
 
 .focus-btn{border:none;background:transparent;color:var(--muted);width:32px;height:32px;border-radius:var(--radius-xs);cursor:pointer;display:grid;place-items:center;flex-shrink:0;opacity:.55;position:relative;transition:all var(--duration-fast)}
@@ -152,11 +151,11 @@ html[data-mode="dark"] .dur-chip{color:#a79bf5}
    moment it takes focus — otherwise the row offers an invisible deletion target. */
 .task:focus-within .del{opacity:1;transform:none}
 .del:focus-visible{opacity:1;transform:none;color:var(--danger);outline:2px solid var(--color-focus,var(--accent));outline-offset:2px}
-.del:hover{color:var(--danger);background:rgba(228,88,79,.12);transform:scale(1.15)!important}
+.del:hover{color:var(--danger);background:color-mix(in srgb,var(--color-danger) 12%,transparent);transform:scale(1.15)!important}
 @media (hover:none){.del{opacity:.6;transform:none}.focus-btn{opacity:.7}}
 
 .task.flash{animation:flash 1.5s ease}
-@keyframes flash{0%{box-shadow:0 0 0 0 rgba(244,112,58,0)}25%,60%{box-shadow:0 0 0 5px var(--accent-soft),var(--shadow-lg)}100%{box-shadow:var(--shadow-sm)}}
+@keyframes flash{0%{box-shadow:0 0 0 0 transparent}25%,60%{box-shadow:0 0 0 5px var(--accent-soft),var(--shadow-lg)}100%{box-shadow:var(--shadow-sm)}}
 
 /* ── Empty state: human and calm, never error-like (8.5) ── */
 .empty{text-align:center;padding:28px 10px;color:var(--muted);font-family:var(--font-personality);font-size:16px;font-weight:700;animation:fadeUp var(--duration-slow) ease;line-height:1.7}
@@ -194,13 +193,28 @@ html[data-mode="dark"] .dur-chip{color:#a79bf5}
 .task::after{content:'';display:block;order:4;flex-basis:100%;height:0}
 .check{order:0}
 .title{order:1}
+.task-menu-wrap{order:2;margin-inline-start:auto}
 .del{order:2}
 .focus-btn{order:3}
-.bell-btn{order:3}
 .pri-dot{order:5;margin-inline-start:34px}
 .cat-tag{order:6}
-.due-chip{order:7}
+/* The time-range chip, shared by the task list and the Today list (js/tasks.js
+   writes .span-chip there, js/today.js writes .t-span). It used to carry the
+   order alone — no filling, no border, no size — so the one chip in the app that
+   names *when* a task sits in the day read as loose text next to six real pills.
+   Both names get the same recipe here so the two lists cannot drift apart, and
+   the digits are tabular so «۹:۰۰ تا ۱۰:۳۰» does not jitter as the clock moves. */
+.span-chip,.t-span{order:7;flex-shrink:0;font-size:11px;font-weight:600;padding:3px 9px;
+  border-radius:var(--radius-pill);font-variant-numeric:tabular-nums;
+  color:var(--color-accent-text);background:var(--accent-soft);
+  border:1px solid color-mix(in srgb,var(--accent) 22%,transparent)}
+/* A finished task's span is context, not a claim on the day: the chip stays in
+   the row (the row is updated in place, so its markup has to stay stable) but
+   recedes to the weight of the crossed-out title. */
+.task.done .span-chip,.t-row.done .t-span{opacity:.55;font-weight:500}
 .dur-chip{order:8}
+.due-chip{order:9}
+.bell-btn{order:10;margin-inline-start:auto}
 
 /* ═══ Responsive: Tasks ═══
    Compact scale for genuinely small screens. The arrangement above never
@@ -218,7 +232,8 @@ html[data-mode="dark"] .dur-chip{color:#a79bf5}
   .focus-btn::after{inset:-8px}
   .bell-btn{opacity:.7;width:28px;height:28px}
   .bell-btn::after{inset:-8px}
-  .pri-dot::after{inset:-12px}
+  .pri-dot{margin-inline-start:28px}
+  .pri-dot::after{inset:-15px}
   .cat-tag{font-size:11px;padding:2px 8px}
   .due-chip{font-size:11px;padding:2px 8px}
   .dur-chip{font-size:11px;padding:2px 8px}
@@ -240,7 +255,7 @@ html[data-mode="dark"] .dur-chip{color:#a79bf5}
   .title{font-size:13px}
   .del,.focus-btn{width:26px;height:26px}
   .del::after,.focus-btn::after{inset:-9px}
-  .pri-dot{margin-inline-start:30px}
+  .pri-dot{margin-inline-start:24px}
   .cat-tag,.due-chip,.dur-chip{font-size:11px;padding:3px 8px}
   .empty .art svg{width:72px}
 }

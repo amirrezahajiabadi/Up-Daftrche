@@ -1,6 +1,6 @@
 /* ═══ Shared App State (Singleton) ═══ */
 
-import { loadTasks, loadName, loadHistory, loadMoods, loadPomo, loadSession } from './store.js';
+import { loadTasks, loadName, loadHistory, loadMoods, loadPomo } from './store.js';
 import { dayKey, dueKeyFromOffset, parseDurationMin, parseTimeRange } from './utils.js';
 
 const defaultTasks = () => [

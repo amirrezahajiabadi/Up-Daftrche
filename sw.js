@@ -82,6 +82,7 @@ const SHELL = [
   'js/constants.js',
   'js/decision.js',
   'js/decisioncontext.js',
+  'js/dialog.js',
   'js/duepicker.js',
   'js/fekrbaz.js',
   'js/focus.js',

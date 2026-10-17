@@ -110,3 +110,45 @@ test('a display rule never hides an element that the UA would already hide', () 
   const covered = SHEETS.some(s => s.text.includes('.ios-install-banner[hidden]'));
   assert.ok(covered, '.ios-install-banner[hidden] must have its own display:none rule');
 });
+
+/* ═══ Panels opened from the reader must sit above it ═══
+   #readerView is a full-screen surface at z-index 98 (css/library.css) with the
+   PDF's text layer inside it, and that layer takes pointer events. A sheet or
+   overlay drawn *under* it is not merely behind: every tap on its own buttons
+   lands on the reader's text layer instead, so #notesClose, #notesExport,
+   #settingsClose, the brightness slider and the mode chips are all dead while a
+   book is open — with nothing on screen to say why. That is exactly how this
+   shipped. This walks the stacking order that has to hold instead of trusting
+   the numbers to stay in step by hand. */
+
+/* The z-index of a selector's base rule: the first rule in the sheets whose
+   selector list contains it exactly, ignoring modifier forms (`[hidden]`,
+   `:hover`). Later rules for the same selector win, as in the cascade. */
+function zIndexOf(selector) {
+  const wanted = selector.replace(/\s+/g, '');
+  let found = null;
+  for (const { text: sheet } of SHEETS) {
+    for (const m of sheet.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+      const parts = m[1].split(',').map(s => s.trim().replace(/\s+/g, ''));
+      if (!parts.includes(wanted)) continue;
+      const z = /(?:^|;)\s*z-index\s*:\s*(-?\d+)/.exec(m[2]);
+      if (z) found = Number(z[1]);
+    }
+  }
+  return found;
+}
+
+test('sheets and overlays are stacked above the reader, not behind it', () => {
+  const reader = zIndexOf('#readerView');
+  assert.ok(reader !== null, '#readerView has lost its z-index — this test reads it from the sheets');
+
+  for (const selector of ['.sheet', '.overlay']) {
+    const z = zIndexOf(selector);
+    assert.ok(z !== null, `${selector} has no z-index`);
+    assert.ok(
+      z > reader,
+      `${selector} is at z-index ${z}, not above #readerView at ${reader}: ` +
+      'every panel opened from inside the reader would be under its text layer'
+    );
+  }
+});

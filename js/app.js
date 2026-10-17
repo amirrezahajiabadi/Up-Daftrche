@@ -1,7 +1,7 @@
 import { state } from './state.js';
-import { PRIMARY_PAGES, MORE_PAGES } from './constants.js';
+import { PRIMARY_PAGES } from './constants.js';
 import { $ } from './utils.js';
-import { saveName } from './store.js';
+import { saveName, safeSet, readString } from './store.js';
 import { initTheme } from './theme.js';
 import { notify } from './bus.js';
 import { initTasks, initAddForm, renderList, updateEmpty } from './tasks.js';
@@ -80,6 +80,8 @@ function initNavigation() {
     if (glideFrame) return;
     glideFrame = requestAnimationFrame(() => { glideFrame = 0; moveGlider(); });
   };
+  window.addEventListener('resize', scheduleGlider, { passive: true });
+  window.addEventListener('orientationchange', scheduleGlider, { passive: true });
 
   /* ── The trail ──
      One array, mirrored into every history entry, is the whole back story: the
@@ -122,6 +124,13 @@ function initNavigation() {
     if (page === 'achv') renderAchievements();
     if (page === 'settings') renderSettings();
     if (page === 'week') renderPlanner();
+    if (page !== 'library') {
+      const rv = document.getElementById('readerView');
+      if (rv && !rv.hidden) {
+        document.body.classList.remove('reader-immersive');
+        window.dispatchEvent(new CustomEvent('close-reader'));
+      }
+    }
     /* The way back exists exactly while there is a step behind. */
     backBtns.forEach(b => { b.hidden = trail.length < 2; });
   };
@@ -217,6 +226,9 @@ function initNavigation() {
     });
     moreSheet.hidden = true;
     moreBtn?.setAttribute('aria-expanded', 'false');
+    const desktopMql = window.matchMedia('(min-width: 1024px)');
+    desktopMql.addEventListener('change', e => { if (e.matches) closeMore(); });
+    if (desktopMql.matches) closeMore();
   }
 
   const sideRail = $('#sideRail');
@@ -752,14 +764,14 @@ safe('نام', applyName);
 function initIOSInstallGuide() {
   const isIOS = typeof navigator !== 'undefined' && /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
   const isStandalone = typeof window !== 'undefined' && (window.navigator.standalone || window.matchMedia?.('(display-mode: standalone)').matches);
-  const dismissed = typeof localStorage !== 'undefined' && localStorage.getItem('daftarche-ios-guide-dismissed');
+  const dismissed = readString('daftarche-ios-guide-dismissed');
   const banner = $('#iosInstallBanner');
   if (!banner) return;
   if (isIOS && !isStandalone && !dismissed) {
     banner.hidden = false;
     banner.querySelector('.ios-guide-close')?.addEventListener('click', () => {
       banner.hidden = true;
-      try { localStorage.setItem('daftarche-ios-guide-dismissed', '1'); } catch {}
+      safeSet('daftarche-ios-guide-dismissed', '1');
     });
   } else {
     banner.hidden = true;

@@ -4,7 +4,7 @@
    Returns: { text, dueDate, timeFrom, timeTo, cat, durationMin } */
 
 import { dayKey, shiftKey, parseDurationMin, formatClock, faNum, esc } from './utils.js';
-import { JALALI_MONTHS, gregorianToJalali, jalaliToGregorian } from './jalali.js';
+import { JALALI_MONTHS, gregorianToJalali, jalaliToGregorian, isValidJalali } from './jalali.js';
 import { CATS } from './constants.js';
 
 const FA_NUMS = '۰۱۲۳۴۵۶۷۸۹';
@@ -54,6 +54,54 @@ const WEEKDAYS = [
   { name: 'شنبه', day: 6, alt: [] },
 ];
 
+/* The category keys a bare hashtag may name directly (#home, #study…). */
+const DIRECT_CATS = ['home', 'study', 'project', 'shopping', 'health', 'misc'];
+
+/* Meridiem spellings. «بعد از ظهر» with spaces and «بعدازظهر» without are the
+   same word, so every match normalizes whitespace before deciding what it
+   means. It is a plain string because both the span and the single-time
+   patterns above splice it into their own expression. */
+const MERIDIEM = '(?:صبح|عصر|شب|ظهر|بعدازظهر|بعد از ظهر)';
+
+function meridiemOf(tod) {
+  const t = String(tod || '').replace(/[\s\u200c]+/g, '');
+  if (t === 'بعدازظهر' || t === 'عصر' || t === 'شب') return 'pm';
+  if (t === 'ظهر') return 'noon';
+  if (t === 'صبح') return 'am';
+  return null;
+}
+
+/* Hours 1–4 said with «ظهر» are the afternoon (۱۳:۰۰–۱۶:۰۰) and «۱۲ ظهر» is
+   noon; anything else is already a 24-hour reading. */
+function to24h(h, tod) {
+  const kind = meridiemOf(tod);
+  if (kind === 'pm') return h < 12 ? h + 12 : h;
+  if (kind === 'noon') {
+    if (h === 12) return 12;
+    return h >= 1 && h <= 4 ? h + 12 : h;
+  }
+  return h;
+}
+
+/* «ساعت ۱۴ تا ۱۶» / «۱۴:۰۰ تا ۱۶:۳۰» / «۱۰ تا ۲ بعد از ظهر» / «۱۴-۱۶».
+   The two ends are always the same shape; what decides whether a match is a
+   clock range is the cue around the separator. A colon or the word «ساعت»
+   speaks for itself, and «تا» with spaces either side reads as a spoken span;
+   a bare hyphen with none of those is how «صفحه ۱۰-۲۰» and «مبلغ ۱۰۰۰-۲۰۰۰»
+   are written, so it is left alone. */
+function findTimeSpan(norm) {
+  const re = new RegExp(
+    `(?:ساعت\\s*)?(\\d{1,2})(?::(\\d{2}))?\\s*(?:تا|-)\\s*(?:ساعت\\s*)?(\\d{1,2})(?::(\\d{2}))?(?:\\s*(${MERIDIEM}))?`,
+    'g',
+  );
+  for (const m of norm.matchAll(re)) {
+    const str = m[0];
+    if (/ساعت/.test(str) || /\d{1,2}:\d{2}/.test(str)) return m;
+    if (new RegExp(`(?:^|\\s)${m[1]}\\s+تا\\s+${m[3]}(?:\\s|$)`).test(norm)) return m;
+  }
+  return null;
+}
+
 export function parseQuickAdd(rawInput, refDate = new Date()) {
   const original = String(rawInput || '').trim();
   if (!original) {
@@ -82,16 +130,11 @@ export function parseQuickAdd(rawInput, refDate = new Date()) {
     for (const h of hashMatches) {
       const tag = h.slice(1).replace(/[_\s]/g, '');
       const mapped = CATEGORY_MAP[tag];
-      if (mapped && !cat) {
-        cat = mapped;
-        matchedCatToken = h;
-      } else if (!cat) {
-        const directKeys = ['home', 'study', 'project', 'shopping', 'health', 'misc'];
-        if (directKeys.includes(tag)) {
-          cat = tag;
-          matchedCatToken = h;
-        }
-      }
+      const known = mapped || (DIRECT_CATS.includes(tag) ? tag : null);
+      if (!known) continue;   /* an unknown tag is left in the title, not eaten */
+      if (cat) continue;      /* a category was already spoken for */
+      cat = known;
+      matchedCatToken = h;
       working = working.replace(h, ' ');
     }
   }
@@ -123,12 +166,17 @@ export function parseQuickAdd(rawInput, refDate = new Date()) {
   }
 
   if (durationMin === null) {
-    // Numeric duration: e.g. "45 دقیقه" or "3 ساعت"
-    const numDurMatch = norm.match(/(?:به\s+مدت\s+)?(\d+)\s*(دقیقه|ساعت)/);
+    /* Numeric duration: e.g. "45 دقیقه", "3 ساعت", "3.5 ساعت", "۱٫۵ ساعت".
+       The decimal part is captured so "3.5" is read as one number instead of
+       "3" plus a stray ".5" left in the title. Both the ASCII separators and
+       the Persian decimal mark are accepted. */
+    const numDurMatch = norm.match(/(?:به\s+مدت\s+)?(\d+(?:[.,/٫]\d+)?)\s*(دقیقه|ساعت)/);
     if (numDurMatch) {
-      const val = parseInt(numDurMatch[1], 10);
+      const val = parseFloat(numDurMatch[1].replace(/[٫,]/g, '.'));
       const unit = numDurMatch[2];
-      const candidate = unit === 'ساعت' ? val * 60 : val;
+      /* A duration is kept in whole minutes: 3.5 ساعت is 210, and a fractional
+         minute is rounded to the nearest one. */
+      const candidate = Math.round(unit === 'ساعت' ? val * 60 : val);
       const idx = numDurMatch.index;
       matchedDurToken = working.slice(idx, idx + numDurMatch[0].length).trim();
       norm = norm.slice(0, idx) + ' ' + norm.slice(idx + numDurMatch[0].length);
@@ -146,8 +194,7 @@ export function parseQuickAdd(rawInput, refDate = new Date()) {
 
   // 3. Time range and specific time
   // Span: "ساعت 14 تا 16" or "14:00 تا 16:30" or "ساعت 10 تا 12 صبح"
-  const timeSpanRe = /(?:ساعت\s*)?(\d{1,2})(?::(\d{2}))?\s*(?:تا|-)\s*(?:ساعت\s*)?(\d{1,2})(?::(\d{2}))?(?:\s*(صبح|عصر|شب|ظهر|بعدازظهر|بعد از ظهر))?/;
-  const spanMatch = norm.match(timeSpanRe);
+  const spanMatch = findTimeSpan(norm);
   if (spanMatch) {
     let h1 = parseInt(spanMatch[1], 10);
     const m1 = spanMatch[2] ? parseInt(spanMatch[2], 10) : 0;
@@ -156,20 +203,25 @@ export function parseQuickAdd(rawInput, refDate = new Date()) {
     const tod = spanMatch[5];
 
     if (tod) {
-      if ((tod === 'عصر' || tod === 'شب' || tod.includes('بعدازظهر')) && h2 < 12) {
-        h2 += 12;
-        if (h1 < 12 && h1 <= h2 - 12) h1 += 12;
-      } else if (tod === 'ظهر' && h2 <= 2) {
-        h2 += 12;
-      }
+      /* The word applies to the whole span, but the two ends do not always move
+         the same way. «۵ تا ۷ عصر» is ۱۷:۰۰–۱۹:۰۰ (both afternoon), while
+         «۱۰ تا ۲ بعد از ظهر» is ۱۰:۰۰–۱۴:۰۰ — the second end has gone past
+         noon, so the first is a morning hour and only the end shifts. */
+      if (h2 < h1) h2 = to24h(h2, tod);
+      else { h1 = to24h(h1, tod); h2 = to24h(h2, tod); }
     } else if (h2 < h1 && h2 <= 12) {
       // e.g. 10 تا 2 (10am to 2pm)
       h2 += 12;
     }
 
-    if (h1 >= 0 && h1 < 24 && m1 >= 0 && m1 < 60 && h2 >= 0 && h2 < 24 && m2 >= 0 && m2 < 60) {
-      timeFrom = h1 * 60 + m1;
-      timeTo = h2 * 60 + m2;
+    const from = h1 * 60 + m1, to = h2 * 60 + m2;
+    /* The same rule the task model will apply on save: a span needs both ends
+       inside the day and in order. A reversed or equal range is reported here
+       instead of previewing a chip that could never be saved. */
+    if (h1 >= 0 && h1 < 24 && m1 >= 0 && m1 < 60 && h2 >= 0 && h2 < 24 && m2 >= 0 && m2 < 60
+        && from < to) {
+      timeFrom = from;
+      timeTo = to;
       const idx = spanMatch.index;
       matchedTimeToken = working.slice(idx, idx + spanMatch[0].length).trim();
       norm = norm.slice(0, idx) + ' ' + norm.slice(idx + spanMatch[0].length);
@@ -184,17 +236,14 @@ export function parseQuickAdd(rawInput, refDate = new Date()) {
 
   if (timeFrom === null) {
     // Single time: "ساعت 17" or "ساعت 5 عصر" or "10:30" or "ساعت 9 شب"
-    const explicitTimeRe = /(?:(?:ساعت\s+(\d{1,2})(?::(\d{2}))?)|(?:(\d{1,2}):(\d{2})))(?:\s*(صبح|عصر|شب|ظهر|بعدازظهر|بعد از ظهر))?/;
+    const explicitTimeRe = new RegExp(`(?:(?:ساعت\\s+(\\d{1,2})(?::(\\d{2}))?)|(?:(\\d{1,2}):(\\d{2})))(?:\\s*(${MERIDIEM}))?`);
     const timeMatch = norm.match(explicitTimeRe);
     if (timeMatch) {
       let h = parseInt(timeMatch[1] || timeMatch[3], 10);
       const m = timeMatch[2] || timeMatch[4] ? parseInt(timeMatch[2] || timeMatch[4], 10) : 0;
       const tod = timeMatch[5];
 
-      if (tod) {
-        if ((tod === 'عصر' || tod === 'شب' || tod.includes('بعدازظهر')) && h < 12) h += 12;
-        if (tod === 'ظهر' && h <= 2) h += 12;
-      }
+      h = to24h(h, tod);
 
       if (h >= 0 && h < 24 && m >= 0 && m < 60) {
         timeFrom = h * 60 + m;
@@ -250,15 +299,19 @@ export function parseQuickAdd(rawInput, refDate = new Date()) {
         }
       }
 
-      try {
+      const idx = jMatch.index;
+      const token = working.slice(idx, idx + jMatch[0].length).trim();
+      /* A day a month does not have («۳۲ فروردین») is refused rather than
+         silently rolling into the next month: the date is reported and left
+         unset so a wrong day can never be saved without being seen. */
+      if (isValidJalali(y, m, d)) {
         const g = jalaliToGregorian(y, m, d);
         dueDate = `${g.gy}-${String(g.gm).padStart(2, '0')}-${String(g.gd).padStart(2, '0')}`;
-        const idx = jMatch.index;
-        matchedDueToken = working.slice(idx, idx + jMatch[0].length).trim();
+        matchedDueToken = token;
         norm = norm.slice(0, idx) + ' ' + norm.slice(idx + jMatch[0].length);
         working = working.slice(0, idx) + ' ' + working.slice(idx + jMatch[0].length);
-      } catch {
-        // Ignore invalid jalali date
+      } else {
+        ignored.push(token);
       }
     }
   }
@@ -267,22 +320,31 @@ export function parseQuickAdd(rawInput, refDate = new Date()) {
   if (!dueDate) {
     for (const w of WEEKDAYS) {
       const allNames = [w.name, ...w.alt].join('|');
-      const nextWeekRe = new RegExp(`(?:برای\\s+)?(?:هفته[\\s‌]?(?:ی|بعد)?\\s+)?(${allNames})`);
-      const wMatch = norm.match(nextWeekRe);
-      if (wMatch) {
-        const curDay = refDate.getDay();
-        let diff = (w.day - curDay + 7) % 7;
-        if (diff === 0) diff = 7;
-        if (wMatch[0].includes('هفته بعد') || wMatch[0].includes('هفته‌ی بعد')) {
-          diff += 7;
-        }
-        dueDate = shiftKey(todayStr, diff);
-        const idx = wMatch.index;
-        matchedDueToken = working.slice(idx, idx + wMatch[0].length).trim();
-        norm = norm.slice(0, idx) + ' ' + norm.slice(idx + wMatch[0].length);
-        working = working.slice(0, idx) + ' ' + working.slice(idx + wMatch[0].length);
-        break;
-      }
+      const weekday = `(${allNames})`;
+      /* «هفته بعد»/«هفتهٔ بعد»/«هفته آینده»/«هفته دیگر» — read on either side of
+         the day name, so «شنبه هفته بعد» and «هفته بعد شنبه» both land on the
+         same week and strip the whole phrase from the title. */
+      const nextWeek = '(?:هفته[\\s\\u200c]?(?:ی|ٔ)?[\\s\\u200c]*(?:بعد|آینده|دیگر))';
+      const before = new RegExp(`(?:برای\\s+)?(${nextWeek}\\s*)?${weekday}`);
+      const after = new RegExp(`(?:برای\\s+)?${weekday}(?:\\s*${nextWeek})?`);
+      /* «هفته بعد» can sit on either side, and both spellings have to be tried:
+         the preferred reading is the one that actually names the next week, so
+         «شنبه هفته بعد» is not read as plain «شنبه» just because the day name
+         comes first. */
+      const candidates = [norm.match(before), norm.match(after)].filter(Boolean);
+      const wMatch = candidates.find(m => /هفته/.test(m[0])) || candidates[0] || null;
+      if (!wMatch) continue;
+      const nextWeekHit = /هفته/.test(wMatch[0]);
+      const curDay = refDate.getDay();
+      let diff = (w.day - curDay + 7) % 7;
+      if (diff === 0) diff = 7;
+      if (nextWeekHit) diff += 7;
+      dueDate = shiftKey(todayStr, diff);
+      const idx = wMatch.index;
+      matchedDueToken = working.slice(idx, idx + wMatch[0].length).trim();
+      norm = norm.slice(0, idx) + ' ' + norm.slice(idx + wMatch[0].length);
+      working = working.slice(0, idx) + ' ' + working.slice(idx + wMatch[0].length);
+      break;
     }
   }
 

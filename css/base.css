@@ -133,6 +133,7 @@
   /* ── Layout ── */
   --radius:var(--radius-lg);
   --nav-height:64px;
+  --rail-offset:0px;
 
   /* Legacy shadow names kept for existing rules */
   --shadow-lg:var(--shadow-2);
@@ -908,6 +909,7 @@ body.focus-immersive::before{display:none}
 .app{width:100%;max-width:480px;margin:0 auto;position:relative;z-index:1;display:flex;flex-direction:column;gap:16px}
 
 header{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+header>div:first-child{min-width:0;flex:1 1 auto}
 h1{font-family:var(--font-personality);font-size:clamp(28px,8vw,34px);font-weight:700;line-height:1.3}
 h1 .underline{display:block;width:110px;height:10px;color:var(--accent);margin-top:2px}
 h1 .underline path{stroke-dasharray:140;stroke-dashoffset:140;animation:draw var(--duration-slow) ease var(--duration-base) forwards}
@@ -1067,8 +1069,8 @@ body.page-swiping .page{animation:none;will-change:transform}
   font-family:var(--font-ui);color:var(--text);cursor:pointer;text-align:start;
   transition:background var(--duration-fast),color var(--duration-fast)}
 .more-item svg{width:22px;height:22px;flex-shrink:0;color:var(--muted);transition:color var(--duration-fast)}
-.more-item-name{font-size:15px;font-weight:600;flex:0 0 auto}
-.more-item-hint{font-size:12px;font-weight:400;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.more-item-name{font-size:15px;font-weight:600;flex-shrink:0}
+.more-item-hint{font-size:12px;font-weight:400;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;flex:1 1 auto;text-align:end}
 .more-item[aria-current="page"]{background:var(--accent-soft);color:var(--color-accent-text);font-weight:700}
 .more-item[aria-current="page"] svg{color:var(--color-accent)}
 .more-item:focus-visible{outline:2px solid var(--color-focus);outline-offset:2px}
@@ -1081,6 +1083,10 @@ body.page-swiping .page{animation:none;will-change:transform}
 /* ═══ Desktop Navigation Side Rail (>= 1024px) ═══ */
 .side-rail{display:none}
 @media (min-width:1024px){
+  :root{
+    --nav-height:0px;
+    --rail-offset:296px;
+  }
   .bottom-nav{display:none!important}
   .side-rail{
     display:flex;
@@ -1160,11 +1166,21 @@ body.page-swiping .page{animation:none;will-change:transform}
   }
 }
 
-/* ═══ Immersive Focus Mode ═══ */
+/* ═══ Immersive Focus & Reader Modes ═══ */
+body.focus-immersive,
+body.reader-immersive{
+  --nav-height:0px;
+  --rail-offset:0px;
+}
 body.focus-immersive .bottom-nav,
 body.focus-immersive .side-rail{display:none!important}
 body.focus-immersive #page-focus header{display:none!important}
 body.focus-immersive .doodle{display:none!important}
+body.reader-immersive .bottom-nav,
+body.reader-immersive .side-rail,
+body.reader-immersive .doodle,
+body.reader-immersive .page-back{display:none!important}
+body.reader-immersive::before{display:none!important}
 /* The ambient-sound and music cards stay in the DOM but out of the immersive
    view: they used to sit under the timer and push the page past one screen, so
    the character's head was the part that got cropped. A single small button
@@ -1176,7 +1192,7 @@ body.has-focus-pill .page{padding-bottom:calc(var(--nav-height) + env(safe-area-
 .focus-page-card .focus-task{font-size:14px;color:var(--muted);font-weight:400;line-height:1.7}
 .focus-page-actions{display:flex;flex-wrap:wrap;gap:8px;width:100%}
 .focus-start-hint{width:100%;font-size:12px;color:var(--color-muted);text-align:center;line-height:1.5}
-.focus-page-actions .go{flex:1;border:none;background:var(--accent);color:#fff;font-family:var(--font-ui);font-weight:600;font-size:15px;padding:12px;border-radius:var(--radius-sm);cursor:pointer;box-shadow:var(--shadow-accent);transition:transform var(--duration-fast),box-shadow var(--duration-fast)}
+.focus-page-actions .go{flex:1;border:none;background:var(--accent);color:var(--color-text-on-accent);font-family:var(--font-ui);font-weight:600;font-size:15px;padding:12px;border-radius:var(--radius-sm);cursor:pointer;box-shadow:var(--shadow-accent);transition:transform var(--duration-fast),box-shadow var(--duration-fast)}
 .focus-page-actions .go:active{transform:translateY(3px);box-shadow:0 1px 0 0 rgba(120,55,20,.35)}
 .focus-page-actions .go:disabled{opacity:.5;box-shadow:none;cursor:not-allowed}
 .focus-page-actions .go:disabled:active{transform:none}
@@ -1232,7 +1248,7 @@ body.has-focus-pill .page{padding-bottom:calc(var(--nav-height) + env(safe-area-
 .pickrow:has(input:focus-visible){outline:2px solid var(--color-focus);outline-offset:1px}
 .pickrow-tick{display:grid;place-items:center;flex-shrink:0;width:20px;height:20px;margin-top:1px;border:1.5px dashed var(--color-border-strong);border-radius:50%;color:transparent;transition:color var(--duration-fast),background var(--duration-fast),border-color var(--duration-fast)}
 .pickrow-tick svg{width:12px;height:12px}
-.pickrow:has(input:checked) .pickrow-tick{background:var(--accent);border-color:var(--accent);border-style:solid;color:#fff}
+.pickrow:has(input:checked) .pickrow-tick{background:var(--accent);border-color:var(--accent);border-style:solid;color:var(--color-text-on-accent)}
 .pickrow-main{display:flex;flex-direction:column;gap:4px;flex:1;min-width:0}
 .pickrow-title{font-size:13.5px;font-weight:500;color:var(--text);line-height:1.6;overflow-wrap:anywhere}
 .pickrow:has(input:checked) .pickrow-title{font-weight:600}
@@ -1259,7 +1275,7 @@ body.has-focus-pill .page{padding-bottom:calc(var(--nav-height) + env(safe-area-
 /* The pill stays compact, but the area that accepts a finger is 44px tall and
    wide enough for a thumb — a tap just above or below the border still lands
    on the button instead of falling through to the row. */
-.settings-btn::after{content:"";position:absolute;left:-4px;right:-4px;top:50%;height:44px;min-width:44px;transform:translateY(-50%)}
+.settings-btn::after{content:"";position:absolute;inset-inline:-4px;top:50%;height:44px;min-width:44px;transform:translateY(-50%)}
 /* hover states live in the @media(hover:hover) block above */
 .settings-btn.danger{color:var(--danger);border-color:rgba(228,88,79,.3)}
 /* A hairline between two settings inside one card. It spans the card's content
@@ -1366,12 +1382,25 @@ button:disabled,.switch:disabled{opacity:.45;cursor:not-allowed}
 }
 @media (max-width:360px){
   .page{padding:20px 10px calc(var(--nav-height) + 14px)}
-  /* Tight screens step the dock down, but to the size the 480px block used to
-     hand out — still roomier than before for a thumb. */
-  .nav-tab{min-width:44px;padding:7px 7px;font-size:11px}
-  .nav-tab svg{width:19px;height:19px}
+  /* Ultra-narrow screens fit all 5 dock tabs inside calc(100vw - 12px) without
+     clipping. The bar is given the width outright rather than a ceiling: with a
+     max-width alone the dock still shrink-wrapped its tabs, so each tab landed
+     at 30px and «کتابخانه» measured 36px — the label bled 2px past its own box
+     and over the tab beside it. A fixed width plus `flex:1 1 0` divides the same
+     308px between five equal columns, and a 56px floor keeps every one of them
+     above the 44px touch minimum. */
+  .bottom-nav{width:calc(100vw - 12px);max-width:calc(100vw - 12px);padding:4px;gap:2px;justify-content:space-between}
+  .nav-tab{flex:1 1 0;min-width:56px;min-height:48px;padding:6px 2px;overflow:hidden;font-size:11px}
+  /* A label that cannot fit ellipsises inside its tab instead of spilling over
+     the neighbour. */
+  .nav-tab .nav-label,.nav-tab>span{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .nav-tab svg{width:18px;height:18px}
+  .nav-label{gap:2px}
+  .nav-glider{top:4px;bottom:4px}
   .focus-page-card{padding:18px 12px}
   .settings-card{padding:6px 14px}
+  .more-item{gap:8px;padding:10px 10px;min-height:48px}
+  .more-item-name{font-size:14px}
 }
 
 /* ═══ 19. The sheet of paper ═══

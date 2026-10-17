@@ -72,6 +72,12 @@ export function isValidJalali(jy, jm, jd) {
   return back.jy === jy && back.jm === jm && back.jd === jd;
 }
 
+/* The same check under the name the parser and the date pickers ask for.
+   Validating a date is a different question from converting one, and a caller
+   reading `isValidJalaliDate(1405, 1, 32)` should not have to know that the
+   day bounds are worked out by round-tripping through Gregorian. */
+export const isValidJalaliDate = isValidJalali;
+
 /* Days in a Jalali month (Esfand depends on the leap year) */
 export function jalaliDaysInMonth(jy, jm) {
   if (jm < 7) return 31;

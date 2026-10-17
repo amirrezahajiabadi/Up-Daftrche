@@ -28,6 +28,14 @@ export function safeRemove(key) {
   catch (error) { reportStorageError(key, error); return false; }
 }
 
+/* The wipe behind Â«Ù‡Ù…Ù‡Ù” Ø¯Ø§Ø¯Ù‡â€ŒÙ‡Ø§Â» in settings. Guarded like every other
+   write, so a browser that refuses storage reports the failure instead of
+   throwing out of a click handler with half the action already done. */
+export function clearAll() {
+  try { localStorage.clear(); return true; }
+  catch (error) { reportStorageError(null, error); return false; }
+}
+
 /* Guarded read of one stored value: a corrupt entry falls back instead of
    throwing, so a malformed value can never take an import down at module
    evaluation time. Exported for the modules that own their own key and would
@@ -37,12 +45,25 @@ export const readJSON = (key, fallback) => {
   catch { return fallback; }
 };
 
+/* Guarded read of a raw string. Storage can be refused on *read* too (a
+   locked-down or partitioned browser throws on the property access itself),
+   and several modules read their own key while they are being evaluated â€”
+   where an unguarded throw takes the whole boot down with it. Every plain
+   string read in the app goes through here, the way every write goes through
+   safeSet. */
+export const readString = (key, fallback = '') => {
+  try {
+    const value = localStorage.getItem(key);
+    return value === null ? fallback : value;
+  } catch { return fallback; }
+};
+
 const read = readJSON;
 
 export const loadTasks   = ()    => read(STORAGE_KEYS.tasks, null);
 export const saveTasks   = t    => safeSet(STORAGE_KEYS.tasks, JSON.stringify(t));
 
-export const loadName    = ()    => localStorage.getItem(STORAGE_KEYS.name) || '';
+export const loadName    = ()    => readString(STORAGE_KEYS.name);
 export const saveName    = v    => safeSet(STORAGE_KEYS.name, v);
 
 export const loadHistory = ()    => read(STORAGE_KEYS.history, []);
@@ -51,7 +72,7 @@ export const saveHistory = h    => safeSet(STORAGE_KEYS.history, JSON.stringify(
 export const loadMoods   = ()    => read(STORAGE_KEYS.moods, {});
 export const saveMoods   = m    => safeSet(STORAGE_KEYS.moods, JSON.stringify(m));
 
-export const loadPomo    = ()    => Number(localStorage.getItem(STORAGE_KEYS.pomo)) || 25;
+export const loadPomo    = ()    => Number(readString(STORAGE_KEYS.pomo)) || 25;
 export const savePomo    = v    => safeSet(STORAGE_KEYS.pomo, v);
 
 /* Active/paused focus session — survives reload; source of truth for the timer */
@@ -65,7 +86,7 @@ export const saveFocusHistory = h  => safeSet(STORAGE_KEYS.focusHistory, JSON.st
 
 /* The stats window the reader last chose. A view preference, not data — if it
    is missing or unreadable the stats page falls back to its default range. */
-export const loadStatsRange = ()    => localStorage.getItem(STORAGE_KEYS.statsRange) || '';
+export const loadStatsRange = ()    => readString(STORAGE_KEYS.statsRange);
 export const saveStatsRange = key   => safeSet(STORAGE_KEYS.statsRange, key);
 
 /* The share card's template — a colour and a layout. A view preference like the
@@ -77,7 +98,7 @@ export const saveCardStyle = style => safeSet(STORAGE_KEYS.cardStyle, JSON.strin
 /* Streak freeze — «مرخصی پیوستگی». On unless it was deliberately turned off,
    so the setting only has to be written down once, when the reader changes it,
    and a missing key (a fresh install, a wiped storage) means the default. */
-export const loadFreeze  = ()    => localStorage.getItem(STORAGE_KEYS.freeze) !== 'off';
+export const loadFreeze  = ()    => readString(STORAGE_KEYS.freeze, 'on') !== 'off';
 export const saveFreeze  = on    => safeSet(STORAGE_KEYS.freeze, on ? 'on' : 'off');
 
 /* Unlocked achievements, keyed by id, with the highest tier reached and the day
@@ -86,9 +107,9 @@ export const saveFreeze  = on    => safeSet(STORAGE_KEYS.freeze, on ? 'on' : 'of
 export const loadAchv    = ()    => read(STORAGE_KEYS.achievements, null);
 export const saveAchv    = v     => safeSet(STORAGE_KEYS.achievements, JSON.stringify(v));
 
-export const loadTheme   = ()    => localStorage.getItem(STORAGE_KEYS.theme);
+export const loadTheme   = ()    => readString(STORAGE_KEYS.theme, null);
 export const saveTheme   = t    => safeSet(STORAGE_KEYS.theme, t);
-export const loadThemeAuto = ()  => localStorage.getItem(STORAGE_KEYS.themeAuto) === 'true';
+export const loadThemeAuto = ()  => readString(STORAGE_KEYS.themeAuto) === 'true';
 export const saveThemeAuto = on => safeSet(STORAGE_KEYS.themeAuto, on ? 'true' : 'false');
 
 /* The last theme used in each half of the table — { light: 'cream', dark: 'ocean' }.
@@ -110,24 +131,16 @@ export const saveBirthday = b     => b ? safeSet(STORAGE_KEYS.birthday, JSON.str
    purpose: nothing about it has to expire, so next year's greeting arrives by
    itself with no cleanup and no year to roll over. Device-local, so js/backup.js
    keeps it out of the file. */
-export const loadBirthdaySeen = ()    => localStorage.getItem(STORAGE_KEYS.birthdaySeen) || '';
+export const loadBirthdaySeen = ()    => readString(STORAGE_KEYS.birthdaySeen);
 export const saveBirthdaySeen = key   => safeSet(STORAGE_KEYS.birthdaySeen, key || '');
 
 /* The guided tour. This release owns a new marker on purpose: the old
    `daftarche-tour-done` key belongs to the previous tour and must not suppress
    this release's required first visit. «Done» means the reader either walked
    it to the end or skipped it; leaving mid-tour (Escape) writes nothing. */
-export const loadTourDone = ()    => {
-  try {
-    return localStorage.getItem(STORAGE_KEYS.tourDone) === 'yes';
-  }
-  catch { return false; }
-};
+export const loadTourDone = ()    => readString(STORAGE_KEYS.tourDone) === 'yes';
 export const saveTourDone   = ()    => safeSet(STORAGE_KEYS.tourDone, 'yes');
 /* A separate marker is essential: dismissing the automatic offer must never
    count as completing the tour or unlock an achievement reward on next boot. */
 export const saveTourAwarded = () => safeSet(STORAGE_KEYS.tourAwarded, 'yes');
-export const loadTourAwarded = ()    => {
-  try { return localStorage.getItem(STORAGE_KEYS.tourAwarded) === 'yes'; }
-  catch { return false; }
-};
+export const loadTourAwarded = ()    => readString(STORAGE_KEYS.tourAwarded) === 'yes';

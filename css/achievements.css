@@ -243,9 +243,16 @@
   .achv-item-top b{font-size:12.5px}
   .achv-item-foot small{font-size:11px}
   .achv-kind{font-size:11px;padding:2px 6px}
-  .achv-tab{font-size:11.5px}
+  .achv-tab{font-size:11.5px;padding:8px 1px}
   .achv-vs-score b{font-size:26px}
   .achv-record-val b{font-size:19px}
+}
+@media (max-width:360px){
+  .achv-tabs{gap:2px;padding:2px}
+  .achv-tab{font-size:11px;padding:6px 0}
+  .achv-near{grid-template-columns:1fr 1fr;gap:6px}
+  .achv-near-card{padding:10px 4px}
+  .achv-record{gap:4px 6px;padding:10px 6px}
 }
 
 @media (prefers-reduced-motion:reduce){

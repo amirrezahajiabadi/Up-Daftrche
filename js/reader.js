@@ -13,11 +13,13 @@
    The renderer itself is fetched on demand (loadPdfJs below), never as part of
    the app's module graph: a CDN that is slow, blocked or down must not keep the
    notebook from opening. */
-import { $, faNum, faDigits, dayKey, esc } from './utils.js';
+import { $, faNum, faDigits, dayKey, esc, nextId } from './utils.js';
 import { STORAGE_KEYS } from './constants.js';
-import { getBook, updateBook, getBookBlob, renderShelf, bookDone, bookPct, bookComplete } from './library.js';
+import { getBook, updateBook, getBookBlob, renderShelf, bookDone, bookComplete, syncGoalPageCap } from './library.js';
 import { recordDay } from './week.js';
 import { jingoolMarkup } from './jingool.js';
+import { showNotice } from './dialog.js';
+import { safeSet, readString } from './store.js';
 
 const PDFJS_BASE = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.4.168';
 
@@ -46,7 +48,11 @@ function loadPdfJs() {
   if (pdfjsLib) return Promise.resolve(pdfjsLib);
   if (!pdfjsLoad) {
     const attempt = pdfjsAttempt;
-    pdfjsLoad = import(pdfjsFile('build/pdf.min.mjs', attempt))
+    /* A module fetch that never settles would leave the loading veil up for
+       good. The budget is generous (it is a real download on a slow line) but
+       finite, and a timeout is treated exactly like a failed load so the
+       browser viewer can take over. */
+    pdfjsLoad = withTimeout(import(pdfjsFile('build/pdf.min.mjs', attempt)), ENGINE_BUDGET_MS)
       .then(mod => {
         mod.GlobalWorkerOptions.workerSrc = pdfjsFile('build/pdf.worker.min.mjs', attempt);
         pdfjsLib = mod;
@@ -63,6 +69,13 @@ function loadPdfJs() {
    engine switch in study settings re-opens the book on our own renderer. */
 const NO_ENGINE_TEXT = 'موتور نمایش PDF در دسترس نیست؛ اتصال اینترنت را بررسی کن و دوباره تلاش کن. تا آن وقت نمایشگر ساده فعال است و متن، هایلایت و یادداشت در دسترس نیست.';
 
+/* Why the fallback viewer is on screen, said in the reader's own words. */
+const FALLBACK_REASONS = {
+  manual: 'نمایشگر مرورگر برای این کتاب انتخاب شده؛ متن و هایلایت در دسترس نیست.',
+  engine: 'موتور نمایش PDF در دسترس نیست؛ اتصال اینترنت را بررسی کن و دوباره تلاش کن.',
+  auto: 'نمایشگر اختصاصی موفق نشد؛ نمایشگر ساده فعال شد و متن، هایلایت و یادداشت در دسترس نیست.',
+};
+
 /* Persian/Arabic/CJK documents often reference predefined CMaps and standard
    font programs that ship with pdf.js instead of inside the file. When those
    URLs are missing pdf.js degrades silently and glyphs can be substituted or
@@ -73,8 +86,52 @@ const PDF_ASSETS = {
   standardFontDataUrl: `${PDFJS_BASE}/standard_fonts/`,
 };
 
-const HL_COLORS = { yellow: 'rgba(246,196,69,.4)', green: 'rgba(159,206,127,.4)', blue: 'rgba(143,183,217,.4)', pink: 'rgba(231,154,176,.4)' };
+/* Dual Annotation Engine: Draw (Fine-tip Pen) vs. Highlight (Chisel-tip Marker) */
+const HL_PALETTE = {
+  yellow: '#f6c445',
+  green: '#7ed992',
+  blue: '#74b9ff',
+  pink: '#f78fb3',
+  purple: '#b892ff',
+  orange: '#ff9f68',
+  teal: '#48dbfb',
+  red: '#ff6b6b',
+};
 
+const INK_PALETTE = {
+  'ink-black': '#1e242b',
+  'ink-blue': '#1d4ed8',
+  'ink-red': '#dc2626',
+  'ink-green': '#15803d',
+  'ink-purple': '#6d28d9',
+  'ink-brown': '#854d0e',
+  'ink-orange': '#ea580c',
+  'ink-white': '#f8fafc',
+};
+
+const STROKE_COLORS = { ...HL_PALETTE, ...INK_PALETTE };
+const HL_COLORS = { ...HL_PALETTE };
+
+function resolveColor(c) {
+  if (!c) return '#f6c445';
+  if (c.startsWith('#') || c.startsWith('rgb')) return c;
+  return INK_PALETTE[c] || HL_PALETTE[c] || STROKE_COLORS[c] || c;
+}
+
+function resolveHlRgba(c, alpha = 0.38) {
+  const hex = resolveColor(c);
+  if (hex.startsWith('#') && hex.length === 7) {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    return `rgba(${r},${g},${b},${alpha})`;
+  }
+  return hex;
+}
+
+const DRAW_WIDTHS = { thin: 2, medium: 4, thick: 8, xthick: 14 };
+const HL_WIDTHS = { thin: 10, medium: 16, thick: 24, xthick: 34 };
+const PEN_WIDTHS = { thin: 4, medium: 8, thick: 14, xthick: 22 };
 
 let curBook = null, curPage = 1, zoom = 1, pageScale = 1;
 let pdfDoc = null, renderTask = null, textLayerTask = null;
@@ -85,28 +142,40 @@ const MODES = ['mode-light', 'mode-sepia', 'mode-dark'];
 let timer = { running: false, start: 0, interval: null };
 let resizeTimer = null;
 let textLayerBroken = false;
-/* Freehand pen state. penActive mirrors the dock toggle; drawing happens on a
-   dedicated canvas sized to the page wrap, so a stroke never touches the PDF
-   render stack. Stroke colour follows the same four hues as the selection
-   highlights, stored at the solid accent, not the translucent overlay. */
+
+/* Dual Annotation Engine tool states */
+let toolMode = null; /* 'highlight' | 'draw' | null */
 let penActive = false;
+let activeWidthKey = 'medium';
+let hlColor = 'yellow';
+let inkColor = 'ink-black';
 let strokeColor = 'yellow';
-const STROKE_COLORS = { yellow: '#f6c445', green: '#9fce7f', blue: '#8fb7d9', pink: '#e79ab0' };
-/* Three nib sizes, page-space px. Restored from localStorage so the reader
-   comes back exactly as the reader left it. */
-const PEN_WIDTHS = { thin: 8, medium: 14, thick: 22 };
-let strokeWidth = PEN_WIDTHS.medium;
-/* A stroke records its nib in page-space px, which is the same unit every
-   repaint uses. Records written when the nib was kept by name still carry the
-   name, and records from before the choice existed carry neither — both fall
-   back to the default nib so their drawn look is preserved. */
-const nibPx = w => typeof w === 'number' ? w : (PEN_WIDTHS[w] || PEN_WIDTHS.medium);
+let strokeWidth = HL_WIDTHS.medium;
+
+function nibPx(w, kind) {
+  if (typeof w === 'number') return w;
+  const isDraw = kind === 'draw';
+  if (isDraw) return DRAW_WIDTHS[w] || DRAW_WIDTHS.medium;
+  return HL_WIDTHS[w] || HL_WIDTHS.medium;
+}
+
 let drawCtx = null, drawStroke = null;
 let penHintShown = false;
 /* Eraser state. eraseActive turns every drag on the draw surface into a
-   hit-test sweep; erasedStrokes parks removed records for the undo toast. */
+   hit-test sweep; erasedStrokes parks the records the undo toast can put back.
+
+   The parking is page-scoped (`{ page, items }`). A flat array was enough while
+   the undo could only be pressed on the page that produced it; with the toast
+   still up across a page turn, `performEraseUndo` pushed the records back into
+   `highlights` — each carrying its original `page` — and restored strokes onto
+   whatever page was on screen instead of the one they were erased from. The
+   page the erase happened on is the only page the undo is allowed to touch. */
 let eraseActive = false;
 let erasing = false, erasedStrokes = null;
+/* A press that landed on the colour bar (#penPop) but has not yet decided
+   whether it is a colour tap or the start of a stroke — see the pointerdown
+   handler in initReader and the top of penMove. */
+let penPopPress = null;
 const ERASER_RADIUS = 22;   /* page-space px, generous for fingers */
 /* Set when a draw was inconclusive because the tab was hidden (background tabs
    throttle the render pipeline). The draw is retried once the tab is visible
@@ -114,6 +183,11 @@ const ERASER_RADIUS = 22;   /* page-space px, generous for fingers */
 let retryOnVisible = false;
 let engine = 'internal';   /* 'internal' = our pdf.js renderer, 'browser' = viewer iframe */
 let openSeq = 0;           /* invalidates an in-flight open when another book opens */
+/* Every call to renderPage() takes a number. A render that was superseded
+   while awaiting the page or the layout compares its number before touching
+   the canvas, pageScale or the text layer, so an older draw can never land on
+   top of a newer page after a fast run of page turns. */
+let renderSeq = 0;
 let hintTimer = null;
 let hintShown = false;
 /* Books whose internal render already failed here. Held in memory only, so the
@@ -124,6 +198,10 @@ const withTimeout = (p, ms) => Promise.race([
   p,
   new Promise((_, rej) => setTimeout(() => rej(new Error('render-timeout')), ms))
 ]);
+
+/* How long the renderer itself may take to arrive before the book is opened in
+   the browser's own viewer instead. */
+const ENGINE_BUDGET_MS = 20000;
 
 /* A timed-out draw can still be attached to the canvas, and pdf.js tracks that
    attachment per canvas. The previous task therefore has to finish — or be
@@ -152,26 +230,64 @@ const TEXT_BUDGET_LAST = 24000;
    budgets above, so the per-step decisions — which know whether it was the
    canvas or only the text layer that struggled — always decide first. */
 const OPEN_BACKSTOP = 90000;
+/* Budget for parsing/document setup itself, below the whole-open backstop so a
+   hang is named here first. */
+const DOC_BUDGET_MS = 45000;
 
 export function initReader() {
   window.addEventListener('open-book', e => openReader(e.detail));
+  window.addEventListener('close-reader', closeReader);
   $('#readerBack').onclick = closeReader;
   $('#prevPage').onclick = () => gotoPage(curPage - 1);
   $('#nextPage').onclick = () => gotoPage(curPage + 1);
   $('#zoomIn').onclick = () => applyZoom(zoom * 1.2);
   $('#zoomOut').onclick = () => applyZoom(zoom / 1.2);
-  $('#pageRange').addEventListener('input', e => gotoPage(parseInt(e.target.value)));
+  $('#zoomVal')?.addEventListener('click', () => applyZoom(1));
+  $('#firstPageBtn')?.addEventListener('click', () => { gotoPage(1); toggleDockPop(null); });
+  $('#lastPageBtn')?.addEventListener('click', () => { if (curBook?.numPages) { gotoPage(curBook.numPages); toggleDockPop(null); } });
+  $('#pageRange').addEventListener('input', e => {
+    const p = parseInt(e.target.value, 10);
+    const inp = $('#pageJumpInput');
+    if (inp) inp.value = p;
+    gotoPage(p);
+  });
   $('#markReadBtn').onclick = togglePageRead;
   $('#readerEngine').onclick = () => switchEngine();
 
-  /* Direct access: the floating zoom + tint stack. The tint button cycles
-     light → sepia → night, exactly the order of the old mode button. */
+  /* Scene lighting mode cycle */
   $('#dockMode').onclick = () => { mode = (mode + 1) % MODES.length; applyMode(); };
 
-  /* Study dock: the two popovers are mutually exclusive and any interaction
-     outside the dock closes them, so the page never keeps a stale menu open. */
-  $('#dockPen').onclick = () => toggleDockPop('#penPop');
+  /* Top command ribbon: pen, highlighter, eraser, undo, page jump, and settings */
+  $('#dockPen')?.addEventListener('click', () => togglePen());
+  $('#hlTool')?.addEventListener('click', () => toggleHighlight());
+  $('#eraserTool')?.addEventListener('click', () => toggleEraser());
+  $('#strokeUndoBtn')?.addEventListener('click', undoLastStroke);
+  $('#clearPageStrokesBtn')?.addEventListener('click', clearPageStrokes);
+  $('#pageJumpGo')?.addEventListener('click', jumpToInputPage);
+  $('#pageJumpInput')?.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); jumpToInputPage(); }
+  });
   $('#pagePill').onclick = () => toggleDockPop('#pagePop');
+  $('#goalChip')?.addEventListener('click', () => {
+    if (curBook) window.dispatchEvent(new CustomEvent('open-goal', { detail: curBook.id }));
+  });
+
+  /* Subribbon tool mode switcher tabs */
+  $('#subribbonHlTab')?.addEventListener('click', () => setToolMode('highlight'));
+  $('#subribbonPenTab')?.addEventListener('click', () => setToolMode('draw'));
+
+  /* Custom Color Pickers */
+  $('#customHlPicker')?.addEventListener('input', e => {
+    hlColor = e.target.value;
+    strokeColor = hlColor;
+    syncPenUI();
+  });
+  $('#customPenColor')?.addEventListener('input', e => {
+    inkColor = e.target.value;
+    strokeColor = inkColor;
+    syncPenUI();
+  });
+
   $('#dockSettings').onclick = () => toggleSettings(true);
   $('#settingsClose').onclick = () => toggleSettings(false);
   $('#modeChips').addEventListener('click', e => {
@@ -181,52 +297,91 @@ export function initReader() {
     applyMode();
   });
   $('#readerBright').addEventListener('input', e => setBrightness(Number(e.target.value)));
-  document.addEventListener('pointerdown', e => {
-    if (!e.target.closest('.reader-dock')) toggleDockPop(null);
-  }, true);
 
-  /* Freehand pen: one pointer trail per gesture, committed as a highlight on
-     release. Drawn on a dedicated canvas sized to the page wrap. */
-  $('#hlTool').onclick = togglePen;
-  $('#eraserTool').onclick = toggleEraser;
+  /* Fixed Outside-Click Handler: Bubble phase, safely ignores clicks inside ribbon & popovers */
+  document.addEventListener('pointerdown', e => {
+    if (!e.target.closest('#readerRibbon, .reader-top, .reader-subribbon, .reader-page-pop, .dock-pop, #penPop, #pagePop')) {
+      toggleDockPop(null);
+    }
+  }, false);
+
+  /* Freehand pen pointer events */
   $('#drawLayer').addEventListener('pointerdown', startPenStroke);
   window.addEventListener('pointermove', penMove);
   window.addEventListener('pointerup', penEnd);
   window.addEventListener('pointercancel', penEnd);
-  /* Eraser drag lives on the same surface; pen/eraser states are exclusive so
-     only one of the two handlers actually fires. */
+  /* Eraser drag */
   $('#drawLayer').addEventListener('pointerdown', startErase);
   window.addEventListener('pointermove', eraseMove);
   window.addEventListener('pointerup', endErase);
   window.addEventListener('pointercancel', endErase);
+
+  /* The colour bar floats over the page, and on a desktop its row of swatches
+     lands on the page's opening lines — so a press that begins on a swatch and
+     then drags is a stroke aimed at the text underneath, while a press that
+     never moves is a tap meant to pick that colour. Both readings are honoured:
+     the press is held here until the pointer either travels past the slop (the
+     stroke starts, anchored at the press point, and the bar folds away) or lifts
+     where it started (the click runs untouched and the colour is chosen).
+
+     Starting the stroke moves the pointer capture to the draw surface, so the
+     release no longer shares an ancestor with the swatch and the tap's click
+     never fires — the two outcomes stay mutually exclusive without a flag. */
+  $('#penPop').addEventListener('pointerdown', e => {
+    if (!penActive || eraseActive || e.button > 0) return;
+    penPopPress = { id: e.pointerId, x: e.clientX, y: e.clientY, ev: e };
+  });
   $('#penWidths').addEventListener('click', e => {
     const chip = e.target.closest('.pen-width[data-width]');
     if (!chip) return;
-    strokeWidth = PEN_WIDTHS[chip.dataset.width] || PEN_WIDTHS.medium;
-    try { localStorage.setItem(STORAGE_KEYS.penWidth, chip.dataset.width); } catch (err) {}
+    activeWidthKey = chip.dataset.width;
+    safeSet(STORAGE_KEYS.penWidth, activeWidthKey);
     syncPenUI();
   });
   restorePenPrefs();
 
-  /* Zen mode: the dock follows the reading gesture — out of the way while the
-     page scrolls forward, back on a tap. Scroll work is coalesced into a single
-     animation frame, so a fast flick never queues a layout per event. */
+  /* Zen mode */
   $('#readerStage').addEventListener('scroll', onStageScroll, { passive: true });
   $('#readerStage').addEventListener('click', onStageTap);
+  /* Swipe to turn: bound once on the stage and decided per touch in the handler
+     below, because all three of its conditions (no zoom, no pen, no eraser) can
+     change between one touch and the next. */
+  $('#readerStage').addEventListener('touchstart', onStageTouchStart, { passive: true });
+  $('#readerStage').addEventListener('touchend', onStageTouchEnd, { passive: false });
   $('#fallbackRetry').onclick = () => switchEngine('internal');
   $('#readerHint').onclick = () => { $('#readerHint').hidden = true; };
-  /* The goal bar belongs to the book that is open, so it has to follow that
-     book's goal: otherwise it keeps showing an outdated goal until the next
-     page turn. */
   window.addEventListener('goal-changed', () => {
     if (curBook && !$('#readerView').hidden) updateGoalBar();
   });
 
-  /* Pen colour swatches live in the pen popover; picking one updates the
-     active hue everywhere (dock + floating stack share the state). */
+  /* Pen colour swatches in #penPop */
   $('#penPop').addEventListener('click', e => {
     const dot = e.target.closest('.hl-dot');
-    if (dot) { strokeColor = dot.dataset.color; syncPenUI(); }
+    if (dot) {
+      if (toolMode === 'draw') {
+        inkColor = dot.dataset.color;
+        strokeColor = inkColor;
+      } else {
+        hlColor = dot.dataset.color;
+        strokeColor = hlColor;
+      }
+      syncPenUI();
+      /* The colour is chosen; the bar has done its job. Folding it now hands the
+         top of the page back to the pen without a second tap. */
+      collapsePenPop();
+      return;
+    }
+    /* A nib pick is the last thing anyone changes before drawing, so it folds
+       the bar away too — unlike the tool tabs, which switch what the bar is
+       showing and have to stay. */
+    if (e.target.closest('.pen-width')) collapsePenPop();
+  });
+
+  /* The chevron is the explicit way back to the colour bar while a tool is in
+     hand — the lit tool button in the ribbon is the implicit one. */
+  $('#penPopToggle')?.addEventListener('click', () => {
+    if (isPenPopHidden()) openPenPop();
+    else collapsePenPop();
   });
 
   /* Text-selection toolbar: highlight the selected run or open a note for it. */
@@ -237,9 +392,24 @@ export function initReader() {
       curBook.highlights.push(highlightFromSelection(dot.dataset.color, lastSelectionRects));
       updateBook(curBook.id, { highlights: curBook.highlights });
       paintHighlights();
+      updatePageUI();
       clearSelectionState();
     }
     if (e.target.closest('#hlNoteBtn')) { pendingNoteHl = lastSelectionRects; openNoteForCurrentPage(); }
+  });
+  /* `change`, not `input`: a colour picker fires `input` on every pixel of a
+     drag, which used to write a brand-new highlight record each time — dozens
+     of duplicates of the same selection. The choice is taken once, when the
+     picker closes on a colour. */
+  $('#customHlBarColor')?.addEventListener('change', e => {
+    if (lastSelectionRects) {
+      curBook.highlights = curBook.highlights || [];
+      curBook.highlights.push(highlightFromSelection(e.target.value, lastSelectionRects));
+      updateBook(curBook.id, { highlights: curBook.highlights });
+      paintHighlights();
+      updatePageUI();
+      clearSelectionState();
+    }
   });
 
   document.addEventListener('keydown', e => {
@@ -250,8 +420,10 @@ export function initReader() {
     if (e.key === 'PageDown') { gotoPage(curPage + 1); e.preventDefault(); }
     if (e.key === 'PageUp') { gotoPage(curPage - 1); e.preventDefault(); }
     if (e.key === 'p' && !e.ctrlKey && !e.metaKey) { togglePen(); e.preventDefault(); }
+    if (e.key === 'h' && !e.ctrlKey && !e.metaKey) { toggleHighlight(); e.preventDefault(); }
     if (e.key === 'e' && !e.ctrlKey && !e.metaKey) { toggleEraser(); e.preventDefault(); }
-    if (e.key === 'Escape') { $('#notesSheet').hidden = true; $('#hlBar').hidden = true; $('#eraseToast').hidden = true; toggleSettings(false); toggleDockPop(null); }
+    if ((e.key === 'z' || e.key === 'Z') && (e.ctrlKey || e.metaKey)) { undoLastStroke(); e.preventDefault(); }
+    if (e.key === 'Escape') { $('#notesSheet').hidden = true; $('#hlBar').hidden = true; $('#eraseToast').hidden = true; $('#noteOverlay').hidden = true; toggleSettings(false); toggleDockPop(null); }
   });
   document.addEventListener('selectionchange', onSelectionChange);
   document.addEventListener('mousedown', e => {
@@ -261,7 +433,7 @@ export function initReader() {
   window.addEventListener('resize', () => {
     if ($('#readerView').hidden || !pdfDoc || engine === 'browser') return;
     clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(() => renderPage(true), 250);
+    resizeTimer = setTimeout(() => renderPageSafe(true), 250);
   });
 
   /* Keyboard and rotation also resize the *visual* viewport without firing a
@@ -272,7 +444,7 @@ export function initReader() {
     visualViewport.addEventListener('resize', () => {
       if ($('#readerView').hidden || !pdfDoc || engine === 'browser') return;
       clearTimeout(resizeTimer);
-      resizeTimer = setTimeout(() => renderPage(true), 250);
+      resizeTimer = setTimeout(() => renderPageSafe(true), 250);
     });
   }
 
@@ -282,25 +454,34 @@ export function initReader() {
     if (document.visibilityState !== 'visible' || !retryOnVisible) return;
     if ($('#readerView').hidden || !pdfDoc || engine === 'browser') return;
     retryOnVisible = false;
-    renderPage();
+    renderPageSafe();
     updatePageUI();
   });
 
   // Close the reader when navigating away from the library
-  $('#bottomNav').addEventListener('click', e => {
-    const tab = e.target.closest('.nav-tab');
-    if (tab && tab.dataset.page !== 'library' && !$('#readerView').hidden) closeReader();
+  document.addEventListener('click', e => {
+    const tab = e.target.closest('.nav-tab, .more-item');
+    if (tab && tab.dataset.page && tab.dataset.page !== 'library' && !$('#readerView').hidden) closeReader();
   });
 
   /* Page note */
   $('#addNoteBtn').onclick = () => { toggleDockPop(null); pendingNoteHl = null; togglePen(false); openNoteForCurrentPage(); };
   $('#noteSave').onclick = saveNote;
   $('#noteClose').onclick = () => { $('#noteOverlay').hidden = true; };
+  $('#noteOverlay')?.addEventListener('click', e => {
+    if (e.target === $('#noteOverlay')) $('#noteOverlay').hidden = true;
+  });
 
   /* Notes panel */
   $('#readerNotes').onclick = () => { toggleDockPop(null); buildNotes(); $('#notesSheet').hidden = false; };
   $('#notesClose').onclick = () => { $('#notesSheet').hidden = true; };
   $('#notesExport').onclick = exportNotes;
+  $('#notesSheet')?.addEventListener('click', e => {
+    if (e.target === $('#notesSheet')) $('#notesSheet').hidden = true;
+  });
+  $('#settingsSheet')?.addEventListener('click', e => {
+    if (e.target === $('#settingsSheet')) toggleSettings(false);
+  });
   $('#eraseUndoBtn')?.addEventListener('click', performEraseUndo);
 
   /* Timer */
@@ -351,7 +532,7 @@ function applyZoom(next) {
   if (engine === 'browser') {
     $('#pdfFrame').src = `${pdfObjectUrl}#page=${curPage}&zoom=${Math.round(zoom * 100)}`;
   } else {
-    renderPage();
+    renderPageSafe();
   }
   syncSettingsUI();
 }
@@ -371,6 +552,10 @@ function syncSettingsUI() {
   $('#readerBright').value = String(b);
   $('#brightVal').textContent = faNum(b) + '٪';
   $('#zoomVal').textContent = faNum(Math.round(zoom * 100)) + '٪';
+  const zoomIn = $('#zoomIn');
+  const zoomOut = $('#zoomOut');
+  if (zoomIn) zoomIn.disabled = zoom >= 3.0;
+  if (zoomOut) zoomOut.disabled = zoom <= 0.5;
   document.querySelectorAll('#modeChips .set-chip').forEach(c => {
     const on = Number(c.dataset.mode) === mode;
     c.classList.toggle('on', on);
@@ -378,53 +563,87 @@ function syncSettingsUI() {
   });
 }
 
-/* ── Freehand pen ──
-   A stroke is a page-space polyline, not a text selection: it works on scanned
-   pages and anywhere the text layer does not reach. On release the polyline is
-   stored as a highlight record with `free: true`, so it persists, survives
-   zoom/resize re-placement, shows up in the notes panel and exports with the
-   rest — with its drawn shape instead of a text quote. */
-function togglePen(force) {
-  const target = typeof force === 'boolean' ? force : !penActive;
-  /* The pen and the eraser are exclusive: picking one retires the other. */
-  if (target && eraseActive) toggleEraser(false);
-  penActive = target;
-  $('#hlTool').classList.toggle('on', penActive);
-  $('#hlTool').setAttribute('aria-pressed', String(penActive));
-  $('#hlTool').title = penActive ? 'قلم روشنه — برای خاموش کردن دوباره بزن' : 'قلم روشن/خاموش';
-  $('#drawLayer').classList.toggle('pen-on', penActive);
-  $('#textLayer').classList.toggle('pen-off', penActive);
-  $('#dockPen').classList.toggle('on', penActive);
+/* ── Dual Annotation Engine: Draw (fine pen) vs. Highlight (broad marker) ── */
+function setToolMode(mode) {
+  if (mode === toolMode) {
+    mode = null;
+  }
+  toolMode = mode;
+  penActive = Boolean(mode);
+  if (eraseActive && penActive) toggleEraser(false);
+
+  const hlTool = $('#hlTool');
+  const dockPen = $('#dockPen');
+  if (hlTool) {
+    const isHl = toolMode === 'highlight';
+    hlTool.classList.toggle('on', isHl);
+    hlTool.setAttribute('aria-pressed', String(isHl));
+  }
+  if (dockPen) {
+    const isDraw = toolMode === 'draw';
+    dockPen.classList.toggle('on', isDraw);
+    dockPen.setAttribute('aria-pressed', String(isDraw));
+  }
+
+  const penPop = $('#penPop');
+  if (penPop) penPop.hidden = !penActive;
+  $('#penPopToggle')?.setAttribute('aria-expanded', String(penActive && !!penPop && !penPop.hidden));
+  $('#drawLayer')?.classList.toggle('pen-on', penActive);
+  $('#textLayer')?.classList.toggle('pen-off', toolMode === 'draw');
+
   if (penActive) {
     toggleDockPop(null);
     prepareDrawCanvas();
     if (!penHintShown && engine === 'internal') {
       penHintShown = true;
       const hint = $('#readerHint');
+      hint.textContent = toolMode === 'draw'
+        ? 'قلم تحریری آماده است — روی صفحه خط بکش یا یادداشت کن'
+        : 'هایلایتر آماده است — روی متن یا صفحه بکش';
       hint.hidden = false;
       clearTimeout(hintTimer);
-      hintTimer = setTimeout(() => { hint.hidden = true; }, 4500);
+      hintTimer = setTimeout(() => { hint.hidden = true; }, 4000);
     }
   } else {
-    /* Deselecting the pen also stops any in-flight stroke. */
     drawStroke = null;
     $('#readerHint').hidden = true;
   }
+  syncPenUI();
 }
 
-/* ── Eraser ──
-   A drag over the page removes any hand-drawn stroke it touches (hit-test on
-   the recorded polylines, scale-aware). The pen and the eraser are exclusive:
-   turning one on turns the other off. Removed strokes stay recoverable through
-   the undo toast until the reader closes. */
+function togglePen(force) {
+  if (typeof force === 'boolean') {
+    setToolMode(force ? (toolMode || 'draw') : null);
+    return;
+  }
+  /* Tapping the lit pen normally puts it away. Once a stroke has tucked the
+     colour picker down, though, the tool button is where the hand goes to ask
+     for a different colour — so it re-opens the picker first, and only a
+     second tap (with the picker already out) retires the tool. */
+  if (toolMode === 'draw' && isPenPopHidden()) { openPenPop(); return; }
+  setToolMode(toolMode === 'draw' ? null : 'draw');
+}
+
+function toggleHighlight(force) {
+  if (typeof force === 'boolean') {
+    setToolMode(force ? (toolMode || 'highlight') : null);
+    return;
+  }
+  if (toolMode === 'highlight' && isPenPopHidden()) { openPenPop(); return; }
+  setToolMode(toolMode === 'highlight' ? null : 'highlight');
+}
+
 function toggleEraser(force) {
   const target = typeof force === 'boolean' ? force : !eraseActive;
   eraseActive = target;
-  if (eraseActive) togglePen(false);
-  $('#eraserTool').classList.toggle('on', eraseActive);
-  $('#eraserTool').setAttribute('aria-pressed', String(eraseActive));
-  $('#eraserTool').title = eraseActive ? 'پاک‌کن روشنه — برای خاموش کردن دوباره بزن' : 'پاک‌کن — روی خط بکش تا پاک شه';
-  $('#drawLayer').classList.toggle('eraser-on', eraseActive);
+  if (eraseActive && penActive) setToolMode(null);
+  const btn = $('#eraserTool');
+  if (btn) {
+    btn.classList.toggle('on', eraseActive);
+    btn.setAttribute('aria-pressed', String(eraseActive));
+    btn.title = eraseActive ? 'پاک‌کن روشنه — برای خاموش کردن دوباره بزن' : 'پاک‌کن — روی خط بکش تا پاک شه';
+  }
+  $('#drawLayer')?.classList.toggle('eraser-on', eraseActive);
   if (eraseActive) {
     toggleDockPop(null);
     prepareDrawCanvas();
@@ -433,11 +652,68 @@ function toggleEraser(force) {
   }
 }
 
+/* Direct Undo of the last drawn or highlighted mark on the current page */
+function undoLastStroke() {
+  if (!curBook || !curBook.highlights || !curBook.highlights.length) return;
+  let lastIdx = -1;
+  for (let i = curBook.highlights.length - 1; i >= 0; i--) {
+    if (curBook.highlights[i].page === curPage) {
+      lastIdx = i;
+      break;
+    }
+  }
+  if (lastIdx === -1) return;
+  const removed = curBook.highlights.splice(lastIdx, 1)[0];
+  updateBook(curBook.id, { highlights: curBook.highlights });
+  paintHighlights();
+  updatePageUI();
+  erasedStrokes = { page: curPage, items: [{ h: removed, index: lastIdx }] };
+  showEraseUndo();
+}
+
+/* Clear all drawn strokes on current page with undo toast */
+function clearPageStrokes() {
+  if (!curBook) return;
+  const keep = [];
+  const items = [];
+  (curBook.highlights || []).forEach((h, i) => {
+    if (h.page === curPage) {
+      items.push({ h, index: i });
+    } else {
+      keep.push(h);
+    }
+  });
+  if (items.length) {
+    erasedStrokes = { page: curPage, items };
+    curBook.highlights = keep;
+    updateBook(curBook.id, { highlights: keep });
+    paintHighlights();
+    updatePageUI();
+    showEraseUndo();
+  }
+}
+
+/* Direct page jump from input */
+function jumpToInputPage() {
+  const inp = $('#pageJumpInput');
+  if (!inp || !curBook) return;
+  const val = parseInt(inp.value, 10);
+  if (Number.isFinite(val)) {
+    const total = curBook.numPages || 1;
+    const clamped = Math.max(1, Math.min(total, val));
+    gotoPage(clamped);
+    toggleDockPop(null);
+  }
+}
+
 /* Point-to-segment distance in *current page space* — the hit radius is
    expressed in what the user sees, so it works identically at every zoom. */
 function strokeHit(h, px, py, f) {
   const pts = h.pts || [];
   if (pts.length < 2) {
+    /* A stroke with no points has nothing to be near; without this guard the
+       eraser threw on `pts[0].x` and the whole gesture stopped. */
+    if (!pts.length) return false;
     const dx = pts[0].x * f - px, dy = pts[0].y * f - py;
     return dx * dx + dy * dy <= ERASER_RADIUS * ERASER_RADIUS;
   }
@@ -460,9 +736,9 @@ function startErase(e) {
   if (!eraseActive || penActive || e.button > 0) return;
   e.preventDefault();
   prepareDrawCanvas();
-  toggleDockPop(null);
+  collapsePenPop();
   erasing = true;
-  erasedStrokes = [];
+  erasedStrokes = { page: curPage, items: [] };
   eraseCursor(e);
   eraseAt(e);
   /* A synthetic/stale pointer must not break the gesture. */
@@ -474,6 +750,7 @@ function eraseAt(e) {
   const p = penPos(e);
   const keep = [];
   let removedAny = false;
+  if (!erasedStrokes || erasedStrokes.page !== curPage) erasedStrokes = { page: curPage, items: [] };
   (curBook.highlights || []).forEach((h, i) => {
     const f = h.scale ? pageScale / h.scale : 1;
     /* Both mark kinds are erasable: drawn strokes hit by their polyline,
@@ -485,7 +762,7 @@ function eraseAt(e) {
         p.x >= r.x * f - ERASER_RADIUS && p.x <= (r.x + r.w) * f + ERASER_RADIUS &&
         p.y >= r.y * f - ERASER_RADIUS && p.y <= (r.y + r.h) * f + ERASER_RADIUS);
     }
-    if (hit) { erasedStrokes.push({ h, index: i }); removedAny = true; }
+    if (hit) { erasedStrokes.items.push({ h, index: i }); removedAny = true; }
     else keep.push(h);
   });
   if (removedAny) {
@@ -504,7 +781,7 @@ function eraseMove(e) {
 function endErase() {
   erasing = false;
   hideEraserCursor();
-  if (erasedStrokes && erasedStrokes.length) {
+  if (erasedStrokes && erasedStrokes.items.length) {
     showEraseUndo();
     /* Keep the removed records parked until the toast hides or the user acts —
        performEraseUndo/hideEraseUndo own this reference from here on. */
@@ -535,32 +812,44 @@ function hideEraserCursor() {
 /* Undo toast for erasing — reuses the existing toast styles with its own
    element so the task-undo flow is never disturbed. */
 let eraseUndoTimer = null;
+let eraseHideTimer = null;
 function showEraseUndo() {
   const toast = $('#eraseToast');
   if (!toast) return;
   toast.hidden = false;
   requestAnimationFrame(() => toast.classList.add('show'));
   clearTimeout(eraseUndoTimer);
+  /* A hide that was already on its way out must be called off: a second erase
+     landing inside the 300ms fade used to have its toast hidden and its parked
+     strokes wiped by the first erase's timer. */
+  clearTimeout(eraseHideTimer);
   eraseUndoTimer = setTimeout(hideEraseUndo, 5000);
 }
 function hideEraseUndo() {
   const toast = $('#eraseToast');
   if (!toast) return;
   toast.classList.remove('show');
-  setTimeout(() => { toast.hidden = true; }, 300);
+  clearTimeout(eraseHideTimer);
+  eraseHideTimer = setTimeout(() => { toast.hidden = true; eraseHideTimer = null; }, 300);
   erasedStrokes = null;
 }
 function performEraseUndo() {
-  /* The parked strokes are still live until the toast goes away. */
-  if (!erasedStrokes || !erasedStrokes.length || !curBook) { hideEraseUndo(); return; }
+  /* The parked strokes are still live until the toast goes away — but only for
+     the page they were erased from. Undoing from anywhere else would push those
+     records back into a `highlights` array they no longer describe. */
+  if (!erasedStrokes || !erasedStrokes.items.length || !curBook || erasedStrokes.page !== curPage) {
+    hideEraseUndo();
+    return;
+  }
   clearTimeout(eraseUndoTimer);
   curBook.highlights = curBook.highlights || [];
-  erasedStrokes.forEach(({ h }) => {
+  erasedStrokes.items.forEach(({ h }) => {
     curBook.highlights.push(h);
   });
   erasedStrokes = null;
   updateBook(curBook.id, { highlights: curBook.highlights });
   paintHighlights();
+  updatePageUI();
   hideEraseUndo();
 }
 
@@ -594,34 +883,66 @@ function startPenStroke(e) {
   e.preventDefault();
   prepareDrawCanvas();
   if (!drawCtx) return;
-  toggleDockPop(null);
+  collapsePenPop();
   const p = penPos(e);
-  drawStroke = { color: strokeColor, pts: [p] };
-  /* A stale/synthetic pointer must never break the stroke (or throw). */
+  const kind = toolMode || 'draw';
+  drawStroke = {
+    color: strokeColor,
+    kind,
+    width: strokeWidth,
+    pts: [p]
+  };
   try { $('#drawLayer').setPointerCapture(e.pointerId); } catch (err) {}
   paintStrokeLive();
 }
 
-/* Live trail: only the newest segment is drawn on the overlay canvas — no
-   clearing, so the gesture stays smooth even on long strokes. */
+/* Live trail: smooth quadratic Bézier curve interpolation */
 function paintStrokeLive() {
   if (!drawCtx || !drawStroke) return;
   const pts = drawStroke.pts;
-  const a = pts[pts.length - 2], b = pts[pts.length - 1];
-  if (!a) return;
-  drawCtx.strokeStyle = STROKE_COLORS[drawStroke.color];
-  drawCtx.globalAlpha = .85;
-  drawCtx.lineWidth = strokeWidth;
+  if (pts.length < 2) return;
+  const isDraw = drawStroke.kind === 'draw';
+  drawCtx.save();
+  drawCtx.strokeStyle = resolveColor(drawStroke.color);
+  drawCtx.globalAlpha = isDraw ? 1.0 : 0.38;
+  drawCtx.lineWidth = drawStroke.width;
   drawCtx.lineCap = 'round';
   drawCtx.lineJoin = 'round';
-  drawCtx.beginPath();
-  drawCtx.moveTo(a.x, a.y);
-  drawCtx.lineTo(b.x, b.y);
-  drawCtx.stroke();
+
+  if (pts.length === 2) {
+    drawCtx.beginPath();
+    drawCtx.moveTo(pts[0].x, pts[0].y);
+    drawCtx.lineTo(pts[1].x, pts[1].y);
+    drawCtx.stroke();
+  } else {
+    const p0 = pts[pts.length - 3];
+    const p1 = pts[pts.length - 2];
+    const p2 = pts[pts.length - 1];
+    const mid1X = (p0.x + p1.x) / 2;
+    const mid1Y = (p0.y + p1.y) / 2;
+    const mid2X = (p1.x + p2.x) / 2;
+    const mid2Y = (p1.y + p2.y) / 2;
+    drawCtx.beginPath();
+    drawCtx.moveTo(mid1X, mid1Y);
+    drawCtx.quadraticCurveTo(p1.x, p1.y, mid2X, mid2Y);
+    drawCtx.stroke();
+  }
+  drawCtx.restore();
 }
 
 function penMove(e) {
-  if (!penActive || eraseActive || !drawStroke) return;
+  if (!penActive || eraseActive) return;
+  /* A press that started on the colour bar becomes a stroke only once it has
+     travelled far enough to be a drag rather than a tap. */
+  if (penPopPress && e.pointerId === penPopPress.id) {
+    if (drawStroke) { penPopPress = null; }
+    else if (Math.hypot(e.clientX - penPopPress.x, e.clientY - penPopPress.y) > 4) {
+      const start = penPopPress;
+      penPopPress = null;
+      startPenStroke(start.ev);
+    } else return;
+  }
+  if (!drawStroke) return;
   const p = penPos(e);
   const pts = drawStroke.pts;
   const last = pts[pts.length - 1];
@@ -631,7 +952,10 @@ function penMove(e) {
   paintStrokeLive();
 }
 
-function penEnd() {
+function penEnd(e) {
+  /* A press on the colour bar that never travelled was a colour tap: the click
+     runs untouched and this hold is simply released. */
+  if (e && penPopPress && e.pointerId === penPopPress.id) penPopPress = null;
   if (eraseActive || !drawStroke) return;
   const s = drawStroke;
   drawStroke = null;
@@ -639,14 +963,24 @@ function penEnd() {
   if (pts.length < 2) { clearDrawCanvas(); return; }   /* a tap is not a mark */
   curBook.highlights = curBook.highlights || [];
   curBook.highlights.push({
-    id: Date.now() + '', page: curPage, text: '', color: s.color,
-    free: true, pts, width: strokeWidth, scale: pageScale, note: '', createdAt: Date.now(),
+    id: nextId(),
+    page: curPage,
+    text: '',
+    color: s.color,
+    kind: s.kind || 'draw',
+    free: true,
+    pts,
+    width: s.width,
+    scale: pageScale,
+    note: '',
+    createdAt: Date.now(),
   });
   updateBook(curBook.id, { highlights: curBook.highlights });
   /* Wipe the live trail first, then let paintHighlights redraw the committed
      strokes — the reverse order would erase the fresh mark. */
   clearDrawCanvas();
   paintHighlights();
+  updatePageUI();
 }
 
 /* Douglas–Peucker-lite: keep points that bend the trail more than 2px. A
@@ -676,25 +1010,68 @@ function clearDrawCanvas() {
 /* ── Study dock ── */
 const DOCK_POPS = { '#penPop': '#dockPen', '#pagePop': '#pagePill' };
 let openPop = null;
+
+/* The colour bar (#penPop) opens under the ribbon, which means it hangs over the
+   top of the page — and the page is the one thing the pen is for. It used to
+   sit there for the whole of a drawing session, covering the first lines of
+   every page and swallowing the taps meant for them.
+
+   So it is a picker, not a palette: it is up while a choice is being made and
+   down while either pen is in hand. Every path that ends a choice — the first
+   stroke, a tapped swatch, its own chevron — folds it away, and the lit tool
+   button in the ribbon brings it back. */
+function isPenPopHidden() {
+  const pop = $('#penPop');
+  return !pop || pop.hidden;
+}
+function openPenPop() {
+  const pop = $('#penPop');
+  if (!pop || !penActive) return;
+  toggleDockPop(null);
+  pop.hidden = false;
+  $('#penPopToggle')?.setAttribute('aria-expanded', 'true');
+}
+function collapsePenPop() {
+  const pop = $('#penPop');
+  if (pop) pop.hidden = true;
+  $('#penPopToggle')?.setAttribute('aria-expanded', 'false');
+  toggleDockPop(null);
+}
+
 function toggleDockPop(sel) {
   const target = sel && sel !== openPop ? sel : null;
-  for (const pop of Object.keys(DOCK_POPS)) {
-    const onPop = pop === target;
-    const btn = $(DOCK_POPS[pop]);
-    $(pop).hidden = !onPop;
-    btn.classList.toggle('on', onPop);
-    btn.setAttribute('aria-expanded', String(onPop));
+  openPop = target;
+  const pagePop = $('#pagePop');
+  if (pagePop) pagePop.hidden = target !== '#pagePop';
+  const pagePill = $('#pagePill');
+  if (pagePill) {
+    pagePill.classList.toggle('on', target === '#pagePop');
+    pagePill.setAttribute('aria-expanded', String(target === '#pagePop'));
+  }
+  if (target === '#pagePop') {
+    const input = $('#pageJumpInput');
+    if (input) {
+      input.value = curPage || 1;
+      input.min = '1';
+      input.max = String(curBook?.numPages || 999999);
+      setTimeout(() => { try { input.focus(); input.select(); } catch (_) {} }, 50);
+    }
   }
   if (target) $('#hlBar').hidden = true;
-  openPop = target;
 }
 
 let zenHidden = false, scrollRaf = 0, lastScrollTop = 0;
 function setZen(on) {
   if (on === zenHidden) return;
   zenHidden = on;
-  $('#readerDock').classList.toggle('zen', on);
-  if (on) toggleDockPop(null);
+  const ribbon = $('#readerRibbon');
+  if (ribbon) ribbon.classList.toggle('zen-scrolled', on);
+  const dock = $('#readerDock');
+  if (dock) dock.classList.toggle('zen', on);
+  if (on) {
+    const pagePop = $('#pagePop');
+    if (pagePop && !pagePop.hidden) toggleDockPop(null);
+  }
 }
 
 function onStageScroll() {
@@ -713,9 +1090,64 @@ function onStageScroll() {
 /* A tap on the page brings the dock back; it never hides it, so a stray tap
    while selecting text cannot take the controls away. */
 function onStageTap(e) {
-  if (e.target.closest('#hlBar,.dock-pop,.sheet,.overlay')) return;
+  if (e.target.closest('#hlBar,.dock-pop,.sheet,.overlay,.reader-ribbon,.reader-page-pop,.reader-subribbon')) return;
   if (zenHidden) setZen(false);
   else toggleDockPop(null);
+}
+
+/* ── Swipe to turn the page ──
+   The reader's own engine draws one page at a time inside a stage that is a
+   scroll container, so on a phone the only ways to the next page were the two
+   arrow buttons and the page popover — both of them at the far edge or behind
+   a tap. A horizontal swipe is what a hand already expects from a reader, and
+   the stage is exactly the surface it should work on.
+
+   It is deliberately narrow: a swipe only turns a page at zoom 1 (any zoom makes
+   the drag a pan, which is the whole point of having zoomed), never while the pen
+   or the eraser is armed (those drags draw and erase), never for a second finger
+   (that is a pinch), and never when the drag started on a text selection. The
+   decision is made on `touchstart` from the conditions as they are *then*, so a
+   gesture cannot change meaning halfway through. */
+let swipeOrigin = null;
+
+/* Somewhere inside a live selection: the drag belongs to the selection handles,
+   not to the page. */
+function inActiveSelection(node) {
+  const sel = window.getSelection();
+  if (!sel || sel.isCollapsed || !sel.rangeCount) return false;
+  if (!node || sel.containsNode?.(node, true)) return true;
+  return [...sel.getClientRects()].some(r => r.width > 1 && r.height > 1);
+}
+
+function onStageTouchStart(e) {
+  swipeOrigin = null;
+  if (e.touches.length !== 1) return;
+  if (zoom !== 1 || penActive || eraseActive) return;
+  if ($('#readerView').hidden) return;
+  if (e.target.closest('#hlBar,.dock-pop,.sheet,.overlay,.reader-page-pop,.reader-subribbon,#notesSheet')) return;
+  if (inActiveSelection(e.target)) return;
+  const t = e.touches[0];
+  swipeOrigin = { x: t.clientX, y: t.clientY };
+}
+
+function onStageTouchEnd(e) {
+  const start = swipeOrigin;
+  swipeOrigin = null;
+  if (!start || e.touches.length) return;
+  const t = e.changedTouches[0];
+  if (!t) return;
+  const dx = t.clientX - start.x;
+  const dy = t.clientY - start.y;
+  /* Long enough to be a swipe rather than a tap, flat enough to be horizontal
+     rather than a scroll, and past the slop browsers use for a tap. */
+  if (Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+  /* RTL, and the direction a hand already knows from a Persian book: the pages
+     are bound on the right, so the next one arrives by dragging the current page
+     to the right — dx > 0 is forward, the way the next-page arrow points. */
+  if (curBook && curPage >= (curBook.numPages || 1) && dx > 0) return;
+  if (curPage <= 1 && dx < 0) return;
+  e.preventDefault();
+  gotoPage(curPage + (dx > 0 ? 1 : -1));
 }
 
 /* ── Open/Close ── */
@@ -777,6 +1209,11 @@ function maybeShowHighlightHint() {
 async function openReader(id, opts = {}) {
   const seq = ++openSeq;                 /* supersede any in-flight open */
   const book = getBook(id); if (!book) return;
+  /* The timer closes before `curBook` is rebound. A session running from the
+     previous book has to bank its minutes against *that* book — stopping it
+     after the assignment (as teardown does for everything else) credited the
+     reading time to whichever book was opened next. */
+  if (timer.running) stopTimerSession();
   curBook = book;
   /* Bind the page before the first draw: renderPage() reads curPage, so
      without this a freshly opened book would first paint the previous book's
@@ -792,6 +1229,7 @@ async function openReader(id, opts = {}) {
   toggleSettings(false);
   $('#shelfView').hidden = true;
   $('#readerView').hidden = false;
+  document.body.classList.add('reader-immersive');
   $('#readerHint').hidden = true;
   $('#readerTitle').textContent = book.title;
   /* Reset the page chrome to this book before the first draw, so the previous
@@ -804,7 +1242,14 @@ async function openReader(id, opts = {}) {
 
   const blob = await getBookBlob(id);
   if (seq !== openSeq) return;                       /* another book took over */
-  if (!blob) { alert('فایل کتاب پیدا نشد!'); closeReader(); return; }
+  /* The PDF for this shelf entry is gone — a wiped IndexedDB, an import that
+     never finished writing. A browser alert would have said so in the browser's
+     own colours; the notice says it in the app's. */
+  if (!blob) {
+    showNotice('فایل این کتاب پیدا نشد؛ دوباره از کتابخانه اضافه‌ش کن.', { actionLabel: 'باشه' });
+    closeReader();
+    return;
+  }
   pdfObjectUrl = URL.createObjectURL(blob);
 
   /* Our own renderer is the default. The browser viewer is used only when it
@@ -822,7 +1267,10 @@ async function openReader(id, opts = {}) {
       if (seq !== openSeq) return;
       const data = new Uint8Array(await blob.arrayBuffer());
       if (seq !== openSeq) return;
-      const doc = await lib.getDocument({ data, ...PDF_ASSETS }).promise;
+      /* A getDocument that never settles (a hung worker) must not keep the
+         loading veil up forever; the backstop hands the book to the browser
+         viewer instead. */
+      const doc = await withTimeout(lib.getDocument({ data, ...PDF_ASSETS }).promise, DOC_BUDGET_MS);
       if (seq !== openSeq) { doc.destroy(); return; }
       pdfDoc = doc;
       ok = true;
@@ -873,13 +1321,14 @@ async function openReader(id, opts = {}) {
       try {
         const lib = await loadPdfJs();
         const data = await blob.arrayBuffer();
-        const doc = await lib.getDocument({ data, ...PDF_ASSETS }).promise;
+        const doc = await withTimeout(lib.getDocument({ data, ...PDF_ASSETS }).promise, DOC_BUDGET_MS);
         if (seq !== openSeq) { doc.destroy(); return; }
         updateBook(id, { numPages: doc.numPages });
         book.numPages = doc.numPages;
         doc.destroy();
       } catch (e) { console.warn('گرفتن تعداد صفحه‌ها ممکن نشد:', e); }
     }
+    syncGoalPageCap(id, book.numPages);
     engageFallbackUI(book.viewer === 'browser' ? 'manual' : engineMissing ? 'engine' : 'auto');
   } else {
     engine = 'internal';
@@ -895,6 +1344,10 @@ async function openReader(id, opts = {}) {
   }
 
   $('#pageRange').max = book.numPages || 999999;
+  /* The page count only becomes real here — an imported book was created with 0
+     — so this is the moment the goal sheet's cap can be corrected. It runs even
+     if the goal sheet is closed, because that is the state the next open reads. */
+  syncGoalPageCap(id, book.numPages);
   curPage = Math.min(Math.max(1, curPage), book.numPages || curPage);
   zoom = 1;
   applyMode();
@@ -909,6 +1362,9 @@ async function openReader(id, opts = {}) {
     if (!drawn && document.visibilityState === 'visible') await renderPage();
     if (seq !== openSeq) return;
     maybeShowHighlightHint();
+    if (pdfDoc && curBook && !curBook.cover && curPage !== 1) {
+      pdfDoc.getPage(1).then(p => maybeGenerateCover(p)).catch(() => {});
+    }
   }
   if (seq !== openSeq) return;
   updatePageUI();
@@ -931,11 +1387,7 @@ function engageFallbackUI(reason) {
   $('#textLayer').hidden = true;
   $('#highlightLayer').hidden = true;
   $('#pdfFallback').hidden = false;
-  $('#fallbackText').textContent = reason === 'manual'
-    ? 'نمایشگر مرورگر فعال است؛ متن، هایلایت و یادداشت در دسترس نیست.'
-    : reason === 'engine'
-      ? NO_ENGINE_TEXT
-      : 'این فایل با نمایشگر داخلی رندر نشد؛ متن، هایلایت و یادداشت در دسترس نیست.';
+  $('#fallbackText').textContent = reason === 'engine' ? NO_ENGINE_TEXT : FALLBACK_REASONS[reason] || FALLBACK_REASONS.auto;
 }
 
 function closeReader() {
@@ -943,6 +1395,7 @@ function closeReader() {
   teardownEngine();
   if (timer.running) stopTimerSession();
   $('#readerView').hidden = true;
+  document.body.classList.remove('reader-immersive');
   $('#shelfView').hidden = false;
   $('#notesSheet').hidden = true;
   $('#donePop').hidden = true;
@@ -973,19 +1426,60 @@ async function stageBox() {
   };
 }
 
+async function maybeGenerateCover(page) {
+  /* True while the cover draw is using this page; renderPage's cleanup waits
+     for it instead of releasing the page underneath it. */
+  coverPending = true;
+  if (!curBook || curBook.cover) { coverPending = false; return; }
+  try {
+    const baseVp = page.getViewport({ scale: 1 });
+    const targetW = 240;
+    const scale = targetW / (baseVp.width || 1);
+    const vp = page.getViewport({ scale });
+    const c = document.createElement('canvas');
+    c.width = Math.floor(vp.width);
+    c.height = Math.floor(vp.height);
+    const ctx = c.getContext('2d');
+    await page.render({ canvasContext: ctx, viewport: vp }).promise;
+    const dataUrl = c.toDataURL('image/jpeg', 0.75);
+    if (dataUrl && dataUrl.length > 100 && curBook && !curBook.cover) {
+      curBook.cover = dataUrl;
+      updateBook(curBook.id, { cover: dataUrl });
+      const thumb = $('#readerThumb');
+      if (thumb) {
+        thumb.src = dataUrl;
+        thumb.hidden = false;
+      }
+    }
+  } catch (err) {
+    console.warn('تولید خودکار جلد انجام نشد:', err);
+  } finally {
+    coverPending = false;
+    /* The page draw may have finished while this was running; its cleanup was
+       deferred to here so the page stayed alive long enough to make a cover. */
+    if (coverCleanup) { const p = coverCleanup; coverCleanup = null; safeCleanup(p); }
+  }
+}
+
 async function renderPage(keepScroll) {
   if (!pdfDoc || !curBook) return { canvasOk: true, cancelled: true };
   const doc = pdfDoc, seq = openSeq;
+  const myRender = ++renderSeq, atPage = curPage;
+  /* True as soon as a newer render (or a newer book) has taken over. The page
+     number is checked as well: a page turn bumps renderSeq on its own, but a
+     render that is superseded without a new renderPage call must not write to
+     the canvas for the page the reader has already left either. */
+  const stale = () => myRender !== renderSeq || doc !== pdfDoc || seq !== openSeq || atPage !== curPage;
   if (renderTask) { try { renderTask.cancel(); } catch (e) {} }
   if (textLayerTask) { try { textLayerTask.cancel(); } catch (e) {} }
-  const page = await doc.getPage(curPage);
+  const page = await doc.getPage(atPage);
   /* Another book took over while we were fetching this page. */
-  if (doc !== pdfDoc || seq !== openSeq) return { canvasOk: true, cancelled: true };
+  if (stale()) { safeCleanup(page); return { canvasOk: true, cancelled: true }; }
   const wrap = $('#pageWrap');
   const stage = $('#readerStage');
   const box = await stageBox();
   /* Another book took over, or the reader closed, while waiting for layout. */
-  if (doc !== pdfDoc || seq !== openSeq) return { canvasOk: true, cancelled: true };
+  if (stale()) { safeCleanup(page); return { canvasOk: true, cancelled: true }; }
   const availW = box.w - 28;
   const availH = box.h - 28;
   const base = page.getViewport({ scale: 1 });
@@ -1014,6 +1508,7 @@ async function renderPage(keepScroll) {
        that error and a perfectly renderable page is written off. */
     await settleRenderTask();
     try {
+      if (stale()) { safeCleanup(page); return { canvasOk: true, cancelled: true }; }
       renderTask = page.render({ canvasContext: ctx, viewport, transform: dpr !== 1 ? [dpr, 0, 0, dpr, 0, 0] : null });
       await withTimeout(renderTask.promise, budgets[attempt]);
       canvasOk = true;
@@ -1024,12 +1519,15 @@ async function renderPage(keepScroll) {
     }
   }
   await settleRenderTask();
-  if (doc !== pdfDoc || seq !== openSeq) return { canvasOk: true, cancelled: true };
+  /* The cancelled path used to claim the page was fine before this check, so a
+     stale draw could still clear the text layer of the page now on screen. */
+  if (stale()) { safeCleanup(page); return { canvasOk: true, cancelled: true }; }
   if (!canvasOk) {
     /* Don't leave the previous page's invisible runs behind: stale text would
        still be selectable and would mis-map highlights. */
     $('#textLayer').innerHTML = '';
     paintHighlights();
+    safeCleanup(page);
     return { canvasOk: false };
   }
 
@@ -1040,6 +1538,12 @@ async function renderPage(keepScroll) {
     updatePageUI();
     updateGoalBar();
     $('#readerLoading').hidden = true;
+  }
+  if (canvasOk && curPage === 1 && curBook && !curBook.cover) {
+    /* Fire-and-forget: the cover draw runs on this same page object, so the
+       page must not be cleaned up underneath it. maybeGenerateCover raises the
+       in-flight flag itself, before its first await. */
+    maybeGenerateCover(page);
   }
 
   /* Text layer — source of truth for selection.
@@ -1064,7 +1568,7 @@ async function renderPage(keepScroll) {
         /* disableNormalization keeps the document's own characters (as upstream's
            text layer does) instead of letting the pipeline rewrite RTL runs. */
         const textContent = await page.getTextContent({ disableNormalization: true });
-        if (doc !== pdfDoc || seq !== openSeq) break;
+        if (stale()) break;
         textLayerTask = new pdfjsLib.TextLayer({
           textContentSource: textContent,
           container: tl,
@@ -1073,7 +1577,7 @@ async function renderPage(keepScroll) {
         await withTimeout(textLayerTask.render(), textBudgets[attempt]);
         break;
       } catch (e) {
-        if (doc !== pdfDoc || seq !== openSeq) break;
+        if (stale()) break;
         console.warn(e);
         /* The timed-out layer may still hold the container or keep writing to
            it; cancel it and start the next attempt from an empty layer so runs
@@ -1086,6 +1590,11 @@ async function renderPage(keepScroll) {
     }
   }
 
+  /* A page turn can land inside the text-layer build above; the wrap box and
+     the highlight layer belong to whatever page is on screen now, so a stale
+     render must not resize the trail surface or repaint another page's marks. */
+  if (stale()) { cleanupWhenIdle(page); return { canvasOk: true, cancelled: true }; }
+
   /* The trail surface must follow the rendered page — zoom, resize and page
      turns all change the wrap box; a resize also wipes the surface, so the
      strokes of the *new* page are painted after it, never the old ones. The
@@ -1093,60 +1602,136 @@ async function renderPage(keepScroll) {
   prepareDrawCanvas(true);
   paintHighlights();
   if (!keepScroll) stage.scrollTop = 0;
+  /* The page's own resources (the operator list, fonts) are released as soon as
+     the page has been drawn: a long book that keeps every page alive runs out
+     of memory, and the page can always be fetched and parsed again. */
+  cleanupWhenIdle(page);
   return { canvasOk: true };
 }
+
+/* page.cleanup() is a hint, not a contract — a viewer build without it, or a
+   page that has already been disposed, must never take the draw down. */
+function safeCleanup(page) {
+  try { page?.cleanup?.(); } catch (e) { /* nothing more to release */ }
+}
+
+/* A page can only be cleaned up once nobody is drawing from it. The cover
+   generator of page 1 is the one long-lived user of a page object, so when it
+   is in flight the cleanup is parked here until it finishes. */
+let coverPending = false;
+let coverCleanup = null;
+
+function cleanupWhenIdle(page) {
+  if (coverPending) { coverCleanup = page; return; }
+  safeCleanup(page);
+}
+
+/* An unhandled rejection from a background draw would surface as a console
+   error for a page the reader has already left. renderPage reports failure by
+   its return value, so a caller that does not await it only needs it silenced. */
+const renderPageSafe = (keepScroll) => renderPage(keepScroll).catch(err => {
+  console.warn('رندر صفحه انجام نشد:', err);
+});
 
 /* Two small helpers wired after init: the pen colour selection needs a visual
    state, and the sync of the draw surface happens inside renderPage. */
 /* Re-apply the remembered nib size and colour on every boot. Missing or
    corrupt storage falls back to the defaults silently. */
 function restorePenPrefs() {
-  try {
-    const w = localStorage.getItem(STORAGE_KEYS.penWidth);
-    if (w && PEN_WIDTHS[w]) strokeWidth = PEN_WIDTHS[w];
-  } catch (e) {}
+  const w = readString(STORAGE_KEYS.penWidth, '');
+  if (w && (DRAW_WIDTHS[w] || HL_WIDTHS[w] || PEN_WIDTHS[w])) activeWidthKey = w;
   syncPenUI();
 }
 
 function syncPenUI() {
-  document.querySelectorAll('.hl-dot').forEach(d => {
-    d.classList.toggle('sel', d.dataset.color === strokeColor);
+  const isDraw = toolMode === 'draw';
+  strokeColor = isDraw ? inkColor : hlColor;
+  strokeWidth = isDraw ? (DRAW_WIDTHS[activeWidthKey] || DRAW_WIDTHS.medium) : (HL_WIDTHS[activeWidthKey] || HL_WIDTHS.medium);
+
+  const tabHl = $('#subribbonHlTab');
+  const tabPen = $('#subribbonPenTab');
+  if (tabHl) {
+    tabHl.classList.toggle('on', !isDraw);
+    tabHl.setAttribute('aria-selected', String(!isDraw));
+  }
+  if (tabPen) {
+    tabPen.classList.toggle('on', isDraw);
+    tabPen.setAttribute('aria-selected', String(isDraw));
+  }
+
+  const hlSwatches = $('#hlColorSwatches');
+  const inkSwatches = $('#inkColorSwatches');
+  if (hlSwatches) hlSwatches.hidden = isDraw;
+  if (inkSwatches) inkSwatches.hidden = !isDraw;
+
+  document.querySelectorAll('#hlColorSwatches .hl-dot').forEach(d => {
+    d.classList.toggle('sel', d.dataset.color === hlColor);
   });
-  /* Reflect the active nib on its chip group and every stroked mark drawn
-     after this point. */
-  const active = Object.keys(PEN_WIDTHS).find(k => PEN_WIDTHS[k] === strokeWidth);
+  document.querySelectorAll('#inkColorSwatches .hl-dot').forEach(d => {
+    d.classList.toggle('sel', d.dataset.color === inkColor);
+  });
+
   document.querySelectorAll('#penWidths .pen-width').forEach(c => {
-    const on = c.dataset.width === active;
+    const on = c.dataset.width === activeWidthKey;
     c.classList.toggle('on', on);
     c.setAttribute('aria-pressed', String(on));
   });
-  /* The dock button carries a live badge of the current nib: the swatch hue
-     plus a size class, so the state is readable without opening the menu. */
-  const ind = $('#dockPen .pen-indicator');
-  if (ind) {
-    ind.style.background = STROKE_COLORS[strokeColor] || STROKE_COLORS.yellow;
-    ind.className = 'pen-indicator w-' + (active || 'medium');
+
+  const penInd = $('#penIndicator');
+  if (penInd) {
+    penInd.style.background = resolveColor(inkColor);
+  }
+  const hlInd = $('#hlIndicator');
+  if (hlInd) {
+    hlInd.style.background = resolveColor(hlColor);
   }
 }
 syncPenUI();
 
 /* ── Page UI + progress ── */
 function updatePageUI() {
-  const total = curBook.numPages;
-  $('#pageLabel').textContent = total ? `${faNum(curPage)} / ${faNum(total)}` : faNum(curPage);
-  $('#pageRange').value = curPage;
-  /* The dock reports the page's read state next to its number, so marking a
-     page is visible without opening the page menu. */
-  const read = bookDone(curBook).has(curPage);
+  const total = curBook?.numPages || 1;
+  $('#pageLabel').textContent = curBook?.numPages ? `${faNum(curPage)} / ${faNum(curBook.numPages)}` : faNum(curPage);
+  const range = $('#pageRange');
+  if (range) {
+    range.value = curPage;
+    range.max = String(curBook?.numPages || 1);
+  }
+  const prevBtn = $('#prevPage');
+  const nextBtn = $('#nextPage');
+  const firstBtn = $('#firstPageBtn');
+  const lastBtn = $('#lastPageBtn');
+  if (prevBtn) prevBtn.disabled = curPage <= 1;
+  if (nextBtn) nextBtn.disabled = curPage >= total;
+  if (firstBtn) firstBtn.disabled = curPage <= 1;
+  if (lastBtn) lastBtn.disabled = curPage >= total;
+
+  const hasMarks = (curBook?.highlights || []).some(h => h.page === curPage);
+  const undoBtn = $('#strokeUndoBtn');
+  if (undoBtn) undoBtn.disabled = !hasMarks;
+
+  const isFallback = engine === 'browser';
+  if ($('#dockPen')) $('#dockPen').disabled = isFallback;
+  if ($('#hlTool')) $('#hlTool').disabled = isFallback;
+  if ($('#eraserTool')) $('#eraserTool').disabled = isFallback;
+
+  const read = curBook ? bookDone(curBook).has(curPage) : false;
   $('#pagePill').classList.toggle('is-read', read);
   $('#pagePill').setAttribute('aria-label', read
     ? `صفحهٔ ${faNum(curPage)} — خوانده شده`
     : `صفحهٔ ${faNum(curPage)}`);
-  if (total) {
+  $('#pageWrap')?.classList.toggle('is-read', read);
+  if (curBook?.numPages) {
     const done = bookDone(curBook).size;
-    $('#readerPct').textContent = `${faNum(Math.round((done / total) * 100))}٪ خونده شده`;
+    $('#readerPct').textContent = `${faNum(Math.round((done / curBook.numPages) * 100))}٪`;
   } else {
     $('#readerPct').textContent = '';
+  }
+  const notesBadge = $('#readerNotesBadge');
+  if (notesBadge) {
+    const totalNotes = (curBook?.highlights?.length || 0) + (curBook?.notes?.length || 0);
+    notesBadge.textContent = faNum(totalNotes);
+    notesBadge.hidden = totalNotes <= 0;
   }
   updateMarkBtn();
 }
@@ -1164,12 +1749,15 @@ function gotoPage(n) {
      The flag only stops repeat attempts on the page that already failed. */
   textLayerBroken = false;
   curPage = n;
+  /* The undo toast belongs to the page its records came from; leaving that page
+     retires it rather than leaving a button that can only be refused. */
+  if (erasedStrokes) hideEraseUndo();
   updateBook(curBook.id, { lastPage: n, lastReadAt: Date.now() });
   curBook.lastPage = n;
   if (engine === 'browser') {
     $('#pdfFrame').src = `${pdfObjectUrl}#page=${n}&zoom=${Math.round(zoom * 100)}`;
   } else {
-    renderPage();
+    renderPageSafe();
   }
   updatePageUI();
   updateGoalBar();
@@ -1178,9 +1766,14 @@ function gotoPage(n) {
 /* ── Page completion ── */
 function updateMarkBtn() {
   const btn = $('#markReadBtn');
+  if (!btn || !curBook) return;
   const read = bookDone(curBook).has(curPage);
   btn.classList.toggle('is-read', read);
-  btn.textContent = read ? '✓ خوانده شد' : 'صفحه را خواندم';
+  btn.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg><span id="markReadText" class="sr-only">${read ? 'خوانده شد' : 'خواندم'}</span>`;
+  btn.title = read ? 'خوانده شد — کلیک برای تغییر به خوانده‌نشده' : 'علامت‌گذاری صفحه به عنوان خوانده شده';
+  btn.setAttribute('aria-pressed', String(read));
+  btn.setAttribute('aria-label', read ? 'صفحه خوانده شد' : 'علامت‌گذاری صفحه به عنوان خوانده شده');
+  $('#pageWrap')?.classList.toggle('is-read', read);
 }
 
 function togglePageRead() {
@@ -1203,18 +1796,35 @@ function togglePageRead() {
 /* ── Goal bar ── */
 function updateGoalBar() {
   const bar = $('#goalBar');
+  const chipText = $('#goalChipText');
+  const chip = $('#goalChip');
+  if (!curBook) return;
   const st = curBook.stats?.[dayKey(new Date())] || { pages: 0, minutes: 0 };
-  /* Only a positive count is a page goal. A record that carries anything else
-     (an older negative or non-numeric value) is shown as having no page goal
-     instead of a progress track measured against a nonsensical target. */
   const rawG = Number(curBook.goal?.pagesPerDay);
   const g = Number.isFinite(rawG) && rawG > 0 ? rawG : null;
+  const pct = g ? Math.min(100, Math.round((st.pages / g) * 100)) : 0;
   const goalName = curBook.goal?.text ? `<span class="goal-name">🎯 ${esc(curBook.goal.text)}</span>` : '';
-  bar.innerHTML = (g || goalName)
-    ? `<div class="goal-line">${goalName}<span>${g ? `امروز: ${faNum(st.pages)} از ${faNum(g)} صفحه · ${faNum(st.minutes)} دقیقه` : ''}</span><button id="goalEdit">تغییر هدف</button></div>
-       ${g ? '<div class="goal-track"><i style="width:' + Math.min(100, Math.round((st.pages / g) * 100)) + '%"></i></div>' : ''}`
-    : `<div class="goal-line"><span>هدفی برای این کتاب تنظیم نشده</span><button id="goalEdit">تنظیم هدف</button></div>`;
-  $('#goalEdit').onclick = () => window.dispatchEvent(new CustomEvent('open-goal', { detail: curBook.id }));
+
+  if (chipText) {
+    if (g) {
+      chipText.textContent = `🎯 ${faNum(st.pages)}/${faNum(g)}`;
+    } else if (curBook.goal?.text) {
+      chipText.textContent = `🎯 ${curBook.goal.text}`;
+    } else {
+      chipText.textContent = '🎯 هدف';
+    }
+  }
+  if (chip) {
+    chip.title = g ? `هدف امروز: ${faNum(st.pages)} از ${faNum(g)} صفحه (${faNum(pct)}٪)` : 'تنظیم هدف مطالعه';
+  }
+  if (bar) {
+    bar.setAttribute('aria-valuenow', String(pct));
+    bar.innerHTML = (g || goalName)
+      ? `<div class="goal-track"><i style="width:${pct}%"></i></div>`
+      : '';
+  }
+  const editBtn = $('#goalEdit');
+  if (editBtn) editBtn.onclick = () => window.dispatchEvent(new CustomEvent('open-goal', { detail: curBook.id }));
 }
 
 /* ── Book completion reaction (Jingool, small and brief) ── */
@@ -1271,7 +1881,7 @@ function highlightFromSelection(color, selection) {
     y: r.top - wrapRect.top,
     w: r.width, h: r.height,
   }));
-  return { id: Date.now() + '', page: curPage, text: selection.text, color, rects, note: '', createdAt: Date.now(), scale: pageScale };
+  return { id: nextId(), page: curPage, text: selection.text, color, rects, note: '', createdAt: Date.now(), scale: pageScale };
 }
 
 /* Drop the captured selection geometry and hide the contextual toolbar. */
@@ -1298,24 +1908,42 @@ function paintHighlights() {
     /* Records saved before the scale was captured keep their original pixels. */
     const f = h.scale ? pageScale / h.scale : 1;
     if (h.free) {
-      /* Hand-drawn stroke: repaint the recorded polyline into the draw canvas
-         at the current render scale. Lives on the canvas, not as DOM nodes.
-         Marks from before the width choice existed keep their drawn look via
-         the default nib. */
+      /* Hand-drawn stroke / freehand highlight: smooth Bézier curve rendering */
       if (drawCtx) {
-        drawCtx.strokeStyle = STROKE_COLORS[h.color] || STROKE_COLORS.yellow;
-        drawCtx.globalAlpha = .85;
-        drawCtx.lineWidth = nibPx(h.width);
+        const isDraw = h.kind === 'draw';
+        drawCtx.save();
+        drawCtx.strokeStyle = resolveColor(h.color);
+        drawCtx.globalAlpha = isDraw ? 1.0 : 0.38;
+        drawCtx.lineWidth = nibPx(h.width, h.kind);
         drawCtx.lineCap = 'round';
         drawCtx.lineJoin = 'round';
-        drawCtx.beginPath();
-        (h.pts || []).forEach((p, i) => {
-          const x = p.x * f, y = p.y * f;
-          if (i === 0) drawCtx.moveTo(x, y);
-          else drawCtx.lineTo(x, y);
-        });
-        drawCtx.stroke();
-        drawCtx.globalAlpha = 1;
+
+        const pts = h.pts || [];
+        if (pts.length === 1) {
+          drawCtx.beginPath();
+          drawCtx.arc(pts[0].x * f, pts[0].y * f, drawCtx.lineWidth / 2, 0, Math.PI * 2);
+          drawCtx.fillStyle = drawCtx.strokeStyle;
+          drawCtx.fill();
+        } else if (pts.length === 2) {
+          drawCtx.beginPath();
+          drawCtx.moveTo(pts[0].x * f, pts[0].y * f);
+          drawCtx.lineTo(pts[1].x * f, pts[1].y * f);
+          drawCtx.stroke();
+        } else if (pts.length > 2) {
+          drawCtx.beginPath();
+          drawCtx.moveTo(pts[0].x * f, pts[0].y * f);
+          for (let i = 1; i < pts.length - 1; i++) {
+            const p1 = pts[i];
+            const p2 = pts[i + 1];
+            const midX = ((p1.x + p2.x) / 2) * f;
+            const midY = ((p1.y + p2.y) / 2) * f;
+            drawCtx.quadraticCurveTo(p1.x * f, p1.y * f, midX, midY);
+          }
+          const last = pts[pts.length - 1];
+          drawCtx.lineTo(last.x * f, last.y * f);
+          drawCtx.stroke();
+        }
+        drawCtx.restore();
       }
       return;
     }
@@ -1325,7 +1953,7 @@ function paintHighlights() {
       d.style.top = +(r.y * f).toFixed(2) + 'px';
       d.style.width = +(r.w * f).toFixed(2) + 'px';
       d.style.height = +(r.h * f).toFixed(2) + 'px';
-      d.style.background = HL_COLORS[h.color] || HL_COLORS.yellow;
+      d.style.background = resolveHlRgba(h.color, 0.38);
       if (h.note) d.classList.add('has-note');
       d.title = h.note ? 'یادداشت: ' + h.note : '';
       layer.appendChild(d);
@@ -1355,9 +1983,10 @@ function saveNote() {
       paintHighlights();
     } else {
       curBook.notes = curBook.notes || [];
-      curBook.notes.push({ id: Date.now() + '', page: curPage, text, createdAt: Date.now() });
+      curBook.notes.push({ id: nextId(), page: curPage, text, createdAt: Date.now() });
       updateBook(curBook.id, { notes: curBook.notes });
     }
+    updatePageUI();
   }
   pendingNoteHl = null;
   $('#noteOverlay').hidden = true;
@@ -1394,7 +2023,7 @@ function buildNotes() {
     el.className = 'note-item';
     /* Hand-drawn marks have no quoted text — the stroke itself is the content. */
     el.innerHTML = `
-      ${it.color ? `<i class="dot" style="background:${HL_COLORS[it.color] || it.color}"></i>` : ''}
+      ${it.color ? `<i class="dot" style="background:${resolveColor(it.color)}"></i>` : ''}
       <div class="note-body">
         <span class="note-text">${it.free ? '<b class="free-tag">نشان قلمی</b>' : esc(it.text)}</span>
         ${it.note ? `<span class="note-note">📝 ${esc(it.note)}</span>` : ''}
@@ -1407,6 +2036,7 @@ function buildNotes() {
         else curBook.notes = (curBook.notes || []).filter(x => x.id !== it.id);
         updateBook(curBook.id, { highlights: curBook.highlights, notes: curBook.notes });
         paintHighlights();
+        updatePageUI();
         buildNotes();
         return;
       }
@@ -1426,9 +2056,13 @@ function exportNotes() {
       : `- صفحه ${it.page}: «${it.text}»${it.note ? ` — ${it.note}` : ''}\n`;
   });
   const a = document.createElement('a');
-  a.href = URL.createObjectURL(new Blob([md], { type: 'text/markdown' }));
+  const url = URL.createObjectURL(new Blob([md], { type: 'text/markdown' }));
+  a.href = url;
   a.download = curBook.title + '.md';
   a.click();
+  /* The download has the bytes by now; holding the blob URL alive would keep
+     the whole export in memory for the life of the page. */
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 /* ── Reading Timer ── */
@@ -1451,15 +2085,23 @@ function stopTimerSession() {
   clearInterval(timer.interval);
   timer.running = false;
   const btn = $('#readTimerBtn');
-  btn.classList.remove('on');
-  btn.setAttribute('aria-pressed', 'false');
-  btn.title = 'شروع تایمر مطالعه';
+  if (btn) {
+    btn.classList.remove('on');
+    btn.setAttribute('aria-pressed', 'false');
+    btn.title = 'شروع تایمر مطالعه';
+  }
   /* The capsule keeps the finished count so the session reads as a closed
      loop instead of resetting to zero. */
   const s = Math.floor(ms / 1000);
-  $('#timerText').textContent = faDigits(`${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`);
-  const m = Math.max(1, Math.round(ms / 60000));
-  addToday('minutes', m);
+  const txt = $('#timerText');
+  if (txt) txt.textContent = faDigits(`${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`);
+  /* Nothing under half a minute is reading. Rounding 2 seconds up to a whole
+     minute made every accidental tap — the double-tap that starts and stops the
+     timer by mistake — add a minute to the day's total, so the totals drifted
+     upwards until they described nothing. Below the floor the session records
+     zero minutes and only the streak day is kept. */
+  const m = ms >= 30000 ? Math.round(ms / 60000) : 0;
+  if (m > 0 && curBook) addToday('minutes', m);
   recordDay();
   updateGoalBar();
 }
@@ -1483,5 +2125,3 @@ function addToday(kind, v) {
   curBook.stats[k][kind] += v;
   updateBook(curBook.id, { stats: curBook.stats });
 }
-
-

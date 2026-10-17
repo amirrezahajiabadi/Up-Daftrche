@@ -193,7 +193,22 @@ const currentPage = () =>
   document.querySelector('.page.active')?.id.replace(/^page-/, '') || 'today';
 
 const resolveTarget = step => {
-  const el = document.querySelector(step.sel);
+  let el = null;
+  if (window.innerWidth >= 1024 && step.sel) {
+    if (step.sel.includes('.nav-tab') || step.sel.includes('[data-page')) {
+      el = document.querySelector(`.side-rail ${step.sel}`);
+    }
+  }
+  if (!el && step.sel) {
+    const list = document.querySelectorAll(step.sel);
+    for (const item of list) {
+      if (item.offsetParent !== null || getComputedStyle(item).display !== 'none') {
+        el = item;
+        break;
+      }
+    }
+    if (!el && list.length > 0) el = list[0];
+  }
   if (!el) return null;
   return step.wrap ? el.closest(step.wrap) || el : el;
 };
@@ -343,6 +358,24 @@ function position() {
       },
       arrow: null, spot: null,
     };
+  }
+
+  const rail = document.querySelector('.side-rail');
+  const railVisible = !mobile && vw >= 1024 && rail && getComputedStyle(rail).display !== 'none';
+  if (railVisible && placement?.box) {
+    const railRect = rail.getBoundingClientRect();
+    const rightLimit = railRect.left - 12;
+    if (target && target.getBoundingClientRect().right <= railRect.left) {
+      if (placement.box.left + bw > rightLimit) {
+        placement.box.left = Math.max(12, rightLimit - bw);
+        if (placement.arrow) {
+          const tRect = target.getBoundingClientRect();
+          placement.arrow.left = Math.min(Math.max(tRect.left + tRect.width / 2 - 7, placement.box.left + 16), placement.box.left + bw - 30);
+        }
+      }
+    } else if (!target) {
+      placement.box.left = Math.max(12, (railRect.left - bw) / 2);
+    }
   }
 
   /* The geometry above is physical, because getBoundingClientRect is; the

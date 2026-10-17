@@ -123,7 +123,10 @@ html[data-mode="dark"] .pri-row button.sel.high{color:#ff8f8f}
 .search input{flex:1;min-width:0;border:none;outline:none;background:transparent;font-family:var(--font-ui);font-size:14px;font-weight:400;color:var(--text)}
 .search input::placeholder{color:var(--muted);font-weight:400}
 .search>svg{color:var(--muted);flex-shrink:0}
-.dice{border:none;background:var(--accent-soft);color:var(--accent);width:34px;height:34px;border-radius:var(--radius-xs);cursor:pointer;display:grid;place-items:center;transition:all var(--duration-fast);flex-shrink:0}
+.dice{position:relative;border:none;background:var(--accent-soft);color:var(--accent);width:34px;height:34px;border-radius:var(--radius-xs);cursor:pointer;display:grid;place-items:center;transition:all var(--duration-fast);flex-shrink:0}
+/* 44px of finger around the die at every size it is drawn, including the 30px
+   it shrinks to on a phone, where the row it sits in has nothing else to spare. */
+.dice::after{content:'';position:absolute;inset:-5px;border-radius:var(--radius-sm)}
 .dice:hover{background:var(--accent);color:#fff;transform:rotate(-8deg)}
 .dice:active{transform:rotate(0) scale(.95)}
 
@@ -173,10 +176,15 @@ html[data-mode="dark"] .pri-row button.sel.high{color:#ff8f8f}
 
 /* Spring switch */
 .switch{position:relative;width:44px;height:24px;border-radius:var(--radius-pill);border:1.5px solid var(--border);background:var(--bg);cursor:pointer;transition:background var(--duration-base),border-color var(--duration-base);flex-shrink:0;padding:0}
-.switch::after{content:'';position:absolute;top:50%;right:3px;transform:translateY(-50%);width:16px;height:16px;border-radius:50%;background:var(--muted);transition:all var(--duration-base) cubic-bezier(.34,1.56,.64,1)}
+/* The knob is a child pseudo-element; the hit area has to be another one, so the
+   switch gains a real ::before box that reaches 44px tall while the track stays
+   24px. inset-inline-end is written logically because both knobs below sit on the
+   inline end of the track. */
+.switch::before{content:'';position:absolute;inset:-10px -2px;border-radius:var(--radius-pill)}
+.switch::after{content:'';position:absolute;top:50%;inset-inline-end:3px;transform:translateY(-50%);width:16px;height:16px;border-radius:50%;background:var(--muted);transition:all var(--duration-base) cubic-bezier(.34,1.56,.64,1)}
 .switch:hover::after{transform:translateY(-50%) scale(1.15)}
 .switch.on{background:var(--green);border-color:var(--green)}
-.switch.on::after{right:calc(100% - 19px);background:#fff}
+.switch.on::after{inset-inline-end:calc(100% - 19px);background:var(--color-text-on-success)}
 
 /* Scene and music chips — same family as the rest of the product */
 .scene-chips{display:flex;gap:7px;flex-wrap:wrap}
@@ -235,22 +243,27 @@ html[data-mode="dark"] .pri-row button.sel.high{color:#ff8f8f}
   .moods button svg{width:17px;height:17px}
   .add-form{padding:8px 8px 6px;gap:5px}
   .add-line input{font-size:14px;padding:9px 10px}
-  .add-btn{width:42px;height:42px;border-radius:var(--radius-sm)}
-  .pri-row{gap:5px;padding:2px 4px 3px}
-  .pri-row button{font-size:11px;padding:4px 10px;gap:5px}
+  .add-btn{width:44px;height:44px;min-width:44px;min-height:44px;border-radius:var(--radius-sm)}
+  .pri-row{gap:5px;padding:2px 4px 6px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  .pri-row::-webkit-scrollbar{display:none}
+  .pri-row button{font-size:11px;padding:4px 10px;gap:5px;flex-shrink:0}
   .pri-row .ic{width:11px;height:11px}
   .pri-row button::before{width:18px;height:18px;inset-inline-start:5px}
-  .cat-row,.due-row{gap:5px;padding:2px 4px 3px}
+  .cat-row,.due-row,.dur-row{gap:5px;padding:2px 4px 6px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  .cat-row::-webkit-scrollbar,.due-row::-webkit-scrollbar,.dur-row::-webkit-scrollbar{display:none}
+  .due-row button,.dur-row button,#durCustom{flex-shrink:0}
   .due-row button{font-size:11px;padding:3px 9px}
+  #durCustom{width:78px;font-size:12px;padding:3px 6px}
   .cat-scroll button{font-size:11px;padding:3px 8px}
   .search{padding:6px 12px 6px 6px}
   .search input{font-size:13px}
   .dice{width:30px;height:30px;border-radius:var(--radius-xs)}
+  .dice::after{inset:-7px}
   .dice svg{width:15px;height:15px}
   .cats{gap:6px}
   .cat-chip{font-size:11px;padding:5px 11px}
   .cat-chip .dot{width:7px;height:7px}
-  .filters button{font-size:12px;padding:8px 0}
+  .filters button{font-size:12px;padding:8px 2px;white-space:nowrap}
   .vibe-card{padding:14px 14px}
   .vibe-head strong{font-size:14px}
   .scene-chips button{font-size:11px;padding:5px 12px}
@@ -259,23 +272,31 @@ html[data-mode="dark"] .pri-row button.sel.high{color:#ff8f8f}
   .amb-control span{font-size:11px}
 }
 
+@media (max-width:380px){
+  .vol-row{flex-direction:column;gap:12px}
+  .vol{width:100%;min-width:0}
+}
+
 /* ═══ QuickAdd Preview ═══ */
 .quickadd-preview{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:6px;width:100%}
 .quickadd-preview[hidden]{display:none}
 .quickadd-chip{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:var(--radius-pill);font-family:var(--font-ui);font-size:11px;font-weight:500;background:var(--accent-soft);border:1px solid color-mix(in srgb,var(--accent) 25%,transparent);color:var(--color-accent-text);line-height:1.4}
-.quickadd-chip-del{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border:none;background:transparent;color:var(--color-accent-text);cursor:pointer;font-size:13px;line-height:1;padding:0;border-radius:50%;margin-inline-start:3px;opacity:.7;transition:opacity var(--duration-fast)}
+.quickadd-chip-del{position:relative;display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border:none;background:transparent;color:var(--color-accent-text);cursor:pointer;font-size:13px;line-height:1;padding:0;border-radius:50%;margin-inline-start:3px;opacity:.7;transition:opacity var(--duration-fast)}
+/* A 15px «×» inside an 11px chip is the smallest target in the app and it is
+   destructive, so the hit area is grown without touching what is drawn: 41px of
+   finger around the glyph, overlapping the chip's own padding rather than the
+   neighbouring chip. */
+.quickadd-chip-del::after{content:'';position:absolute;inset:-13px;border-radius:var(--radius-pill)}
 .quickadd-chip-del:hover{opacity:1}
 @media (max-width:360px){
-  .progress-card{padding:16px 12px;gap:12px}
-  .ring-wrap{width:68px;height:68px}
-  .ring-inner{width:56px;height:56px}
-  .ring-text{font-size:20px}
+  .progress-card{padding:14px 12px;gap:10px}
+  .ring-wrap{width:64px;height:64px;flex-shrink:0}
+  .ring-inner{width:52px;height:52px}
+  .ring-text{font-size:18px}
   .chart{height:56px;gap:4px}
-  .moods button{width:30px;height:30px}
-  .moods button svg{width:15px;height:15px}
   .scene-chips button{font-size:11px;padding:4px 10px}
-  .vol{min-width:110px}
-  .filters button{font-size:11px}
+  .vol{min-width:0;width:100%}
+  .filters button{font-size:11px;padding:7px 1px;white-space:nowrap}
   .cat-chip{font-size:11px;padding:4px 9px}
 }
 

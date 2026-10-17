@@ -19,8 +19,17 @@ html[data-mode="dark"] .overlay{background:rgba(0,0,0,.5)}
 .name-card>p{color:var(--muted);font-size:13px;margin-bottom:18px;line-height:1.7;font-weight:400}
 .name-card input{width:100%;border:1.5px solid var(--border);background:var(--bg);border-radius:var(--radius-sm);padding:var(--space-3) var(--space-4);font-family:var(--font-ui);font-size:16px;font-weight:400;text-align:center;color:var(--text);outline:none;transition:border-color var(--duration-base),box-shadow var(--duration-base)}
 .name-card input:focus{border-color:var(--accent);box-shadow:0 0 0 4px var(--accent-soft)}
-.name-card .go{margin-top:var(--space-3);width:100%;border:none;background:var(--accent);color:#fff;font-family:var(--font-ui);font-size:15px;font-weight:600;padding:12px;border-radius:var(--radius-sm);cursor:pointer;box-shadow:var(--shadow-accent);transition:transform var(--duration-fast),box-shadow var(--duration-fast)}
+.name-card .go{margin-top:var(--space-3);width:100%;border:none;background:var(--accent);color:var(--color-text-on-accent);font-family:var(--font-ui);font-size:15px;font-weight:600;padding:12px;border-radius:var(--radius-sm);cursor:pointer;box-shadow:var(--shadow-accent);transition:transform var(--duration-fast),box-shadow var(--duration-fast)}
 .name-card .go:active{transform:translateY(3px);box-shadow:0 1px 0 0 rgba(120,55,20,.35)}
+/* The themed confirm's destructive choice: the same .go button, filled with the
+   danger token and labelled with the ink that reads on it — so «حذف» looks like
+   the thing it is instead of like every other confirm in the app. */
+.name-card .go.danger{background:var(--color-danger);color:var(--color-text-on-danger);box-shadow:0 4px 0 0 color-mix(in srgb,var(--color-danger) 55%,transparent)}
+.name-card .go.danger:active{box-shadow:0 1px 0 0 color-mix(in srgb,var(--color-danger) 55%,transparent)}
+/* The confirm answers one question, so its title and its body sit tighter than
+   the name card's greeting does. */
+.confirm-card h2{margin-top:0}
+.confirm-card #confirmBody[hidden]{display:none}
 .skip{margin-top:14px;background:none;border:none;color:var(--muted);font-family:var(--font-ui);font-size:13px;font-weight:500;cursor:pointer}
 
 /* ═══ The name card ═══
@@ -157,7 +166,7 @@ html.tab-hidden .bd-char svg{animation-play-state:paused}
 .roll-box.landed{border-color:var(--accent);border-style:solid;animation:pop var(--duration-base) cubic-bezier(.34,1.56,.64,1)}
 .roll-actions{display:flex;gap:8px;margin-top:14px}
 .roll-actions[hidden]{display:none}
-.roll-actions .go{flex:1;border:none;background:var(--accent);color:#fff;font-family:var(--font-ui);font-weight:600;font-size:14px;padding:11px;border-radius:var(--radius-xs);cursor:pointer;box-shadow:var(--shadow-accent);transition:transform var(--duration-fast),box-shadow var(--duration-fast)}
+.roll-actions .go{flex:1;border:none;background:var(--accent);color:var(--color-text-on-accent);font-family:var(--font-ui);font-weight:600;font-size:14px;padding:11px;border-radius:var(--radius-xs);cursor:pointer;box-shadow:var(--shadow-accent);transition:transform var(--duration-fast),box-shadow var(--duration-fast)}
 .roll-actions .go:active{transform:translateY(3px);box-shadow:0 1px 0 0 rgba(120,55,20,.35)}
 .roll-actions .ghost{flex:1;border:1.5px solid var(--border);background:transparent;color:var(--muted);font-family:var(--font-ui);font-weight:500;font-size:13px;padding:11px;border-radius:var(--radius-xs);cursor:pointer;transition:all var(--duration-fast)}
 
@@ -177,7 +186,7 @@ html.tab-hidden .bd-char svg{animation-play-state:paused}
 .focus-presets input{width:64px;font-family:var(--font-ui);font-size:12px;font-weight:500;text-align:center;border:1.5px dashed var(--border);background:transparent;color:var(--text);border-radius:var(--radius-pill);padding:5px 6px;outline:none;transition:border-color var(--duration-fast)}
 .focus-presets input:focus{border-color:var(--accent)}
 
-.focus-pill{position:fixed;bottom:calc(var(--nav-height) + env(safe-area-inset-bottom,0) + 12px);inset-inline-start:50%;transform:translateX(50%);z-index:99;display:flex;align-items:center;gap:8px;background:var(--surface);border:1.5px solid var(--accent);color:var(--text);font-family:var(--font-ui);font-weight:600;font-size:13px;padding:10px 18px;border-radius:var(--radius-pill);box-shadow:var(--shadow-lg);cursor:pointer;animation:pillIn var(--duration-base) var(--ease-out)}
+.focus-pill{position:fixed;bottom:max(24px,calc(var(--nav-height) + env(safe-area-inset-bottom,0px) + 12px));inset-inline-start:calc(50% + (var(--rail-offset, 0px) / 2));transform:translateX(50%);z-index:99;display:flex;align-items:center;gap:8px;background:var(--surface);border:1.5px solid var(--accent);color:var(--text);font-family:var(--font-ui);font-weight:600;font-size:13px;padding:10px 18px;border-radius:var(--radius-pill);box-shadow:var(--shadow-lg);cursor:pointer;animation:pillIn var(--duration-base) var(--ease-out)}
 .focus-pill svg{color:var(--accent)}
 .focus-pill span{max-width:60vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 
@@ -496,20 +505,38 @@ body.focus-immersive .focus-sound-toggle{display:inline-flex}
 
 /* ═══ Notes Panel ═══ */
 /* Same touch-ergonomics contract as the reader sheet: keyboard-aware height
-   (svh closed / dvh live) and real bottom clearance on home-indicator devices. */
-.sheet{position:fixed;bottom:0;left:0;right:0;z-index:95;background:var(--surface);border-radius:var(--radius-xl) var(--radius-xl) 0 0;box-shadow:var(--shadow-2);max-height:85vh;max-height:85svh;max-height:85dvh;display:flex;flex-direction:column;animation:sheetUp var(--duration-base) var(--ease-out);padding-bottom:var(--sab)}
+   (svh closed / dvh live) and real bottom clearance on home-indicator devices.
+
+   105, not 95: the reader is a full-screen surface at z-index 98 (css/library.css,
+   #readerView), and every sheet opened from inside it — the notes panel and the
+   study settings — has to sit above that surface. At 95 both rendered *underneath*
+   the reader, so the page's text layer swallowed every tap: #notesClose,
+   #notesExport, #settingsClose, the brightness slider and the mode chips were all
+   unclickable while a book was open. Above .overlay's 100 as well, so a sheet
+   opened from a dialog (the reader's own goal sheet) is never trapped behind it. */
+.sheet{position:fixed;bottom:0;inset-inline:0;width:100%;max-width:100%;z-index:105;background:var(--surface);border-radius:var(--radius-xl) var(--radius-xl) 0 0;border-bottom:none;box-shadow:var(--shadow-2);max-height:85vh;max-height:85svh;max-height:85dvh;display:flex;flex-direction:column;animation:sheetUp var(--duration-base) var(--ease-out);padding-bottom:var(--sab)}
 .sheet[hidden]{display:none}
+@media (min-width:640px){
+  .sheet{
+    max-width:520px;
+    margin-inline:auto;
+    bottom:20px;
+    border-radius:var(--radius-xl);
+    border:1px solid var(--border);
+  }
+}
 @keyframes sheetUp{from{transform:translateY(100%)}}
 .sheet-head{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:16px 18px;border-bottom:1.5px dashed var(--border)}
 .sheet-head strong{font-family:var(--font-ui);font-size:15px;font-weight:600}
 .sheet-head div{display:flex;align-items:center;gap:6px}
-.notes-list{overflow:auto;padding:12px 16px;display:flex;flex-direction:column;gap:10px;overscroll-behavior-y:contain}
+.notes-list{overflow:auto;padding:12px 16px calc(12px + var(--nav-height) + var(--sab));display:flex;flex-direction:column;gap:10px;overscroll-behavior-y:contain}
 .notes-empty{text-align:center;color:var(--muted);font-size:12px;padding:20px 0;font-weight:400}
 .note-item{display:flex;gap:10px;align-items:flex-start;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px var(--space-3);cursor:pointer;transition:transform var(--duration-fast),border-color var(--duration-fast)}
 @media (hover:hover){.note-item:hover{transform:translateY(-2px);border-color:var(--accent)}}
 .note-item .dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-top:4px}
 .note-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
 .note-text{font-size:12px;line-height:1.7;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-weight:400}
+.note-text .free-tag{font-style:italic;color:var(--muted);font-weight:500}
 .note-note{font-size:11px;color:var(--accent);line-height:1.6;font-weight:500}
 .note-page{font-size:11px;color:var(--muted);flex-shrink:0;font-weight:500}
 /* note-del: touch target widened by an invisible disc (see ::after below) */
@@ -552,9 +579,50 @@ body.focus-immersive .focus-sound-toggle{display:inline-flex}
   .focus-presets input{width:56px;font-size:13px}
   .roll-box{min-height:72px;font-size:14px;padding:14px}
   .roll-actions .go,.roll-actions .ghost{font-size:13px;padding:10px}
-  .focus-pill{padding:8px 14px;font-size:12px;bottom:calc(var(--nav-height) + var(--sab) + 8px)}
+.focus-pill{padding:8px 14px;font-size:12px;bottom:calc(var(--nav-height) + var(--sab) + 8px)}
   .focus-pill svg{width:13px;height:13px}
 }
+
+/* ═══ Immersive focus: one screen, no scroll ═══
+   While a session is running the page drops its dock, its header and its
+   doodles (css/base.css) so the timer *is* the screen — and on the short
+   phones this view is built for that is exactly where it overflowed: the app
+   column already carried the page's own 20px+14px of padding under its
+   min-height:100vh box, so a 568px phone scrolled by 34px before the sound
+   cards were even opened, and by another ~268px once they were.
+
+   The box is now the viewport itself (100dvh, where dvh is supported, so the
+   collapsing mobile toolbar cannot re-introduce the overflow), the page's
+   padding goes to zero while immersive, and the vertical rhythm from the ring
+   down — the ring, the character, the gaps — tightens on any screen shorter
+   than 700px. Nothing here changes what the view looks like on a tall phone
+   or a desktop: those keep every dimension they had. */
+body.focus-immersive #page-focus.page{padding-block:0;min-height:0}
+body.focus-immersive .app-focus{min-height:100dvh;padding:max(12px,env(safe-area-inset-top)) 0 14px}
+/* The measure, not the media query, is what decides whether the ring fits: a
+   wildcard so the block also covers the pages that render it outside
+   .focus-page-card. */
+@media (max-height:700px){
+  body.focus-immersive .app-focus{padding-block:max(10px,env(safe-area-inset-top)) 10px;gap:10px}
+  body.focus-immersive .focus-page-card{gap:9px;padding:0}
+  body.focus-immersive .focus-char{width:60px;height:60px}
+  body.focus-immersive .focus-char .fekrbaz,
+  body.focus-immersive .focus-char .qorqori,
+  body.focus-immersive .focus-char .jingool{width:60px;height:60px}
+  body.focus-immersive .focus-ring{width:min(126px,34dvh);height:min(126px,34dvh)}
+  body.focus-immersive .focus-inner{width:min(108px,29dvh);height:min(108px,29dvh)}
+  body.focus-immersive .focus-time{font-size:min(30px,8dvh)}
+  body.focus-immersive .focus-task{font-size:13px;margin-bottom:8px}
+  body.focus-immersive .focus-page-actions .go,
+  body.focus-immersive .focus-page-actions .ghost{font-size:13.5px;padding:9px}
+  body.focus-immersive .focus-sound-toggle{padding:7px 16px}
+  body.focus-immersive .vibe-card{padding:12px 14px}
+  body.focus-immersive .vol-row{margin-top:9px;padding-top:8px;gap:10px}
+}
+/* The sound cards are brought back into the same screen rather than under it:
+   the toggle scrolls to them, so the reader lands on the controls they just
+   revealed instead of on a page that grew by a card and a half. */
+body.focus-immersive .vibe-card.open{scroll-margin-block:80px 24px}
 
 /* ═══ What's New — changelog dialog ═══
    Reuses the .overlay scrim and the .name-card paper language; the release
@@ -576,7 +644,7 @@ body.focus-immersive .focus-sound-toggle{display:inline-flex}
 .changelog-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
 .changelog-item{display:flex;align-items:center;gap:10px;font-size:12.5px;line-height:1.7;color:var(--text);font-weight:400}
 .changelog-icon{flex-shrink:0;width:26px;height:26px;display:grid;place-items:center;font-size:13px;background:var(--accent-soft);border-radius:var(--radius-sm)}
-.changelog-card .go{margin-top:14px;width:100%;min-height:44px;border:none;background:var(--accent);color:#fff;font-family:var(--font-ui);font-size:15px;font-weight:600;padding:12px;border-radius:var(--radius-sm);cursor:pointer;box-shadow:var(--shadow-accent);transition:transform var(--duration-fast),box-shadow var(--duration-fast)}
+.changelog-card .go{margin-top:14px;width:100%;min-height:44px;border:none;background:var(--accent);color:var(--color-text-on-accent);font-family:var(--font-ui);font-size:15px;font-weight:600;padding:12px;border-radius:var(--radius-sm);cursor:pointer;box-shadow:var(--shadow-accent);transition:transform var(--duration-fast),box-shadow var(--duration-fast)}
 .changelog-card .go:active{transform:translateY(3px);box-shadow:0 1px 0 0 rgba(120,55,20,.35)}
 @media (hover:hover){
   .changelog-card .go:hover{transform:translateY(-2px)}

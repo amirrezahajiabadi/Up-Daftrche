@@ -1,4 +1,4 @@
-﻿/* The two-layer navigation.
+/* The two-layer navigation.
    The bottom bar carries four homes and a `more` doorway; the five destinations
    that used to crowd it live in the `more` sheet and in the rail's second
    group. Three files have to agree on that split: js/constants.js owns the

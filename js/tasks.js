@@ -41,10 +41,19 @@ function animatePriDotChange(dot) {
    into the dock's strip, flip it above the button instead. */
 function openMenuAboveNav(menu) {
   menu.classList.remove('up');
+  menu.style.insetInlineStart = '';
+  menu.style.insetInlineEnd = '';
   const rect = menu.getBoundingClientRect();
   const navHeight = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--nav-height')) || 64;
   const navTop = innerHeight - navHeight - 16;
   if (rect.bottom > navTop) menu.classList.add('up');
+  if (rect.left < 4) {
+    menu.style.insetInlineEnd = 'auto';
+    menu.style.insetInlineStart = '0';
+  } else if (rect.right > innerWidth - 4) {
+    menu.style.insetInlineStart = 'auto';
+    menu.style.insetInlineEnd = '0';
+  }
 }
 
 function animateChipFlip(chip) {
@@ -277,13 +286,23 @@ export function moveTaskToDay(id, key) {
 }
 
 /* ── Undo Toast ── */
-let undoTimer = null, lastDeleted = null;
+/* Deletions arrive in the order they were made, because a hand that is tidying
+   a list rarely stops after one. Each entry remembers the task and *where it
+   sat among that day's visible rows* — an index into state.tasks is useless
+   for putting it back, since the list a reader is looking at is filtered and
+   the array is not. */
+let undoTimer = null, undoQueue = [];
 function showUndo(task, index) {
-  lastDeleted = { task, index };
+  undoQueue.push({ task, index });
+  /* The toast names the task that was just deleted, not the first of the run. */
   const toast = $('#undoToast');
   const title = task && task.text ? (task.text.length > 25 ? task.text.slice(0, 24).trim() + '…' : task.text) : 'کار';
   const label = toast?.querySelector('.toast-text');
-  if (label) label.textContent = `${title} حذف شد`;
+  if (label) {
+    label.textContent = undoQueue.length > 1
+      ? `${faNum(undoQueue.length)} کار حذف شد`
+      : `${title} حذف شد`;
+  }
   // Reset the toast bar animation
   const bar = toast.querySelector('.toast-bar');
   bar.style.animation = 'none'; void bar.offsetWidth; bar.style.animation = '';
@@ -296,24 +315,34 @@ function commitUndo() {
   const toast = $('#undoToast');
   toast.classList.remove('show');
   setTimeout(() => { toast.hidden = true; }, 300);
-  lastDeleted = null;
+  undoQueue = [];
 }
 function performUndo() {
-  if (!lastDeleted) return;
+  if (!undoQueue.length) return;
   clearTimeout(undoTimer);
-  const { task, index } = lastDeleted;
-  // Reinsert the task at its approximate position
-  const insertAt = Math.min(index, state.tasks.length);
-  state.tasks.splice(insertAt, 0, task);
-  save();
-  // If it's visible in the current view, add it back
-  if (matches(task) && (state.catFilter === 'all' || state.catFilter === (task.cat || 'misc')) && (!state.query || task.text.includes(state.query))) {
-    const el = createTaskEl(task);
-    const children = [...listEl.children];
-    if (insertAt >= children.length) listEl.appendChild(el);
-    else listEl.insertBefore(el, children[insertAt]);
-    updateEmpty();
+  /* Newest first, so the list ends up in the order it was before the run of
+     deletions rather than reversed. */
+  const restored = undoQueue.slice().reverse();
+  undoQueue = [];
+  for (const { task, index } of restored) {
+    const at = Math.min(index, state.tasks.length);
+    state.tasks.splice(at, 0, task);
   }
+  save();
+  /* The DOM is filtered, so the row is put back by matching the task that
+     follows it in the model — the same `normalizeFa` comparison the filter
+     itself uses — instead of by an array index that counts rows it is not in. */
+  const shown = visible();
+  for (const { task } of restored) {
+    if (!shown.includes(task)) continue;
+    const el = createTaskEl(task);
+    const at = shown.indexOf(task);
+    const nextId = shown[at + 1]?.id;
+    const nextEl = nextId ? listEl.querySelector(`[data-id="${nextId}"]`) : null;
+    if (nextEl) listEl.insertBefore(el, nextEl);
+    else listEl.appendChild(el);
+  }
+  updateEmpty();
   notify();
   commitUndo();
 }
@@ -335,8 +364,11 @@ function animateOut(el, onDone) {
 /* Actually delete a task (trash button) — removes it from state and shows the undo toast */
 export function collapse(el, id) {
   const task = state.tasks.find(t => t.id === id);
-  const index = state.tasks.findIndex(t => t.id === id);
-  if (task) lastDeleted = null; // Prevent conflicts
+  /* Where the row sat in the list the reader is looking at, so Undo can put it
+     back among the same neighbours rather than at a raw array position. */
+  const shown = visible();
+  const shownAt = shown.findIndex(t => t.id === id);
+  const index = shownAt >= 0 ? shownAt : state.tasks.findIndex(t => t.id === id);
   state.tasks = state.tasks.filter(t => t.id !== id);
   save();
   if (state.session && state.session.taskId === id) clearFocus();
@@ -613,16 +645,38 @@ export function initAddForm() {
     durInput.addEventListener('blur', () => { if (durInput.value === '') showDurHint(false); });
   }
 
-  const taskInput = $('#taskInput');
+const taskInput = $('#taskInput');
   const taskPreview = $('#taskQuickAddPreview');
   if (taskInput && taskPreview) {
+    /* A token the parser set aside has no raw span in `parsed.tokens` yet, so
+       the × used to be a dead button: the chip vanished, then the next
+       keystroke parsed the same text and brought it straight back. The
+       dismissed spellings are remembered and filtered out of every preview
+       until the input changes under them. */
+    const dismissed = new Set();
+    const withoutDismissed = parsed => {
+      if (!dismissed.size || !parsed.ignored) return parsed;
+      const ignored = parsed.ignored.filter(t => !dismissed.has(t));
+      return ignored.length === parsed.ignored.length ? parsed : { ...parsed, ignored };
+    };
     taskInput.addEventListener('input', () => {
       const raw = taskInput.value;
-      const parsed = parseQuickAdd(raw);
+      const parsed = withoutDismissed(parseQuickAdd(raw));
+      /* A dismissed spelling is forgotten as soon as it is really gone from the
+         field: retyping «ساعت ۲۵» afterwards is a fresh, deliberate act. */
+      for (const token of dismissed) if (!raw.includes(token)) dismissed.delete(token);
       renderQuickAddPreview(taskPreview, parsed, key => {
         if (key === 'due') state.selDue = 'none';
         if (key === 'cat') state.selCat = 'misc';
         if (key === 'dur') state.selDur = null;
+        if (key === 'ignored') {
+          (parsed.ignored || []).forEach(t => {
+            dismissed.add(t);
+            taskInput.value = stripQuickAddToken(taskInput.value, t);
+          });
+          taskInput.dispatchEvent(new Event('input'));
+          return;
+        }
         renderDueRow();
         const token = parsed.tokens?.[key];
         if (token) {

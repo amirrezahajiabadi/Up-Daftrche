@@ -1,5 +1,5 @@
 import { state, getTask } from './state.js';
-import { savePomo, loadSession, saveSession, clearSession, safeSet } from './store.js';
+import { savePomo, loadSession, saveSession, clearSession, safeSet, readString } from './store.js';
 import { addSessionToHistory, getHistory } from './focushistory.js';
 import { $, faNum, faDigits, formatDuration, normalizeFa, startOfToday, esc } from './utils.js';
 import { APP_TITLE } from './constants.js';
@@ -32,9 +32,12 @@ const SESSION_PRESETS = [5, 15, 30, 60, 90];
 const RATINGS = { good: 'خوب بود', okay: 'معمولی بود', hard: 'سخت بود' };
 const END_MESSAGE = 'وقتت تموم شد.';
 
-let scene = localStorage.getItem('daftarche-scene') || 'none';
-let ambOn = localStorage.getItem('daftarche-ambsound') !== '0';
-let musicSel = localStorage.getItem('daftarche-music') || 'none';
+/* Read through the store, not straight from localStorage: these three run
+   while this module is being evaluated, so a browser that refuses storage on
+   read (partitioned or locked-down) would take the whole boot down here. */
+let scene = readString('daftarche-scene', 'none');
+let ambOn = readString('daftarche-ambsound', '1') !== '0';
+let musicSel = readString('daftarche-music', 'none');
 let userList = [];
 let tracksLoaded = false;
 
@@ -44,7 +47,12 @@ let tracksLoaded = false;
 function elapsedMs(session, at = Date.now()) {
   if (!session) return 0;
   const base = Number(session.activeMs) || 0;
-  return session.runStartedAt ? base + Math.max(0, at - session.runStartedAt) : base;
+  const raw = session.runStartedAt ? base + Math.max(0, at - session.runStartedAt) : base;
+  /* A run whose clock was left ticking in a background tab (or a locked phone)
+     is capped at the time that was actually planned: a 25-minute session that
+     sat hidden overnight is 25 minutes of focus, not nine hours of it. */
+  const cap = (Number(session.plannedDurationMin) || 0) * 60000;
+  return cap > 0 ? Math.min(raw, cap) : raw;
 }
 
 function remainingSec(session, at = Date.now()) {
@@ -132,6 +140,7 @@ export function cancelSession() {
   s.status = 'cancelled';
   s.runStartedAt = null;
   persist();
+  document.title = APP_TITLE;
 }
 
 /* Fill the final fields (taskCompleted/rating set by the reflection) */
@@ -144,6 +153,8 @@ function finalizeSession(status) {
   s.status = status;
   s.actualDurationMin = Math.round(s.activeMs / 60000);
   persist();
+  /* The countdown in the tab title belongs to a running timer only. */
+  document.title = APP_TITLE;
   return s;
 }
 
@@ -177,17 +188,39 @@ function applyScene(visualOnly = false) {
   const pg = $('#page-focus');
   if (!pg) return;
   ['rain', 'sea', 'forest'].forEach(s => pg.classList.toggle('scene-' + s, scene === s));
-  document.querySelectorAll('#sceneChips button').forEach(b => b.classList.toggle('sel', b.dataset.scene === scene));
+  /* The chosen chip is a pressed button, and says so. `sel` alone was a colour
+     the screen reader could not read: four chips, no way to tell which one was
+     on. */
+  document.querySelectorAll('#sceneChips button').forEach(b => {
+    const on = b.dataset.scene === scene;
+    b.classList.toggle('sel', on);
+    b.setAttribute('aria-pressed', String(on));
+  });
   const sw = $('#ambSwitch');
   if (!sw) return;
   sw.classList.toggle('on', ambOn);
+  sw.setAttribute('aria-checked', String(ambOn));
   $('#ambLabel').textContent = ambOn ? 'صدای محیط: روشن' : 'صدای محیط: خاموش';
   if (!visualOnly) audio.setAmbience(scene, ambOn);
 }
 
+/* The selected chip is a pressed button in both chip groups. Split from
+   applyMusic so the page can paint the choice without playing it. */
+function paintMusicChips() {
+  document.querySelectorAll('#musicChips button').forEach(b => {
+    const on = b.dataset.music === musicSel;
+    b.classList.toggle('sel', on);
+    b.setAttribute('aria-pressed', String(on));
+  });
+  document.querySelectorAll('.user-chip').forEach(ch => {
+    const on = ('user:' + ch.dataset.id) === musicSel;
+    ch.classList.toggle('sel', on);
+    ch.setAttribute('aria-pressed', String(on));
+  });
+}
+
 async function applyMusic() {
-  document.querySelectorAll('#musicChips button').forEach(b => b.classList.toggle('sel', b.dataset.music === musicSel));
-  document.querySelectorAll('.user-chip').forEach(ch => ch.classList.toggle('sel', ('user:' + ch.dataset.id) === musicSel));
+  paintMusicChips();
   if (musicSel === 'none') audio.stopMusicAll();
   else if (audio.TRACK_KEYS.includes(musicSel)) audio.setMusic(musicSel);
   else if (musicSel.startsWith('user:')) {
@@ -203,7 +236,9 @@ function renderUserTracks() {
   wrap.innerHTML = '';
   userList.forEach(t => {
     const b = document.createElement('button');
-    b.className = 'user-chip' + (('user:' + t.id) === musicSel ? ' sel' : '');
+    const chosen = ('user:' + t.id) === musicSel;
+    b.className = 'user-chip' + (chosen ? ' sel' : '');
+    b.setAttribute('aria-pressed', String(chosen));
     b.dataset.id = t.id;
     b.innerHTML = `<svg viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg><span></span><i class="rm" title="حذف">×</i>`;
     b.querySelector('span').textContent = t.name;
@@ -240,6 +275,11 @@ function initVolumes() {
 function initVibe() {
   buildSceneVisuals();
   applyScene(true);
+  /* paintMusicChips only, not applyMusic: the pressed state of the chips has to
+     be right on the first paint, and applyMusic also *starts* the chosen track —
+     which is not something a page may do before the reader has touched anything.
+     The audio itself still waits for the first interaction above. */
+  paintMusicChips();
   initVolumes();
 
   $('#sceneChips')?.addEventListener('click', e => {
@@ -358,6 +398,15 @@ function renderFocusPage() {
     const open = document.body.classList.toggle('focus-sound-open');
     e.currentTarget.setAttribute('aria-expanded', open ? 'true' : 'false');
     document.querySelectorAll('#page-focus .vibe-card').forEach(el => el.classList.toggle('open', open));
+    /* On a short screen the two cards that just appeared sit below the fold, and
+       the reader who pressed «صدا و موسیقی» would be looking at the timer while
+       the panel they opened stayed out of sight. Bringing the first card into
+       view costs one scroll and puts the controls under the thumb that asked for
+       them; the toggle itself stays put above. */
+    if (open && window.innerHeight < 760) {
+      const first = document.querySelector('#page-focus .vibe-card.open');
+      requestAnimationFrame(() => first?.scrollIntoView({ behavior: 'smooth', block: 'nearest' }));
+    }
   });
   card.querySelector('#sessionFinish')?.addEventListener('click', () => {
     finalizeSession('completed');
@@ -734,20 +783,36 @@ function naturalEnd(session) {
   beep();
 }
 
+/* The one place an expired timer is closed out. It is called both by the
+   display tick and by the visibility handler below, so a run that expired
+   while the tab was hidden is finished the moment the tab is looked at
+   again, instead of waiting for the next (throttled) interval. */
+function checkExpiry() {
+  const session = getActiveSession();
+  if (!session || session.status !== 'active') return;
+  if (remainingSec(session) > 0) return;
+  if ($('#page-focus')?.classList.contains('active')) {
+    naturalEnd(session);
+    renderEndedView();
+  } else {
+    naturalEnd(session);
+  }
+}
+
 /* Display refresh only — timestamps stay the source of truth */
 setInterval(() => {
   const session = getActiveSession();
   if (!session) return;
-  if ($('#page-focus')?.classList.contains('active')) {
-    if (session.status === 'active' && remainingSec(session) <= 0) { naturalEnd(session); renderEndedView(); return; }
-    syncRunningUI();
-  } else if (session.status === 'active' && remainingSec(session) <= 0) {
-    naturalEnd(session);
-    return;
-  } else {
-    updateFocusPill();
-  }
+  if (session.status === 'active' && remainingSec(session) <= 0) { checkExpiry(); return; }
+  if ($('#page-focus')?.classList.contains('active')) syncRunningUI();
+  else updateFocusPill();
 }, 1000);
+
+/* A hidden tab throttles its interval to about once a minute (and a sleeping
+   phone stops it altogether), so the expiry check is run again on return. */
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') checkExpiry();
+});
 
 /* ═══ Public page API ═══ */
 
@@ -758,10 +823,27 @@ export function syncFocusPage() {
 
 export function clearFocus() {
   document.body?.classList.remove('focus-immersive');
-  const s = getActiveSession();
-  if (s) { s.status = 'cancelled'; s.endedAt = Date.now(); s.runStartedAt = null; }
-  state.session = null;
-  clearSession();
+  const s = state.session;
+  /* A session that already ran out is sitting on its reflection screen with
+     its minutes not yet archived. Clearing it here would throw those minutes
+     away, so it is kept: only the link to a task that is being deleted is
+     dropped, and the reflection can still be answered. */
+  const ended = s && s.status === 'completed' && !s._reflectDone;
+  if (ended) {
+    /* The task id is left in place on purpose: every reader of the session
+       (the title, the completion question, the history record) already copes
+       with a task that no longer exists, and clearing it would make
+       normalizeSession() drop the whole record — and its minutes — on the next
+       reload. */
+    s.taskCompleted = s.taskCompleted === true;
+    persist();
+  } else {
+    const live = getActiveSession();
+    if (live) { live.status = 'cancelled'; live.endedAt = Date.now(); live.runStartedAt = null; }
+    state.session = null;
+    clearSession();
+  }
+  document.title = APP_TITLE;
   renderFocusPage();
   updateFocusPill();
 }

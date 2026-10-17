@@ -4,7 +4,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   gregorianToJalali, jalaliToGregorian, isValidJalali, jalaliDaysInMonth,
-  dateToJalali, jalaliToDate, formatJalali, JALALI_MONTHS,
+  isValidJalaliDate, dateToJalali, jalaliToDate, formatJalali, JALALI_MONTHS,
 } from '../js/jalali.js';
 
 test('known Nowruz anchors', () => {
@@ -38,6 +38,17 @@ test('impossible dates are rejected', () => {
   assert.equal(isValidJalali(1404, 7, 31), false);   // Mehr has 30
   assert.equal(isValidJalali(1404, 1.5, 1), false);
   assert.equal(isValidJalali('1404', 1, 1), false);
+});
+
+test('isValidJalaliDate is the same guard under the name the parser uses', () => {
+  assert.equal(isValidJalaliDate(1405, 1, 32), false);   // Farvardin has 31
+  assert.equal(isValidJalaliDate(1405, 1, 31), true);
+  assert.equal(isValidJalaliDate(1405, 7, 31), false);   // Mehr has 30
+  assert.equal(isValidJalaliDate(1405, 12, 29), true);
+  assert.equal(isValidJalaliDate(1405, 12, 30), false);  // 1405 is not a leap year
+  assert.equal(isValidJalaliDate(1404, 12, 30), false);
+  assert.equal(isValidJalaliDate(1403, 12, 30), true);   // 1403 is
+  assert.equal(isValidJalaliDate(1405, 13, 1), false);
 });
 
 test('round trip over every day from 1990 to 2100 (Gregorian) — and days advance by exactly one', () => {

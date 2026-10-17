@@ -226,8 +226,11 @@
       <div class="sec-head">
         <h2>پیشرفت امروز</h2>
       </div>
-      <div class="tp-track"><i id="todayProgBar"></i></div>
-      <p class="tp-text" id="todayProgText"></p>
+      <!-- The bar is a progressbar and the sentence under it is its live text:
+           a screen reader gets the same 3-of-7 the eye does, and gets it as it
+           changes. aria-valuenow is kept in step by js/today.js. -->
+      <div class="tp-track" id="todayProgTrack" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="پیشرفت کارهای امروز"><i id="todayProgBar"></i></div>
+      <p class="tp-text" id="todayProgText" role="status" aria-live="polite"></p>
     </section>
 
     <section class="today-sec mood-sec">
@@ -473,6 +476,48 @@
     </header>
 
     <div id="shelfView">
+      <div class="lib-stats-strip sheet-paper" id="libraryStatsBar" hidden>
+        <div class="lib-stat-item">
+          <span class="lib-stat-num" id="statBooksCount">۰</span>
+          <span class="lib-stat-label">📚 کتاب‌ها</span>
+          <span class="lib-stat-sub" id="statBooksSub">۰ مطالعه · ۰ تمام</span>
+        </div>
+        <div class="lib-stat-item">
+          <span class="lib-stat-num" id="statPagesCount">۰</span>
+          <span class="lib-stat-label">📄 صفحه‌ها</span>
+        </div>
+        <div class="lib-stat-item">
+          <span class="lib-stat-num" id="statTimeCount">۰ دقیقه</span>
+          <span class="lib-stat-label">⏱ مطالعه</span>
+        </div>
+        <div class="lib-stat-item">
+          <span class="lib-stat-num" id="statNotesCount">۰</span>
+          <span class="lib-stat-label">📝 نکات</span>
+        </div>
+      </div>
+
+      <div class="shelf-controls" id="shelfControls" hidden>
+        <div class="shelf-bar">
+          <svg class="shelf-search-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+          <input type="search" id="shelfSearch" class="shelf-search-input" placeholder="جستجوی عنوان کتاب…" aria-label="جستجوی کتاب">
+          <button type="button" class="shelf-search-clear" id="shelfSearchClear" aria-label="پاک کردن جستجو" hidden>✕</button>
+          <div class="shelf-sort-wrap">
+            <select id="shelfSortSelect" class="shelf-sort-select" aria-label="مرتب‌سازی کتاب‌ها">
+              <option value="lastRead">⇅ اخیر</option>
+              <option value="progress">⇅ پیشرفت</option>
+              <option value="newest">⇅ تازه‌ها</option>
+              <option value="title">⇅ الفبا</option>
+            </select>
+          </div>
+        </div>
+        <div class="shelf-filter-chips" id="shelfFilter" role="group" aria-label="فیلتر وضعیت کتاب">
+          <button type="button" class="s-filter-chip on" data-filter="all" aria-pressed="true">همه</button>
+          <button type="button" class="s-filter-chip" data-filter="reading" aria-pressed="false">در حال مطالعه</button>
+          <button type="button" class="s-filter-chip" data-filter="unread" aria-pressed="false">خوانده‌نشده</button>
+          <button type="button" class="s-filter-chip" data-filter="done" aria-pressed="false">تکمیل‌شده</button>
+        </div>
+      </div>
+
       <div class="shelf-head"><strong>قفسهٔ من</strong><span id="shelfCount"></span></div>
       <div id="lastReadSlot"></div>
       <div class="shelf-grid" id="shelfGrid"></div>
@@ -491,19 +536,179 @@
     </div>
 
     <div id="readerView" hidden>
-      <div class="reader-top">
-        <button class="r-back" id="readerBack">→ قفسه</button>
-        <img class="reader-thumb" id="readerThumb" alt="" hidden>
-        <div class="reader-titles">
-          <div class="reader-title" id="readerTitle"></div>
-          <div class="reader-sub" id="readerPct"></div>
+      <header class="reader-ribbon" id="readerRibbon">
+        <div class="reader-ribbon-row reader-top">
+          <!-- گروه ۱ (راست / Start): هویت کتاب و هدف (Island 1) -->
+          <div class="reader-island-book" role="region" aria-label="مشخصات کتاب">
+            <button type="button" class="r-back" id="readerBack" title="بازگشت به قفسه">→ قفسه</button>
+            <img class="reader-thumb" id="readerThumb" alt="" hidden>
+            <div class="reader-titles">
+              <div class="reader-title" id="readerTitle"></div>
+              <div class="reader-sub-row">
+                <span class="reader-sub" id="readerPct"></span>
+                <span class="reader-sub-sep" aria-hidden="true">·</span>
+                <button type="button" class="goal-chip" id="goalChip" title="تنظیم یا مشاهده هدف روزانه مطالعه">
+                  <span id="goalChipText">🎯 هدف</span>
+                </button>
+                <button type="button" id="goalEdit" hidden aria-hidden="true"></button>
+              </div>
+            </div>
+            <!-- نوار بسیار ظریف ۲.۵ پیکسلی پیشرفت هدف در لبه زیرین جزیره -->
+            <div class="goal-bar reader-goal-line" id="goalBar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0" aria-label="پیشرفت هدف مطالعهٔ امروز"><div class="goal-track"><i style="width:0%"></i></div></div>
+          </div>
+
+          <!-- گروه ۲ (مرکز / Center): میز ابزارها و ورق‌زدن (Island 2) -->
+          <div class="reader-island-tools" id="ribbonToolsScroll" role="toolbar" aria-label="ابزارهای مطالعه و پیمایش">
+            <!-- بخش ورق‌زدن صفحه -->
+            <div class="r-tool-group r-group-nav">
+              <button type="button" class="r-tool-btn r-nav-step" id="prevPage" aria-label="صفحهٔ قبل" title="صفحهٔ قبل">‹</button>
+              <button type="button" class="dock-page" id="pagePill" aria-haspopup="true" aria-expanded="false" title="پرش به صفحه"><span id="pageLabel"></span></button>
+              <button type="button" class="r-tool-btn r-nav-step" id="nextPage" aria-label="صفحهٔ بعد" title="صفحهٔ بعد">›</button>
+              <button type="button" class="mark-read r-tool-btn" id="markReadBtn" title="علامت‌گذاری وضعیت مطالعه صفحه" aria-label="وضعیت مطالعه این صفحه">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+                <span id="markReadText" class="sr-only">خواندم</span>
+              </button>
+            </div>
+
+            <span class="bar-sep" aria-hidden="true"></span>
+
+            <!-- جامدادی (ابزارهای حاشیه‌نویسی) -->
+            <div class="r-tool-group r-group-draw">
+              <button type="button" class="r-tool-btn" id="hlTool" aria-label="هایلایتر (ماژیک)" title="هایلایتر (ماژیک)" aria-pressed="false">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 11-6 6v3h3l6-6"/><path d="m22 12-4.6 4.6a2 2 0 0 1-2.8 0l-5.2-5.2a2 2 0 0 1 0-2.8L14 4"/><path d="m18 8 2 2"/></svg>
+                <i class="hl-indicator" id="hlIndicator" aria-hidden="true"></i>
+              </button>
+              <button type="button" class="r-tool-btn" id="dockPen" aria-label="قلم تحریری (خودکار)" title="قلم تحریری (خودکار)" aria-pressed="false">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg>
+                <i class="pen-indicator" id="penIndicator" aria-hidden="true"></i>
+              </button>
+              <button type="button" class="r-tool-btn" id="eraserTool" aria-label="پاک‌کن" title="پاک‌کن — روی خطوط بکش تا پاک شوند" aria-pressed="false">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 20H8.5L3.6 15.1a2 2 0 010-2.8L12.6 3.3a2 2 0 012.8 0l5 5a2 2 0 010 2.8L11 20"/><path d="M8.5 11.5l5.5 5.5"/></svg>
+              </button>
+              <button type="button" class="r-tool-btn" id="strokeUndoBtn" aria-label="لغو آخرین علامت (Undo)" title="لغو آخرین علامت (Undo)" disabled>
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5v0a5.5 5.5 0 0 1-5.5 5.5H11"/></svg>
+              </button>
+              <button type="button" class="r-tool-btn" id="addNoteBtn" aria-label="افزودن یادداشت صفحه" title="افزودن یادداشت صفحه">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><path d="M12 18v-6"/><path d="M9 15h6"/></svg>
+              </button>
+              <button type="button" class="r-tool-btn has-badge" id="readerNotes" aria-label="یادداشت‌ها و هایلایت‌ها" title="یادداشت‌ها و هایلایت‌ها">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12a1 1 0 011 1v17l-7-4-7 4V4a1 1 0 011-1z"/></svg>
+                <span class="r-notes-badge" id="readerNotesBadge" hidden>۰</span>
+              </button>
+            </div>
+
+            <span class="bar-sep" aria-hidden="true"></span>
+
+            <!-- ابزار بزرگنمایی -->
+            <div class="r-tool-group r-group-zoom">
+              <button type="button" class="r-tool-btn r-zoom-btn" id="zoomOut" aria-label="کوچک‌نمایی صفحه" title="کوچک‌نمایی">−</button>
+              <button type="button" class="zoom-pill" id="zoomVal" title="بازنشانی بزرگ‌نمایی به ۱۰۰٪" aria-label="درصد بزرگ‌نمایی">۱۰۰٪</button>
+              <button type="button" class="r-tool-btn r-zoom-btn" id="zoomIn" aria-label="بزرگ‌نمایی صفحه" title="بزرگ‌نمایی">+</button>
+            </div>
+          </div>
+
+          <!-- گروه ۳ (چپ / End): تایمر، نور و تنظیمات (Island 3) -->
+          <div class="reader-island-meta" role="region" aria-label="کنترل‌های محیط مطالعه">
+            <button type="button" class="reader-timer" id="readTimerBtn" title="شروع تایمر مطالعه" aria-pressed="false">
+              <svg class="t-ico" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 2"/></svg>
+              <span id="timerText">۰:۰۰</span>
+            </button>
+            <button type="button" class="r-tool-btn mode-light" id="dockMode" aria-label="نور روز" title="تغییر نور صحنه">
+              <svg class="m-sun" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
+              <svg class="m-sepia" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.7s6 6.3 6 10.3a6 6 0 11-12 0C6 9 12 2.7 12 2.7z"/></svg>
+              <svg class="m-moon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1111.2 3 7 7 0 0021 12.8z"/></svg>
+            </button>
+            <button type="button" class="r-tool-btn" id="dockSettings" aria-haspopup="dialog" aria-expanded="false" aria-label="تنظیمات مطالعه" title="تنظیمات مطالعه">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/><circle cx="8.5" cy="6" r="2"/><circle cx="15.5" cy="12" r="2"/><circle cx="10.5" cy="18" r="2"/></svg>
+            </button>
+          </div>
         </div>
-        <button class="reader-timer" id="readTimerBtn" title="شروع تایمر مطالعه" aria-pressed="false">
-          <svg class="t-ico" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 2"/></svg>
-          <span id="timerText">۰:۰۰</span>
-        </button>
-      </div>
-      <div class="goal-bar" id="goalBar"></div>
+
+        <!-- نوار کشوییِ ابزار حاشیه‌نویسی (Sub-Ribbon بالایی): وقتی هایلایتر یا قلم فعال است باز می‌شود -->
+        <div class="reader-subribbon" id="penPop" hidden role="toolbar" aria-label="تنظیمات هایلایتر و قلم">
+          <div class="subribbon-inner">
+            <div class="subribbon-tools-nav" role="tablist" aria-label="انتخاب ابزار حاشیه‌نویسی">
+              <button type="button" class="subribbon-tab on" id="subribbonHlTab" role="tab" aria-selected="true" title="هایلایتر (ماژیک)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 11-6 6v3h3l6-6"/><path d="m22 12-4.6 4.6a2 2 0 0 1-2.8 0l-5.2-5.2a2 2 0 0 1 0-2.8L14 4"/><path d="m18 8 2 2"/></svg>
+                <span>هایلایتر</span>
+              </button>
+              <button type="button" class="subribbon-tab" id="subribbonPenTab" role="tab" aria-selected="false" title="قلم تحریری (خودکار)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg>
+                <span>قلم تحریری</span>
+              </button>
+            </div>
+
+            <span class="dock-sep" aria-hidden="true"></span>
+
+            <span class="subribbon-label">رنگ:</span>
+            <!-- سطل رنگ‌های هایلایتر -->
+            <div class="subribbon-colors palette-swatches" id="hlColorSwatches">
+              <button type="button" class="hl-dot hl-yellow sel" data-color="yellow" aria-label="زرد طلایی" title="زرد طلایی"></button>
+              <button type="button" class="hl-dot hl-green" data-color="green" aria-label="سبز نعنایی" title="سبز نعنایی"></button>
+              <button type="button" class="hl-dot hl-blue" data-color="blue" aria-label="آبی آسمانی" title="آبی آسمانی"></button>
+              <button type="button" class="hl-dot hl-pink" data-color="pink" aria-label="صورتی گلاب" title="صورتی گلاب"></button>
+              <button type="button" class="hl-dot hl-purple" data-color="purple" aria-label="بنفش یاسی" title="بنفش یاسی"></button>
+              <button type="button" class="hl-dot hl-orange" data-color="orange" aria-label="نارنجی هلویی" title="نارنجی هلویی"></button>
+              <button type="button" class="hl-dot hl-teal" data-color="teal" aria-label="فیروزه‌ای" title="فیروزه‌ای"></button>
+              <button type="button" class="hl-dot hl-red" data-color="red" aria-label="قرمز مرجانی" title="قرمز مرجانی"></button>
+              <label class="custom-color-swatch" title="رنگ دلخواه هایلایتر">
+                <input type="color" id="customHlPicker" aria-label="رنگ دلخواه هایلایتر" value="#f6c445">
+              </label>
+            </div>
+
+            <!-- سطل رنگ‌های قلم تحریری -->
+            <div class="subribbon-colors palette-swatches" id="inkColorSwatches" hidden>
+              <button type="button" class="hl-dot ink-black sel" data-color="ink-black" aria-label="مشکی تحریری" title="مشکی تحریری"></button>
+              <button type="button" class="hl-dot ink-blue" data-color="ink-blue" aria-label="آبی خودکاری" title="آبی خودکاری"></button>
+              <button type="button" class="hl-dot ink-red" data-color="ink-red" aria-label="قرمز لاکی" title="قرمز لاکی"></button>
+              <button type="button" class="hl-dot ink-green" data-color="ink-green" aria-label="سبز جنگلی" title="سبز جنگلی"></button>
+              <button type="button" class="hl-dot ink-purple" data-color="ink-purple" aria-label="بنفش" title="بنفش"></button>
+              <button type="button" class="hl-dot ink-brown" data-color="ink-brown" aria-label="قهوه‌ای سپیا" title="قهوه‌ای سپیا"></button>
+              <button type="button" class="hl-dot ink-orange" data-color="ink-orange" aria-label="نارنجی" title="نارنجی"></button>
+              <button type="button" class="hl-dot ink-white" data-color="ink-white" aria-label="سفید تحریری" title="سفید تحریری"></button>
+              <label class="custom-color-swatch" title="رنگ دلخواه قلم">
+                <input type="color" id="customPenColor" aria-label="رنگ دلخواه قلم" value="#1e242b">
+              </label>
+            </div>
+
+            <span class="dock-sep" aria-hidden="true"></span>
+
+            <span class="subribbon-label">ضخامت:</span>
+            <div class="pen-widths" id="penWidths" role="group" aria-label="ضخامت قلم">
+              <button type="button" class="pen-width" data-width="thin" aria-label="نازک" title="نازک"><i style="width:3px;height:3px"></i></button>
+              <button type="button" class="pen-width on" data-width="medium" aria-label="متوسط" title="متوسط"><i style="width:6px;height:6px"></i></button>
+              <button type="button" class="pen-width" data-width="thick" aria-label="پهن" title="پهن"><i style="width:10px;height:10px"></i></button>
+              <button type="button" class="pen-width" data-width="xthick" aria-label="خیلی پهن" title="خیلی پهن"><i style="width:14px;height:14px"></i></button>
+            </div>
+
+            <span class="dock-sep" aria-hidden="true"></span>
+
+            <button type="button" class="subribbon-clear" id="clearPageStrokesBtn" title="پاک کردن همهٔ علامت‌های این صفحه" aria-label="پاک کردن همهٔ علامت‌های این صفحه"><span class="clear-icon" aria-hidden="true">🗑️</span><span class="clear-label">پاک کردن</span></button>
+
+            <!-- بستن نوار رنگ: واپسین دکمه‌ای که پیش از کشیدن خط لمس می‌شود؛ جمع کردنش ابتدای صفحه را آزاد می‌کند -->
+            <button type="button" class="subribbon-fold" id="penPopToggle" aria-expanded="true" aria-label="جمع کردن نوار رنگ" title="جمع کردن نوار رنگ">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 15l-6-6-6 6"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- پاپ‌آور پرش به صفحه متصل به نوار بالا -->
+        <div class="dock-pop dock-pop-page reader-page-pop" id="pagePop" hidden>
+          <div class="page-jump-row">
+            <button type="button" class="page-quick-jump" id="firstPageBtn" title="صفحهٔ نخست">۱ «</button>
+            <label for="pageJumpInput">پرش به صفحه:</label>
+            <input type="number" id="pageJumpInput" min="1" class="page-jump-input" placeholder="۱">
+            <button type="button" class="page-jump-go" id="pageJumpGo">برو</button>
+            <button type="button" class="page-quick-jump" id="lastPageBtn" title="صفحهٔ آخر">» آخر</button>
+          </div>
+          <input type="range" id="pageRange" min="1" value="1" aria-label="اسلایدر شمارهٔ صفحه">
+        </div>
+      </header>
+
+      <!-- نگه‌دارنده‌های سازگاری backward با DOM برای جلوگیری از شکستن هرگونه تست یا کوئری بیرونی -->
+      <div id="readerDock" class="reader-dock-bridge" hidden aria-hidden="true"></div>
+      <div id="readerFloat" class="reader-float-bridge" hidden aria-hidden="true"></div>
+
       <div class="reader-stage mode-light" id="readerStage">
         <div class="reader-loading" id="readerLoading" hidden><div class="spinner"></div></div>
         <div class="reader-hint" id="readerHint" role="status" hidden>برای هایلایت، قلم رو بردار و روی صفحه بکش</div>
@@ -521,12 +726,19 @@
           </div>
         </div>
         <div id="hlBar" hidden role="toolbar" aria-label="ابزار هایلایت متن">
-          <button class="hl-dot" data-color="yellow" style="--hl:#f6c445" aria-label="هایلایت زرد"></button>
-          <button class="hl-dot" data-color="green" style="--hl:#9fce7f" aria-label="هایلایت سبز"></button>
-          <button class="hl-dot" data-color="blue" style="--hl:#8fb7d9" aria-label="هایلایت آبی"></button>
-          <button class="hl-dot" data-color="pink" style="--hl:#e79ab0" aria-label="هایلایت صورتی"></button>
+          <button type="button" class="hl-dot hl-yellow" data-color="yellow" aria-label="زرد طلایی" title="زرد طلایی"></button>
+          <button type="button" class="hl-dot hl-green" data-color="green" aria-label="سبز نعنایی" title="سبز نعنایی"></button>
+          <button type="button" class="hl-dot hl-blue" data-color="blue" aria-label="آبی آسمانی" title="آبی آسمانی"></button>
+          <button type="button" class="hl-dot hl-pink" data-color="pink" aria-label="صورتی گلاب" title="صورتی گلاب"></button>
+          <button type="button" class="hl-dot hl-purple" data-color="purple" aria-label="بنفش یاسی" title="بنفش یاسی"></button>
+          <button type="button" class="hl-dot hl-orange" data-color="orange" aria-label="نارنجی هلویی" title="نارنجی هلویی"></button>
+          <button type="button" class="hl-dot hl-teal" data-color="teal" aria-label="فیروزه‌ای" title="فیروزه‌ای"></button>
+          <button type="button" class="hl-dot hl-red" data-color="red" aria-label="قرمز مرجانی" title="قرمز مرجانی"></button>
+          <label class="custom-color-swatch" title="رنگ دلخواه هایلایت">
+            <input type="color" id="customHlBarColor" aria-label="رنگ دلخواه هایلایت" value="#f6c445">
+          </label>
           <span class="bar-sep" aria-hidden="true"></span>
-          <button class="hlbar-note" id="hlNoteBtn">یادداشت</button>
+          <button type="button" class="hlbar-note" id="hlNoteBtn" title="افزودن یادداشت" aria-label="افزودن یادداشت">📝</button>
         </div>
         <div class="done-pop" id="donePop" hidden>
           <div class="done-pop-card">
@@ -535,67 +747,11 @@
           </div>
         </div>
       </div>
-      <div class="reader-dock" id="readerDock">
-        <div class="dock-pill">
-          <button class="dock-btn dock-nav" id="prevPage" aria-label="صفحهٔ قبل" title="صفحهٔ قبل">‹</button>
-          <button class="dock-page" id="pagePill" aria-haspopup="true" aria-expanded="false" title="پرش به صفحه"><span id="pageLabel"></span></button>
-          <button class="dock-btn dock-nav" id="nextPage" aria-label="صفحهٔ بعد" title="صفحهٔ بعد">›</button>
-          <span class="dock-sep" aria-hidden="true"></span>
-          <button class="dock-btn" id="dockPen" aria-haspopup="true" aria-expanded="false" aria-label="قلم هایلایت" title="قلم هایلایت">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg>
-            <i class="pen-indicator" aria-hidden="true"></i>
-          </button>
-          <button class="dock-btn" id="readerNotes" aria-label="یادداشت‌ها و هایلایت‌ها" title="یادداشت‌ها">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12a1 1 0 011 1v17l-7-4-7 4V4a1 1 0 011-1z"/></svg>
-          </button>
-          <button class="dock-btn" id="dockSettings" aria-haspopup="dialog" aria-expanded="false" aria-label="تنظیمات مطالعه" title="تنظیمات مطالعه">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/><circle cx="8.5" cy="6" r="2"/><circle cx="15.5" cy="12" r="2"/><circle cx="10.5" cy="18" r="2"/></svg>
-          </button>
-        </div>
-        <div class="dock-pop" id="penPop" hidden role="toolbar" aria-label="قلم هایلایت">
-          <button class="dock-tool" id="hlTool" aria-pressed="false" title="قلم روشن/خاموش">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg>
-            قلم
-          </button>
-          <span class="dock-sep" aria-hidden="true"></span>
-          <button class="hl-dot" data-color="yellow" style="--hl:#f6c445" aria-label="هایلایت زرد"></button>
-          <button class="hl-dot" data-color="green" style="--hl:#9fce7f" aria-label="هایلایت سبز"></button>
-          <button class="hl-dot" data-color="blue" style="--hl:#8fb7d9" aria-label="هایلایت آبی"></button>
-          <button class="hl-dot" data-color="pink" style="--hl:#e79ab0" aria-label="هایلایت صورتی"></button>
-          <span class="dock-sep" aria-hidden="true"></span>
-          <div class="pen-widths" id="penWidths" role="group" aria-label="ضخامت قلم">
-            <button type="button" class="pen-width" data-width="thin" aria-label="قلم نازک" title="نازک"><i style="width:4px;height:4px"></i></button>
-            <button type="button" class="pen-width" data-width="medium" aria-label="قلم متوسط" title="متوسط"><i style="width:7px;height:7px"></i></button>
-            <button type="button" class="pen-width" data-width="thick" aria-label="قلم پهن" title="پهن"><i style="width:11px;height:11px"></i></button>
-          </div>
-          <span class="dock-sep" aria-hidden="true"></span>
-          <button class="dock-tool" id="eraserTool" aria-pressed="false" title="پاک‌کن — روی خط بکش تا پاک شه">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 20H8.5L3.6 15.1a2 2 0 010-2.8L12.6 3.3a2 2 0 012.8 0l5 5a2 2 0 010 2.8L11 20"/><path d="M8.5 11.5l5.5 5.5"/></svg>
-            پاک‌کن
-          </button>
-          <span class="dock-sep" aria-hidden="true"></span>
-          <button class="dock-pop-btn" id="addNoteBtn">یادداشت صفحه</button>
-        </div>
-        <div class="dock-pop dock-pop-page" id="pagePop" hidden>
-          <input type="range" id="pageRange" min="1" value="1" aria-label="شمارهٔ صفحه">
-          <button class="mark-read" id="markReadBtn">صفحه را خواندم</button>
-        </div>
-      </div>
-      <div class="reader-float" id="readerFloat">
-        <button class="float-btn" id="zoomOut" aria-label="کوچک‌نمایی صفحه">−</button>
-        <span class="float-val" id="zoomVal">۱۰۰٪</span>
-        <button class="float-btn" id="zoomIn" aria-label="بزرگ‌نمایی صفحه">+</button>
-        <button class="float-btn mode-light" id="dockMode" aria-label="نور روز" title="نور روز">
-          <svg class="m-sun" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>
-          <svg class="m-sepia" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2.7s6 6.3 6 10.3a6 6 0 11-12 0C6 9 12 2.7 12 2.7z"/></svg>
-          <svg class="m-moon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12.8A9 9 0 1111.2 3 7 7 0 0021 12.8z"/></svg>
-        </button>
-      </div>
     </div>
 
     <div class="overlay" id="noteOverlay" hidden>
-      <div class="name-card">
-        <h2>یادداشت</h2>
+      <div class="name-card" role="dialog" aria-modal="true" aria-labelledby="noteTitle">
+        <h2 id="noteTitle">یادداشت</h2>
         <p id="noteForText" style="font-size:12px"></p>
         <textarea id="noteInput" rows="4" placeholder="چی به ذهنت رسید؟"></textarea>
         <button class="go" id="noteSave">ذخیره</button>
@@ -635,7 +791,7 @@
         </div>
         <div class="set-row">
           <span class="set-label">بزرگ‌نمایی و نور صفحه</span>
-          <span class="set-hint-inline">کنار داک، پایین صفحه</span>
+          <span class="set-hint-inline">در نوار ابزار بالای کتابخوان</span>
         </div>
         <div class="set-row">
           <span class="set-label">نمایشگر</span>
@@ -657,6 +813,16 @@
         <label class="goal-daily">هدف روزانه: <input id="goalPages" type="number" min="1" max="500" placeholder="مثلاً ۱۰"> صفحه در روز</label>
         <button class="go" id="goalSave">ثبت هدف</button>
         <button class="skip" id="goalClose">بی‌خیال</button>
+      </div>
+    </div>
+
+    <div class="overlay" id="renameOverlay" hidden>
+      <div class="name-card" role="dialog" aria-modal="true" aria-labelledby="renameTitle">
+        <h2 id="renameTitle">تغییر نام کتاب</h2>
+        <p>نام دلخواهت رو برای این کتاب بنویس:</p>
+        <input type="text" id="renameInput" class="rename-input" placeholder="عنوان کتاب">
+        <button type="button" class="go" id="renameSave">ذخیره نام</button>
+        <button type="button" class="skip" id="renameClose">انصراف</button>
       </div>
     </div>
   </main>
@@ -698,7 +864,7 @@
         <strong>فضای تمرکز</strong>
         <div class="amb-control">
           <span id="ambLabel">صدای محیط: روشن</span>
-          <button class="switch on" id="ambSwitch" aria-label="صدای محیط"></button>
+          <button class="switch on" id="ambSwitch" role="switch" aria-checked="true" aria-label="صدای محیط"></button>
         </div>
       </div>
       <div class="scene-chips" id="sceneChips">
@@ -1176,13 +1342,13 @@ rather than a form describing itself. -->
   <span class="toast-text" id="achvToastText"></span>
 </div>
 
-<div class="toast" id="undoToast" hidden>
+<div class="toast" id="undoToast" role="status" aria-live="polite" hidden>
   <span class="toast-text">حذف شد</span>
   <button class="toast-btn" id="undoBtn">پشیمون شدم!</button>
   <span class="toast-bar"></span>
 </div>
 
-<div class="toast" id="eraseToast" hidden>
+<div class="toast" id="eraseToast" role="status" aria-live="polite" hidden>
   <span class="toast-text">پاک شد</span>
   <button class="toast-btn" id="eraseUndoBtn">برگردون</button>
   <span class="toast-bar"></span>

@@ -19,7 +19,7 @@
 import { state, getTask } from './state.js';
 import {
   $, dayKey, faNum, weekStartOf, dateFromKey, shiftKey, formatClock,
-  WEEKDAYS_SHORT, parseTimeRange, esc,
+  WEEKDAYS_SHORT, parseTimeRange,
 } from './utils.js';
 import { subscribe } from './bus.js';
 import { addTask, setTaskDone, collapse, timeRangeLabel, moveTaskToDay } from './tasks.js';
@@ -154,7 +154,7 @@ function buildShell() {
       <div class="wk-sections-grid">
         <section class="wk-sec wk-timeline-sec" id="wkTimelineSec">
           <h3>تایم‌لاین روز</h3>
-          <div class="wk-timeline" id="wkTimeline"></div>
+          <ul class="wk-timeline wk-list" id="wkTimeline"></ul>
         </section>
 
         <section class="wk-sec wk-untimed-sec" id="wkUntimedSec">
@@ -189,10 +189,25 @@ function buildShell() {
   const wkInput = $('#wkInput');
   const wkPreview = $('#wkQuickAddPreview');
   if (wkInput && wkPreview) {
+    const dismissed = new Set();
+    const withoutDismissed = parsed => {
+      if (!dismissed.size || !parsed.ignored) return parsed;
+      const ignored = parsed.ignored.filter(t => !dismissed.has(t));
+      return ignored.length === parsed.ignored.length ? parsed : { ...parsed, ignored };
+    };
     wkInput.addEventListener('input', () => {
       const raw = wkInput.value;
-      const parsed = parseQuickAdd(raw);
+      const parsed = withoutDismissed(parseQuickAdd(raw));
+      for (const token of dismissed) if (!raw.includes(token)) dismissed.delete(token);
       renderQuickAddPreview(wkPreview, parsed, key => {
+        if (key === 'ignored') {
+          (parsed.ignored || []).forEach(t => {
+            dismissed.add(t);
+            wkInput.value = stripQuickAddToken(wkInput.value, t);
+          });
+          wkInput.dispatchEvent(new Event('input'));
+          return;
+        }
         const token = parsed.tokens?.[key];
         if (token) {
           wkInput.value = stripQuickAddToken(wkInput.value, token);
@@ -319,9 +334,16 @@ function onSubmit(e) {
   const due = parsed.dueDate || shownKey();
   const cat = parsed.cat || 'misc';
   const dur = parsed.durationMin;
+  /* An inferred end that would run past midnight is brought back to 23:59
+     rather than thrown away: «ساعت ۲۳:۳۰» is a real plan, and the whole span
+     used to be dropped because the end did not fit inside the day. */
+  const inferredTo = (from, minutes) =>
+    from === null || from === undefined ? null : Math.min(1439, from + (minutes || 60));
   const time = (parsed.timeFrom !== null && parsed.timeTo !== null)
     ? { from: parsed.timeFrom, to: parsed.timeTo }
-    : (parsed.timeFrom !== null ? { from: parsed.timeFrom, to: parsed.timeFrom + (dur || 60) } : currentSpan());
+    : (parsed.timeFrom !== null
+        ? { from: parsed.timeFrom, to: inferredTo(parsed.timeFrom, dur) }
+        : currentSpan());
 
   /* An impossible custom span is refused, and the reason is already on screen
      under the picks — writing the task without its span would be a silent loss
@@ -419,18 +441,24 @@ function renderDayHead() {
 
 /* One row, both lists. A planned task and a task finished that day are the same
    thing seen from two sides, so they are not allowed to look like two species. */
-function rowEl(task) {
+/* `slot` marks the timeline variant: the same row, with the hour said before
+   the title instead of after it. Both variants carry the same grip, tick, bin
+   and span chip, so a timed task is ticked, deleted, dragged and arrow-moved
+   exactly like a floating one. */
+function rowEl(task, slot) {
   const li = document.createElement('li');
-  li.className = 'wk-row' + (task.done ? ' done' : '');
+  li.className = 'wk-row' + (slot ? ' wk-timeline-slot' : '') + (task.done ? ' done' : '');
   li.dataset.id = task.id;
   li.dataset.p = task.p || 'mid';
-  const span = timeRangeLabel(task);
+  const span = timeRangeLabel(task) || formatClock(task.timeFrom);
+  const spanChip = span ? `<span class="wk-span-chip">${span}</span>` : '';
   li.innerHTML = `
     <span class="wk-grip" aria-hidden="true" title="بکشش روی روز دیگه — یا با کلیدهای چپ و راست ببرش">${ICONS.grip}</span>
     <button class="wk-check" type="button" aria-label="تغییر وضعیت تکمیل">${ICONS.check}</button>
     <span class="wk-dot" aria-hidden="true"></span>
+    ${slot && span ? `<span class="wk-slot-badge">⏰ ${span}</span>` : ''}
     <span class="wk-title"></span>
-    ${span ? `<span class="wk-span-chip">${span}</span>` : ''}
+    ${slot ? '' : spanChip}
     <button class="wk-del" type="button" aria-label="حذف">${ICONS.trash}</button>`;
   li.querySelector('.wk-title').textContent = task.text;
   return li;
@@ -507,16 +535,9 @@ function renderLists() {
   if (timelineEl) {
     if (timed.length) {
       if (timelineSec) timelineSec.hidden = false;
-      timelineEl.innerHTML = timed.map(t => {
-        const span = timeRangeLabel(t) || formatClock(t.timeFrom);
-        return `
-          <div class="wk-timeline-slot" data-id="${t.id}">
-            <div class="wk-slot-time"><span class="wk-slot-badge">⏰ ${span}</span></div>
-            <div class="wk-slot-task">
-              <span class="wk-slot-title ${t.done ? 'done' : ''}">${esc(t.text)}</span>
-            </div>
-          </div>`;
-      }).join('');
+      /* Rows, not markup: the timeline used to paint bare divs with no tick and
+         no bin, so a timed task could be read but not touched. */
+      timelineEl.replaceChildren(...timed.map(t => rowEl(t, true)));
     } else {
       if (timelineSec) timelineSec.hidden = !untimedTasks.length;
       timelineEl.innerHTML = `<div class="wk-timeline-empty">هیچ کار زمان‌بندی‌شده‌ای ثبت نشده؛ کارها شناور هستند.</div>`;

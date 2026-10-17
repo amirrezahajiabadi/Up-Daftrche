@@ -15,7 +15,10 @@ import { getRecommendation, reasonForTask, energyFromMood, ALL_DONE_REASON } fro
 import { parseQuickAdd, renderQuickAddPreview, stripQuickAddToken } from './quickadd.js';
 
 const DAY = 864e5;
-const PRI_COLORS = { high: '#ff5d5d', mid: '#ffb45c', low: '#7fb069' };
+/* Priority is meaning, not decoration: the three dots read from the palette's
+   own success/warning/danger tokens, so a priority dot can never be a colour the
+   active theme does not have. */
+const PRI_COLORS = { high: 'var(--color-danger)', mid: 'var(--color-warning)', low: 'var(--color-success)' };
 const LIST_CAP = 6;
 
 const dueDiff = due => Math.round((new Date(due + 'T00:00:00') - startOfToday()) / DAY);
@@ -26,12 +29,22 @@ const dueDiff = due => Math.round((new Date(due + 'T00:00:00') - startOfToday())
 let skippedRecs = new Map(); // taskId → skip count, session memory only
 let shownRecId = null;       // currently displayed recommendation (alternatives switch)
 
-/* True when a task belongs to "today": completed today, due today/late,
-   important open work, or freshly added today. */
+/* True when a task belongs to "today": completed today, due today/late, or
+   freshly added today.
+
+   High priority used to be a free pass into Today — `t.p === 'high'` returned
+   true before the due date was ever read — so an important task filed for three
+   months out sat in «کارهای امروز» every single day until it was done, and the
+   list slowly filled with things that were explicitly *not* for today. Importance
+   still earns a place in Today, but only while the work is actually near: no
+   deadline at all (nothing has been scheduled, so the desk is where it lives), or
+   a deadline that has arrived, is today, or is tomorrow. */
+const TODAY_HORIZON = 1;
 const isTodayPending = t => {
   if (!t || t.done) return false;
-  if (t.p === 'high') return true;
-  if (t.dueDate) return dueDiff(t.dueDate) <= 0;
+  const diff = t.dueDate ? dueDiff(t.dueDate) : null;
+  if (t.p === 'high') return diff === null || diff <= TODAY_HORIZON;
+  if (t.dueDate) return diff <= 0;
   return !!t.created && dayKey(new Date(t.created)) === dayKey(new Date());
 };
 const isDoneToday = t => !!t && !!t.done && !!t.doneAt && dayKey(new Date(t.doneAt)) === dayKey(new Date());
@@ -80,12 +93,12 @@ function recChips(task) {
   const dl = task.dueDate ? dueLabel(task.dueDate) : null;
   const chips = [`<span class="frog-chip" style="--fc:${PRI_COLORS[task.p || 'mid']}">اولویت ${P_LABEL[task.p || 'mid']}</span>`];
   if (dl) {
-    const fc = dl.cls === 'late' ? '#d84a4a' : dl.cls === 'today' ? 'var(--accent)' : '#5f8f4d';
+    const fc = dl.cls === 'late' ? 'var(--color-danger)' : dl.cls === 'today' ? 'var(--color-accent)' : 'var(--color-success)';
     const txt = dl.ltr ? `<span dir="ltr">${dl.text}</span>` : dl.text;
     chips.push(`<span class="frog-chip" style="--fc:${fc}">${txt}</span>`);
   }
   const dlbl = formatDuration(task.durationMin);
-  if (dlbl) chips.push(`<span class="frog-chip" style="--fc:#7b6fd8">${dlbl}</span>`);
+  if (dlbl) chips.push(`<span class="frog-chip" style="--fc:var(--color-accent)">${dlbl}</span>`);
   return chips.join('');
 }
 
@@ -205,12 +218,23 @@ function renderFrog(force) {
   }
 }
 
-/* Skip: temporary session penalty so the same task isn't re-suggested at once */
-function skipCurrentFrog() {
+/* Skip: temporary session penalty so the same task isn't re-suggested at once.
+   The card is rebuilt from scratch, which drops the focus the keyboard was
+   holding on the button that was just pressed — so it is handed back to the
+   same button in the new card. */
+function skipCurrentFrog(fromKeyboard) {
   if (!heroFrog) return;
   skippedRecs.set(heroFrog.id, (skippedRecs.get(heroFrog.id) || 0) + 1);
   shownRecId = null;
   renderFrog(true);
+  if (fromKeyboard) focusFrogControl('.frog-next');
+}
+
+/* Hand the focus to a control of the freshly rebuilt card. Called only for an
+   interaction that had no pointer (a key press or a screen reader), where the
+   rebuild would otherwise leave the focus on the document body. */
+function focusFrogControl(selector) {
+  $('#todayFrog')?.querySelector(selector)?.focus();
 }
 
 /* ── Today's tasks ── */
@@ -228,7 +252,10 @@ function todayRow(t) {
   const durLabel = formatDuration(t.durationMin);
   const durChip = durLabel ? `<span class="t-dur">${durLabel}</span>` : '';
   const spanLabel = timeRangeLabel(t);
-  const spanChip = spanLabel ? `<span class="t-span">${spanLabel}</span>` : '';
+  /* `span-chip` is the chip's name everywhere else (js/tasks.js) and css/tasks.css
+     carries its recipe; `t-span` stays as the Today-local hook the ready-state
+     rules hang off. */
+  const spanChip = spanLabel ? `<span class="t-span span-chip">${spanLabel}</span>` : '';
   li.innerHTML = `
     <button class="t-check" type="button" aria-label="تغییر وضعیت تکمیل">${ICONS.check}</button>
     <span class="t-dot" style="--pr:${PRI_COLORS[t.p || 'mid']}"></span>
@@ -251,11 +278,28 @@ function todayRow(t) {
 const liveRows = new Map(); // taskId → { el, sig }
 const rowSig = t => [t.text, t.p || 'mid', t.dueDate || '', t.durationMin || '', t.timeFrom || '', t.timeTo || ''].join('|');
 
+/* The one wording of the way into the full list, so the label is written down
+   once and the count is merely appended to it. */
+const ALL_TASKS_LABEL = 'مشاهده همه کارها ←';
+function updateAllBtn(hiddenCount) {
+  const btn = $('#todayAllBtn');
+  if (!btn) return;
+  btn.textContent = hiddenCount > 0
+    ? `مشاهده همه کارها (و ${faNum(hiddenCount)} مورد دیگر) ←`
+    : ALL_TASKS_LABEL;
+}
+
 function renderTodayList() {
   const list = $('#todayList');
   if (!list) return;
   const undone = todayPending().slice().sort((a, b) => frogScore(b) - frogScore(a));
   const rows = [...undone, ...todayDone()].slice(0, LIST_CAP);
+  /* The list is capped at six, and until now the rest simply were not there: the
+     «مشاهده همه کارها ←» link said the same thing whether it led to two more
+     tasks or twenty. It now carries the count it is hiding. The button keeps its
+     default wording when nothing is left over, so a short day reads as it always
+     did. */
+  updateAllBtn(undone.length + todayDone().length - rows.length);
 
   if (!rows.length) {
     liveRows.forEach(entry => { if (!entry.el.dataset.exiting) entry.el.remove(); });
@@ -314,16 +358,22 @@ function renderTodayList() {
 function renderProgress() {
   const bar = $('#todayProgBar');
   if (!bar) return;
+  /* The track carries the progressbar role, so the number the bar is drawn at is
+     also the number assistive tech reads. It is written on every path out of
+     this function — including the empty one, which is 0% and not «unchanged». */
+  const track = $('#todayProgTrack');
   const pending = todayPending(), done = todayDone();
   const total = pending.length + done.length;
   const text = $('#todayProgText');
   if (!total) {
     bar.style.width = '0%';
+    track?.setAttribute('aria-valuenow', '0');
     if (text) text.textContent = 'هنوز کاری برای امروز ثبت نشده';
     return;
   }
   const pct = Math.round(done.length / total * 100);
   bar.style.width = pct + '%';
+  track?.setAttribute('aria-valuenow', String(pct));
   bar.classList.toggle('full', pct === 100);
   text.innerHTML = pct === 100
     ? `آفرین! هر <b>${faNum(total)}</b> کار امروز انجام شد 🎉`
@@ -344,10 +394,28 @@ export function initToday() {
   const todayPreview = $('#todayQuickAddPreview');
 
   if (todayInput && todayPreview) {
+    /* See js/tasks.js: an ignored token has no raw span to strip, so the ×
+       remembers the spelling and keeps it out of the next preview instead of
+       letting it reappear on the very next keystroke. */
+    const dismissed = new Set();
+    const withoutDismissed = parsed => {
+      if (!dismissed.size || !parsed.ignored) return parsed;
+      const ignored = parsed.ignored.filter(t => !dismissed.has(t));
+      return ignored.length === parsed.ignored.length ? parsed : { ...parsed, ignored };
+    };
     todayInput.addEventListener('input', () => {
       const raw = todayInput.value;
-      const parsed = parseQuickAdd(raw);
+      const parsed = withoutDismissed(parseQuickAdd(raw));
+      for (const token of dismissed) if (!raw.includes(token)) dismissed.delete(token);
       renderQuickAddPreview(todayPreview, parsed, key => {
+        if (key === 'ignored') {
+          (parsed.ignored || []).forEach(t => {
+            dismissed.add(t);
+            todayInput.value = stripQuickAddToken(todayInput.value, t);
+          });
+          todayInput.dispatchEvent(new Event('input'));
+          return;
+        }
         const token = parsed.tokens?.[key];
         if (token) {
           todayInput.value = stripQuickAddToken(todayInput.value, token);
@@ -400,11 +468,17 @@ export function initToday() {
   if (frog) {
     frog.addEventListener('click', e => {
       if (e.target.closest('.frog-start') && heroFrog) openFocus(heroFrog.id);
-      else if (e.target.closest('.frog-next')) skipCurrentFrog();
+      /* A keyboard-activated click reports detail 0; a pointer press does not.
+         Only the keyboard needs the focus handed back after the reroll. */
+      else if (e.target.closest('.frog-next')) skipCurrentFrog(e.detail === 0);
       else if (e.target.closest('.frog-add')) $('#todayInput')?.focus();
       else {
         const alt = e.target.closest('.rec-alt');
-        if (alt) { shownRecId = alt.dataset.id; renderFrog(true); }
+        if (alt) {
+          shownRecId = alt.dataset.id;
+          renderFrog(true);
+          if (e.detail === 0) focusFrogControl(`.rec-alt[data-id="${CSS.escape(alt.dataset.id)}"]`);
+        }
       }
     });
   }

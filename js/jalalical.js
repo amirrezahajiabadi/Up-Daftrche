@@ -86,7 +86,12 @@ export function renderMonthGrid(host, opts) {
        Tab at all, which is why it is opt-in rather than the default. */
     const tab = activeKey === null ? ''
       : day.key === activeKey ? ' tabindex="0"' : ' tabindex="-1"';
-    html += `<button type="button" class="${cls}" data-key="${day.key}" aria-label="${label}"${tab}${todayKey === day.key ? ' aria-current="date"' : ''}${selectedKey === day.key ? ' aria-selected="true"' : ''}>${faDigits(day.d)}</button>`;
+    /* aria-selected is only valid on a role that supports it — a plain button is
+       not one, so the attribute was invalid markup that assistive tech was free
+       to ignore, and the chosen day announced nothing. aria-pressed is the
+       pressed-button state the day actually is; today keeps aria-current="date",
+       which is the attribute written for exactly this. */
+    html += `<button type="button" class="${cls}" data-key="${day.key}" aria-label="${label}"${tab}${todayKey === day.key ? ' aria-current="date"' : ''}${selectedKey === day.key ? ' aria-pressed="true"' : ''}>${faDigits(day.d)}</button>`;
   }
 
   html += '</div>';

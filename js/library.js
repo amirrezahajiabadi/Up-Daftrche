@@ -1,6 +1,7 @@
 /* ═══ Library: Reading Workspace — Shelf, Reading State, Goal, Storage ═══ */
-import { $, faNum, esc } from './utils.js';
-import { readJSON, safeSet } from './store.js';
+import { $, faNum, dayKey, esc, nextId, normalizeFa } from './utils.js';
+import { readJSON, safeSet, STORAGE_ERROR_EVENT } from './store.js';
+import { showNotice } from './dialog.js';
 
 const META_KEY = 'daftarche-books-meta';
 /* Read through the storage layer's guarded reader: a corrupt value falls back
@@ -43,9 +44,21 @@ export async function getBookBlob(id) {
     q.onerror = () => res(null);
   });
 }
+/* A put that fails (a full quota, a storage layer refusing to write) used to
+   leave this promise pending forever: the import hung with no book, no error
+   and the file picker stuck. Every way the transaction can end is wired up
+   now, so the caller can say what went wrong and let go of the input. */
 async function putBook(rec) {
   const d = await db();
-  return new Promise(res => { const tx = d.transaction('books', 'readwrite'); tx.objectStore('books').put(rec); tx.oncomplete = res; });
+  return new Promise((resolve, reject) => {
+    let tx;
+    try { tx = d.transaction('books', 'readwrite'); } catch (err) { reject(err); return; }
+    const req = tx.objectStore('books').put(rec);
+    tx.oncomplete = () => resolve(true);
+    tx.onerror = () => reject(tx.error || new Error('IndexedDB transaction failed'));
+    tx.onabort = () => reject(tx.error || new Error('IndexedDB transaction aborted'));
+    req.onerror = () => reject(req.error || new Error('IndexedDB write failed'));
+  });
 }
 async function delBookBlob(id) {
   const d = await db();
@@ -78,7 +91,66 @@ export function clearLibraryData() {
 }
 
 const TRASH = `<svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4a1 1 0 011-1h6a1 1 0 011 1v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6M10 11v6M14 11v6"/></svg>`;
-const BOOK_ICON = `<svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>`;
+
+/* ── Soft delete ──
+   One book, one undo. The PDF file is the slow half of a delete and the half
+   that cannot be rebuilt, so it is only unlinked when the offer expires;
+   putting the record back inside that window restores the book with its file,
+   its highlights and its notes untouched.
+
+   There is a single pending slot, because the notice is a single notice: a
+   second delete has to settle the first, or the row the reader still believes is
+   recoverable would quietly lose its file. */
+let pendingDelete = null; // { book, index, commit }
+function softDeleteBook(id) {
+  const idx = books.findIndex(b => b.id === id);
+  if (idx < 0) return;
+  const book = books[idx];
+  const title = book.title || 'کتاب';
+  settlePendingDelete();
+  const commit = () => { delBookBlob(id); pendingDelete = null; };
+  pendingDelete = { book, index: idx, commit };
+  books = books.filter(b => b.id !== id);
+  saveMeta();
+  renderShelf();
+  showNotice(`«${title}» حذف شد.`, { actionLabel: 'برگردون', onAction: restorePendingDelete });
+  /* The notice's own timer is not exported, so the same 5s is armed here: whether
+     the offer was taken or simply ran out, the file follows the metadata. */
+  setTimeout(() => { if (pendingDelete?.commit === commit) commit(); }, 5000);
+}
+function restorePendingDelete() {
+  if (!pendingDelete) return;
+  const { book, index } = pendingDelete;
+  pendingDelete = null;
+  books.splice(Math.min(index, books.length), 0, book);
+  saveMeta();
+  renderShelf();
+}
+/* The offer is over — a second delete, or the whole library being cleared. */
+function settlePendingDelete() {
+  if (!pendingDelete) return;
+  const { commit } = pendingDelete;
+  pendingDelete = null;
+  commit();
+}
+
+/* The import failed and no toast is on screen for it: say so, then let the
+   shared storage warning speak too (it owns its own rate limiting). */
+function showImportError(message) {
+  const toast = document.getElementById('storageToast');
+  if (!toast) return;
+  const label = toast.querySelector('.toast-text');
+  if (label && message) label.textContent = message;
+  toast.hidden = false;
+  requestAnimationFrame(() => toast.classList.add('show'));
+  /* The storage listener also fires on a failed write; this makes sure the
+     message is not swallowed when the failure was the IndexedDB put alone. */
+  window.dispatchEvent(new CustomEvent(STORAGE_ERROR_EVENT, { detail: { key: META_KEY } }));
+}
+
+const BOOK_ICON = `<svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 016.5 2z"/></svg>`;
+const PENCIL_ICON = `<svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`;
+const TARGET_ICON = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="2"/></svg>`;
 
 /* ── Book totals (new notes + old highlights) ── */
 function bookTotals(b) {
@@ -88,52 +160,211 @@ function bookTotals(b) {
 }
 const bookStatus = b => bookComplete(b) ? 'done' : ((bookDone(b).size > 0 || (b.lastPage || 1) > 1) ? 'reading' : 'new');
 
+/* Tactile notebook cover fallback when PDF has no cover thumbnail yet */
+function notebookCoverMarkup(title) {
+  return `
+    <div class="book-cover-notebook">
+      <div class="nb-pattern" aria-hidden="true"></div>
+      <div class="nb-header"><span>دفتَرچه</span><span>PDF</span></div>
+      <div class="nb-title">${esc(title)}</div>
+      <div class="nb-footer">${BOOK_ICON}</div>
+    </div>`;
+}
+
+/* ── Shelf State (Search, Filter, Sort) ── */
+let shelfFilter = 'all';
+let shelfSort = 'lastRead';
+let shelfSearchQuery = '';
+let renameBookId = null;
+
+/* ── Library Summary Stats ── */
+function updateLibraryStats() {
+  const bar = $('#libraryStatsBar');
+  if (!bar) return;
+  if (!books.length) {
+    bar.hidden = true;
+    return;
+  }
+  bar.hidden = false;
+  const reading = books.filter(b => bookStatus(b) === 'reading').length;
+  const done = books.filter(b => bookStatus(b) === 'done').length;
+  let totalPages = 0;
+  let totalMins = 0;
+  let totalNotes = 0;
+
+  books.forEach(b => {
+    totalPages += bookDone(b).size;
+    const t = bookTotals(b);
+    totalMins += t.minutes;
+    totalNotes += t.notes;
+  });
+
+  const bCnt = $('#statBooksCount');
+  const bSub = $('#statBooksSub');
+  const pCnt = $('#statPagesCount');
+  const tCnt = $('#statTimeCount');
+  const nCnt = $('#statNotesCount');
+
+  if (bCnt) bCnt.textContent = faNum(books.length);
+  if (bSub) bSub.textContent = `${faNum(reading)} مطالعه · ${faNum(done)} تمام`;
+  if (pCnt) pCnt.textContent = faNum(totalPages);
+  if (tCnt) {
+    tCnt.textContent = totalMins >= 60
+      ? `${faNum(Math.floor(totalMins / 60))}س ${faNum(totalMins % 60)}د`
+      : `${faNum(totalMins)} د`;
+  }
+  if (nCnt) nCnt.textContent = faNum(totalNotes);
+}
+
 /* ── Shelf + Currently Reading ── */
 export function renderShelf() {
+  updateLibraryStats();
+  const ctrl = $('#shelfControls');
+  if (ctrl) ctrl.hidden = books.length === 0;
+
   const grid = $('#shelfGrid');
   const doneGrid = $('#doneGrid');
   const doneWrap = $('#doneShelf');
   grid.innerHTML = ''; doneGrid.innerHTML = '';
-  const active = books.filter(b => bookStatus(b) !== 'done');
-  const finished = books.filter(b => bookStatus(b) === 'done');
-  $('#shelfEmpty').hidden = books.length > 0;
-  doneWrap.hidden = finished.length === 0;
-  const cnt = $('#shelfCount');
-  if (cnt) cnt.textContent = books.length ? `${faNum(books.length)} کتاب` : 'خالی';
 
-  /* Currently Reading card — the dominant element of Library Home */
-  const slot = $('#lastReadSlot');
-  slot.innerHTML = '';
-  const last = [...active].filter(b => b.numPages).sort((a, b) => (b.lastReadAt || 0) - (a.lastReadAt || 0))[0];
-  if (last) {
-    const done = bookDone(last).size;
-    const pct = bookPct(last);
-    const t = bookTotals(last);
-    const goalLine = last.goal?.text ? `<span class="lr-goal">🎯 ${esc(last.goal.text)}</span>` : '';
-    const card = document.createElement('div');
-    card.className = 'lastread';
-    card.innerHTML = `
-      ${last.cover ? `<img src="${last.cover}" alt="">` : ''}
-      <div class="lr-info">
-        <span class="lr-kicker">در حال مطالعه</span>
-        <div class="lr-top"><span class="lr-title">${esc(last.title)}</span><span class="lr-pct">${faNum(pct)}٪</span></div>
-        <div class="lr-track"><i style="width:${pct}%"></i></div>
-        <span class="lr-sub">${faNum(done)} صفحهٔ خوانده‌شده از ${faNum(last.numPages)} · صفحهٔ ${faNum(last.lastPage || 1)}${t.notes ? ` · ${faNum(t.notes)} یادداشت` : ''}</span>
-        ${goalLine}
-      </div>
-      <button class="lr-btn">ادامه مطالعه</button>`;
-    card.addEventListener('click', () => window.dispatchEvent(new CustomEvent('open-book', { detail: last.id })));
-    slot.appendChild(card);
+  let filtered = [...books];
+  if (shelfSearchQuery) {
+    /* Typed on a Persian keyboard the same title can arrive with an Arabic yeh
+       and kaf («كتاب») and never match the «کتاب» that was stored. normalizeFa is
+       the app's one answer to that — the task list's own filter uses it — so the
+       shelf reads the query through it too. */
+    const q = normalizeFa(shelfSearchQuery.trim()).toLowerCase();
+    filtered = filtered.filter(b => normalizeFa(b.title || '').toLowerCase().includes(q));
   }
 
-  /* Shelf cards — active books */
-  active.forEach((b, i) => {
-    grid.appendChild(bookCard(b, i, false));
-  });
-  /* Completed books — kept, quieter */
-  finished.forEach((b, i) => {
-    doneGrid.appendChild(bookCard(b, i, true));
-  });
+  if (shelfFilter === 'reading') {
+    filtered = filtered.filter(b => bookStatus(b) === 'reading');
+  } else if (shelfFilter === 'unread') {
+    filtered = filtered.filter(b => bookStatus(b) === 'new');
+  } else if (shelfFilter === 'done') {
+    filtered = filtered.filter(b => bookStatus(b) === 'done');
+  }
+
+  // Sort
+  if (shelfSort === 'progress') {
+    filtered.sort((a, b) => bookPct(b) - bookPct(a));
+  } else if (shelfSort === 'newest') {
+    filtered.sort((a, b) => (b.addedAt || 0) - (a.addedAt || 0));
+  } else if (shelfSort === 'title') {
+    filtered.sort((a, b) => (a.title || '').localeCompare(b.title || '', 'fa'));
+  } else {
+    // default: lastRead
+    filtered.sort((a, b) => (b.lastReadAt || b.addedAt || 0) - (a.lastReadAt || a.addedAt || 0));
+  }
+
+  const active = filtered.filter(b => bookStatus(b) !== 'done');
+  const finished = filtered.filter(b => bookStatus(b) === 'done');
+
+  $('#shelfEmpty').hidden = books.length > 0;
+  doneWrap.hidden = shelfFilter !== 'all' || finished.length === 0 || !!shelfSearchQuery;
+
+  /* An empty shelf already says «هنوز کتابی اینجا نیست» in the middle of the
+     grid; the count badge above it saying «خالی» is the same sentence twice, and
+     the heading over both is a header for a list that is not there. Both go
+     quiet together. */
+  const head = $('.shelf-head');
+  if (head) head.hidden = books.length === 0;
+  const cnt = $('#shelfCount');
+  if (cnt) {
+    if (filtered.length !== books.length) cnt.textContent = `${faNum(filtered.length)} از ${faNum(books.length)}`;
+    else cnt.textContent = `${faNum(books.length)} کتاب`;
+  }
+
+  /* Currently Reading card — shown when viewing all books and no active search */
+  const slot = $('#lastReadSlot');
+  slot.innerHTML = '';
+  if (!shelfSearchQuery && shelfFilter === 'all') {
+    const allActive = books.filter(b => bookStatus(b) !== 'done');
+    const last = [...allActive].filter(b => b.numPages).sort((a, b) => (b.lastReadAt || 0) - (a.lastReadAt || 0))[0];
+    if (last) {
+      const done = bookDone(last).size;
+      const pct = bookPct(last);
+      const t = bookTotals(last);
+      let goalLine = '';
+      if (last.goal?.pagesPerDay) {
+        const todayPages = last.stats?.[dayKey(new Date())]?.pages || 0;
+        goalLine = `<span class="lr-goal" title="هدف امروز: ${faNum(todayPages)} از ${faNum(last.goal.pagesPerDay)} صفحه">🎯 ${faNum(todayPages)}/${faNum(last.goal.pagesPerDay)} امروز</span>`;
+      } else if (last.goal?.text) {
+        goalLine = `<span class="lr-goal" title="${esc(last.goal.text)}">🎯 ${esc(last.goal.text)}</span>`;
+      }
+      const card = document.createElement('div');
+      card.className = 'lastread';
+      /* The whole card opens the book, but it is a plain div: a keyboard user
+         tabbing through the shelf had no way in — the only focusable thing in
+         it was the «ادامه مطالعه» button, so the card's own click target was
+         mouse-only. It now carries the same button contract as `.book-cover`
+         (role, tabindex, label, Enter/Space) and the button's own activation is
+         left to the button. */
+      card.setAttribute('role', 'button');
+      card.setAttribute('tabindex', '0');
+      card.setAttribute('aria-label', `ادامهٔ مطالعهٔ ${last.title}`);
+      card.innerHTML = `
+        ${last.cover ? `<img src="${last.cover}" alt="">` : notebookCoverMarkup(last.title)}
+        <div class="lr-info">
+          <span class="lr-kicker">در حال مطالعه</span>
+          <div class="lr-top"><span class="lr-title">${esc(last.title)}</span><span class="lr-pct">${faNum(pct)}٪</span></div>
+          <div class="lr-track"><i style="width:${pct}%"></i></div>
+          <span class="lr-sub">${faNum(done)} صفحه از ${faNum(last.numPages)} · ص ${faNum(last.lastPage || 1)}${t.minutes ? ` · ⏱ ${faNum(t.minutes)}د` : ''}${t.notes ? ` · 📝 ${faNum(t.notes)}` : ''}</span>
+          ${goalLine}
+        </div>
+        <button type="button" class="lr-btn">ادامه مطالعه ←</button>`;
+      card.addEventListener('click', () => window.dispatchEvent(new CustomEvent('open-book', { detail: last.id })));
+      card.addEventListener('keydown', e => {
+        /* A keypress on the nested button is the button's own, and it bubbles
+           here — opening the book twice in one press. */
+        if (e.target.closest('.lr-btn')) return;
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          window.dispatchEvent(new CustomEvent('open-book', { detail: last.id }));
+        }
+      });
+      slot.appendChild(card);
+    }
+  }
+
+  if (books.length > 0 && filtered.length === 0) {
+    const noResult = document.createElement('div');
+    noResult.className = 'shelf-no-result';
+    noResult.innerHTML = `
+      <p class="shelf-no-result-text">کتابی با این عنوان یا فیلتر پیدا نشد.</p>
+      <button type="button" class="shelf-reset-btn" id="shelfResetBtn">پاک کردن جستجو و فیلترها</button>
+    `;
+    grid.appendChild(noResult);
+    $('#shelfResetBtn')?.addEventListener('click', () => {
+      shelfSearchQuery = '';
+      shelfFilter = 'all';
+      const searchInput = $('#shelfSearch');
+      if (searchInput) searchInput.value = '';
+      const clearBtn = $('#shelfSearchClear');
+      if (clearBtn) clearBtn.hidden = true;
+      $('#shelfFilter')?.querySelectorAll('.s-filter-chip').forEach(c => {
+        const isAll = c.dataset.filter === 'all';
+        c.classList.toggle('on', isAll);
+        c.setAttribute('aria-pressed', String(isAll));
+      });
+      renderShelf();
+    });
+    return;
+  }
+
+  /* Shelf cards */
+  if (shelfFilter === 'all' && !shelfSearchQuery) {
+    active.forEach((b, i) => {
+      grid.appendChild(bookCard(b, i, false));
+    });
+    finished.forEach((b, i) => {
+      doneGrid.appendChild(bookCard(b, i, true));
+    });
+  } else {
+    filtered.forEach((b, i) => {
+      grid.appendChild(bookCard(b, i, bookStatus(b) === 'done'));
+    });
+  }
 }
 
 function bookCard(b, i, isDone) {
@@ -141,36 +372,50 @@ function bookCard(b, i, isDone) {
   const pct = bookPct(b);
   const st = bookStatus(b);
   const t = bookTotals(b);
-  const cta = st === 'done' ? 'مطالعه کامل شد' : (st === 'reading' ? 'ادامه مطالعه' : 'شروع مطالعه');
+  const cta = st === 'done' ? '✓ تمام شد' : (st === 'reading' ? '📖 ادامه' : '📖 شروع');
   const card = document.createElement('div');
   card.className = 'book-card' + (isDone ? ' book-done' : '');
-  card.style.animationDelay = (i * 60) + 'ms';
+  card.style.animationDelay = (i * 50) + 'ms';
   card.innerHTML = `
-    <div class="book-cover">
-      ${b.cover ? `<img src="${b.cover}" alt="">` : BOOK_ICON}
+    <div class="book-cover" data-act="open" role="button" tabindex="0" aria-label="باز کردن کتاب ${esc(b.title)}">
+      ${b.cover ? `<img src="${b.cover}" alt="">` : notebookCoverMarkup(b.title)}
       <span class="book-prog" style="width:${pct}%"></span>
       ${st === 'reading' ? `<span class="book-pct-badge">${faNum(pct)}٪</span>` : ''}
       ${st === 'done' ? `<span class="book-done-badge" aria-label="مطالعهٔ کامل‌شده">✓</span>` : ''}
     </div>
-    <div class="book-title">${esc(b.title)}</div>
+    <div class="book-title" data-act="open" role="button" tabindex="0">${esc(b.title)}</div>
     <div class="book-meta">
       ${b.numPages ? `<span>${faNum(done)} از ${faNum(b.numPages)} ص</span>` : '<span>خوانده نشده</span>'}
-      ${t.notes ? `<span>· ${faNum(t.notes)} یادداشت</span>` : ''}
+      ${t.minutes > 0 ? `<span>· ⏱ ${faNum(t.minutes)} د</span>` : ''}
+      ${t.notes ? `<span>· 📝 ${faNum(t.notes)}</span>` : ''}
     </div>
     <div class="book-actions">
-      <button class="b-go" data-act="open">${cta}</button>
-      <button class="b-ghost" data-act="goal" aria-label="هدف مطالعه">هدف</button>
-      <button class="b-del" data-act="del" aria-label="حذف">${TRASH}</button>
+      <button type="button" class="b-go" data-act="open">${cta}</button>
+      <div class="b-sub-actions">
+        <button type="button" class="b-icon-btn b-ghost" data-act="goal" aria-label="هدف مطالعه" title="هدف مطالعه">${TARGET_ICON}</button>
+        <button type="button" class="b-icon-btn b-rename" data-act="rename" aria-label="تغییر نام کتاب" title="تغییر نام">${PENCIL_ICON}</button>
+        <button type="button" class="b-icon-btn b-del" data-act="del" aria-label="حذف" title="حذف کتاب">${TRASH}</button>
+      </div>
     </div>`;
   card.addEventListener('click', e => {
     const act = e.target.closest('[data-act]')?.dataset.act;
     if (act === 'open') window.dispatchEvent(new CustomEvent('open-book', { detail: b.id }));
     if (act === 'goal') openGoal(b.id);
-    if (act === 'del') {
-      if (confirm(`«${b.title}» با همهٔ یادداشت‌هاش حذف بشه؟`)) {
-        delBookBlob(b.id);
-        books = books.filter(x => x.id !== b.id);
-        saveMeta(); renderShelf();
+    if (act === 'rename') openRenameModal(b.id);
+    /* Soft delete. The row disappears at once and a notice offers it back for a
+       few seconds, so the accidental tap that a native confirm used to catch (and
+       that a native confirm's mirrored buttons made easy to get wrong) is caught
+       by undo instead — and the timer is the only moment the PDF is still in
+       IndexedDB. Drawing the shelf without the book would still leave its file
+       behind, so the record is held here and put back on «برگردون». */
+    if (act === 'del') softDeleteBook(b.id);
+  });
+  card.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      const act = e.target.closest('[data-act]')?.dataset.act;
+      if (act === 'open') {
+        e.preventDefault();
+        window.dispatchEvent(new CustomEvent('open-book', { detail: b.id }));
       }
     }
   });
@@ -192,6 +437,20 @@ export function openGoal(id) {
   $('#goalText').hidden = gtype !== 'personal';
   $('#goalOverlay').hidden = false;
 }
+
+/* The goal sheet's page cap follows the book's real page count — but a freshly
+   imported book carries `numPages: 0` until the reader has rendered it, so
+   opening the goal sheet at import time left the input capped at the 500-page
+   placeholder. A three-page PDF could then be given a five-hundred-page-a-day
+   goal, which the save handler quietly clamps after the fact. The reader calls
+   this the moment the count is known, so an open sheet shows the true cap and
+   the next open starts from it. */
+export function syncGoalPageCap(id, numPages) {
+  if (!numPages || id !== goalBookId) return;
+  const gp = $('#goalPages');
+  if (gp) gp.max = String(numPages);
+}
+
 function initGoal() {
   document.querySelectorAll('.goal-choice').forEach(c => {
     c.onclick = () => {
@@ -206,9 +465,6 @@ function initGoal() {
     const sel = document.querySelector('.goal-choice.sel');
     const gtype = sel?.dataset.gtype || 'full';
     const text = gtype === 'personal' ? $('#goalText').value.trim() : '';
-    /* A daily page goal is a positive count and can never exceed the book, so
-       an empty, zero, negative or non-numeric entry means "no page goal"
-       rather than a value that renders as a broken progress track. */
     const entered = Number($('#goalPages').value);
     let pages = Number.isFinite(entered) && entered > 0 ? Math.floor(entered) : null;
     if (pages && b.numPages) pages = Math.min(pages, b.numPages);
@@ -217,30 +473,139 @@ function initGoal() {
     renderShelf();
     window.dispatchEvent(new CustomEvent('goal-changed'));
   };
-  $('#goalClose').onclick = () => { $('#goalOverlay').hidden = true; };
+  const goalOverlay = $('#goalOverlay');
+  $('#goalClose').onclick = () => { goalOverlay.hidden = true; };
+  goalOverlay?.addEventListener('click', e => {
+    if (e.target === goalOverlay) goalOverlay.hidden = true;
+  });
+  window.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && goalOverlay && !goalOverlay.hidden) goalOverlay.hidden = true;
+  });
   window.addEventListener('open-goal', e => openGoal(e.detail));
+}
+
+/* ── Rename Book Modal ── */
+function openRenameModal(id) {
+  const b = getBook(id);
+  if (!b) return;
+  renameBookId = id;
+  const input = $('#renameInput');
+  if (input) input.value = b.title || '';
+  const overlay = $('#renameOverlay');
+  if (overlay) overlay.hidden = false;
+  setTimeout(() => {
+    if (input) {
+      input.focus();
+      input.select();
+    }
+  }, 120);
+}
+
+function initRename() {
+  const overlay = $('#renameOverlay');
+  const input = $('#renameInput');
+  const saveBtn = $('#renameSave');
+  const closeBtn = $('#renameClose');
+
+  const closeRename = () => {
+    overlay.hidden = true;
+    renameBookId = null;
+  };
+
+  const commitRename = () => {
+    if (!renameBookId) return;
+    const val = input.value.trim();
+    if (val) {
+      updateBook(renameBookId, { title: val });
+      renderShelf();
+      closeRename();
+    } else {
+      input.focus();
+    }
+  };
+
+  saveBtn?.addEventListener('click', commitRename);
+  closeBtn?.addEventListener('click', closeRename);
+  overlay?.addEventListener('click', e => {
+    if (e.target === overlay) closeRename();
+  });
+  window.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && overlay && !overlay.hidden) closeRename();
+  });
+  input?.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); commitRename(); }
+  });
 }
 
 /* ── Import book ── */
 export function initLibrary() {
   renderShelf();
   initGoal();
+  initRename();
+
+  const searchInput = $('#shelfSearch');
+  const searchClear = $('#shelfSearchClear');
+  searchInput?.addEventListener('input', e => {
+    shelfSearchQuery = e.target.value;
+    if (searchClear) searchClear.hidden = !shelfSearchQuery.trim();
+    renderShelf();
+  });
+  searchClear?.addEventListener('click', () => {
+    shelfSearchQuery = '';
+    if (searchInput) {
+      searchInput.value = '';
+      searchInput.focus();
+    }
+    searchClear.hidden = true;
+    renderShelf();
+  });
+
+  const filterWrap = $('#shelfFilter');
+  filterWrap?.addEventListener('click', e => {
+    const btn = e.target.closest('.s-filter-chip[data-filter]');
+    if (!btn) return;
+    filterWrap.querySelectorAll('.s-filter-chip').forEach(c => {
+      const active = c === btn;
+      c.classList.toggle('on', active);
+      c.setAttribute('aria-pressed', String(active));
+    });
+    shelfFilter = btn.dataset.filter || 'all';
+    renderShelf();
+  });
+
+  const sortSelect = $('#shelfSortSelect');
+  sortSelect?.addEventListener('change', e => {
+    shelfSort = e.target.value;
+    renderShelf();
+  });
+
   $('#importBtn').onclick = () => $('#bookFile').click();
   const emptyAdd = $('#emptyAdd');
   if (emptyAdd) emptyAdd.onclick = () => $('#bookFile').click();
   $('#bookFile').addEventListener('change', async e => {
+    const fileInput = e.target;
     const f = e.target.files[0];
     if (!f) return;
-    const id = Date.now() + '';
-    await putBook({ id, blob: f });
-    books.unshift({
-      id, title: f.name.replace(/\.pdf$/i, ''), addedAt: Date.now(),
-      numPages: 0, lastPage: 1, cover: '', goal: null, stats: {}, highlights: [], notes: [],
-      completedPages: []
-    });
-    saveMeta(); renderShelf();
-    e.target.value = '';
-    window.dispatchEvent(new CustomEvent('open-book', { detail: id }));
-    setTimeout(() => openGoal(id), 400);
+    /* Two imports in the same millisecond would otherwise collide on one id and
+       silently replace each other. */
+    const id = nextId();
+    try {
+      await putBook({ id, blob: f });
+      books.unshift({
+        id, title: f.name.replace(/\.pdf$/i, ''), addedAt: Date.now(),
+        numPages: 0, lastPage: 1, cover: '', goal: null, stats: {}, highlights: [], notes: [],
+        completedPages: []
+      });
+      saveMeta(); renderShelf();
+      window.dispatchEvent(new CustomEvent('open-book', { detail: id }));
+      setTimeout(() => openGoal(id), 400);
+    } catch (err) {
+      console.warn('کتاب ذخیره نشد:', err);
+      showImportError('کتاب ذخیره نشد؛ شاید حافظهٔ مرورگر پر است. یک بار دیگر امتحان کن.');
+    } finally {
+      /* Whatever happened, the picker is cleared so choosing the same file
+         again is a change the browser will report. */
+      fileInput.value = '';
+    }
   });
 }

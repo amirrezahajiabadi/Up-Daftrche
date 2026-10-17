@@ -28,7 +28,7 @@
   padding:8px 6px;box-shadow:var(--shadow-sm)}
 .wk-cell{display:flex;flex-direction:column;align-items:center;gap:3px;min-width:0;
   border:1.5px solid transparent;background:transparent;border-radius:var(--radius-sm);
-  padding:6px 2px 5px;cursor:pointer;font-family:var(--font-ui);
+  padding:6px 2px 5px;cursor:pointer;font-family:var(--font-ui);min-height:48px;
   transition:background var(--duration-fast),border-color var(--duration-fast),color var(--duration-fast)}
 .wk-dow{font-size:11px;font-weight:600;color:var(--muted);line-height:1}
 .wk-num{font-size:15px;font-weight:700;color:var(--text);line-height:1.2}
@@ -62,7 +62,7 @@
    button's shadow crossing the pill's own border and read as two shapes
    overlapping. */
 .wk-add{display:flex;align-items:center;gap:10px;background:var(--bg);border:1.5px solid var(--border);
-  border-radius:var(--radius-pill);padding:6px 6px 6px 18px;box-shadow:none;
+  border-radius:var(--radius-pill);padding-block:6px;padding-inline:18px 6px;box-shadow:none;
   transition:border-color var(--duration-base),box-shadow var(--duration-base),background var(--duration-slow)}
 /* One ring, and it belongs to the row: the field inside never draws its own, so
    a focused reader sees a single outline rather than two sharing the same box. */
@@ -79,7 +79,7 @@
 .wk-go{flex:0 0 auto;width:44px;height:44px;border:none;border-radius:50%;background:var(--accent);
   color:var(--color-text-on-accent);cursor:pointer;display:grid;place-items:center;
   box-shadow:var(--shadow-accent);transition:transform var(--duration-fast) var(--ease-spring),box-shadow var(--duration-fast)}
-.wk-add .wk-go:active{transform:translateY(3px);box-shadow:0 1px 0 0 rgba(120,55,20,.35)}
+.wk-add .wk-go:active{transform:translateY(3px);box-shadow:0 1px 0 0 color-mix(in srgb,var(--color-accent-strong) 35%,transparent)}
 .wk-go:focus-visible{outline:2px solid var(--color-focus);outline-offset:2px}
 
 /* ── The optional span ── */
@@ -117,7 +117,7 @@
   color:transparent;transition:background var(--duration-fast) var(--ease-out),border-color var(--duration-fast)}
 /* 44px of finger without 44px of row */
 .wk-check::after{content:'';position:absolute;inset:-9px;border-radius:var(--radius-sm)}
-.wk-check svg{width:13px;height:13px;stroke:#fff;stroke-width:3;fill:none;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:24;stroke-dashoffset:24;transition:stroke-dashoffset var(--duration-base) ease}
+.wk-check svg{width:13px;height:13px;stroke:var(--color-text-on-success);stroke-width:3;fill:none;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:24;stroke-dashoffset:24;transition:stroke-dashoffset var(--duration-base) ease}
 .wk-row.done .wk-check{background:var(--green);border-color:transparent}
 .wk-row.done .wk-check svg{stroke-dashoffset:0}
 .wk-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;background:var(--color-success)}
@@ -131,11 +131,13 @@
    accent rather than in a chip grey — it is the planner's own signal. */
 .wk-span-chip{flex-shrink:0;font-size:11px;font-weight:700;padding:2px 9px;border-radius:var(--radius-pill);
   color:var(--accent);background:var(--accent-soft);white-space:nowrap}
-.wk-del{border:none;background:transparent;color:var(--muted);width:28px;height:28px;border-radius:var(--radius-xs);
+.wk-del{position:relative;border:none;background:transparent;color:var(--muted);width:28px;height:28px;border-radius:var(--radius-xs);
   cursor:pointer;display:grid;place-items:center;flex-shrink:0;opacity:0;transform:scale(.8);
   transition:opacity var(--duration-fast),transform var(--duration-fast),color var(--duration-fast),background var(--duration-fast)}
+/* 44px of finger around the 28px trash, the same expansion the other lists use. */
+.wk-del::after{content:'';position:absolute;inset:-8px;border-radius:var(--radius-sm)}
 .wk-row:hover .wk-del,.wk-del:focus-visible{opacity:1;transform:none}
-.wk-del:hover{color:var(--danger);background:rgba(228,88,79,.12)}
+.wk-del:hover{color:var(--danger);background:color-mix(in srgb,var(--color-danger) 12%,transparent)}
 @media (hover:none){.wk-del{opacity:.55;transform:none}}
 .wk-empty{list-style:none;text-align:center;padding:18px 12px;color:var(--muted);font-size:12.5px;
   line-height:1.9;font-weight:400;background:var(--color-bg);border:1px solid var(--color-border);
@@ -157,6 +159,16 @@
 html.wk-dragging{cursor:grabbing;user-select:none;-webkit-user-select:none}
 html.wk-dragging .wk-grip{cursor:grabbing}
 .wk-row.dragging{opacity:.4}
+/* The strip is «armed» for the length of a drag (js/planner.js): every cell in
+   it is a landing zone, and until now nothing on screen said so — the class was
+   toggled and had no rule behind it. A held breath rather than an announcement:
+   the accent border lifts, the day cells rise a hair, and the whole board reads
+   as pickable at the moment the finger is already looking for a place to drop.
+   transform/opacity and one border colour only, so the cue costs no layout. */
+.wk-strip.armed{border-color:color-mix(in srgb,var(--accent) 45%,var(--border));
+  box-shadow:0 10px 26px -14px color-mix(in srgb,var(--accent) 60%,transparent),var(--shadow-1)}
+.wk-strip.armed .wk-cell{transform:scale(1.01)}
+.wk-strip.armed .wk-cell:not(.drop):not(.sel){border-color:color-mix(in srgb,var(--accent) 22%,transparent)}
 .wk-cell.drop{border-color:var(--accent);background:var(--accent-soft)}
 .wk-cell.drop .wk-dow,.wk-cell.drop .wk-num{color:var(--accent)}
 .wk-cell.flash{animation:wk-pulse .7s var(--ease-out)}
@@ -186,9 +198,7 @@ html.wk-dragging .wk-grip{cursor:grabbing}
 .wk-timeline-sec{display:flex;flex-direction:column;gap:10px}
 .wk-timeline{display:flex;flex-direction:column;gap:8px;position:relative}
 .wk-timeline-slot{
-  display:flex;
-  align-items:center;
-  gap:12px;
+  gap:9px;
   background:var(--surface);
   border:1px solid var(--border);
   border-radius:var(--radius-md);
@@ -197,7 +207,6 @@ html.wk-dragging .wk-grip{cursor:grabbing}
   transition:border-color var(--duration-fast);
 }
 .wk-timeline-slot:hover{border-color:var(--accent)}
-.wk-slot-time{flex-shrink:0}
 .wk-slot-badge{
   display:inline-flex;
   align-items:center;
@@ -209,10 +218,9 @@ html.wk-dragging .wk-grip{cursor:grabbing}
   font-weight:600;
   padding:3px 8px;
   border-radius:var(--radius-pill);
+  flex-shrink:0;
+  white-space:nowrap;
 }
-.wk-slot-task{display:flex;align-items:center;gap:8px;flex:1;min-width:0}
-.wk-slot-title{font-size:14px;font-weight:500;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.wk-slot-title.done{text-decoration:line-through;color:var(--muted)}
 .wk-timeline-empty{
   font-size:12.5px;
   color:var(--muted);
@@ -230,6 +238,13 @@ html.wk-dragging .wk-grip{cursor:grabbing}
   .wk-dow{font-size:11px}
   .wk-strip{padding:7px 5px}
   .wk-title{font-size:13px}
+}
+@media (max-width:360px){
+  .wk-strip{gap:3px;padding:6px 3px}
+  .wk-cell{padding:5px 1px 4px;min-height:48px}
+  .wk-num{font-size:13px}
+  .wk-dow{font-size:11px}
+  .wk-span-picks select{max-width:calc(50% - 10px);min-width:0;padding:6px 4px;font-size:11.5px}
 }
 
 /* ── Desktop: the week gets the room it always wanted ──

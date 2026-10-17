@@ -132,11 +132,33 @@ test('time span: ۸ تا ۹ صبح', () => {
   assert.equal(res.text, 'ورزش');
 });
 
-test('time span: 14-16 dash format', () => {
-  const res = parseQuickAdd('کارگاه 14-16', REF_DATE);
+test('time span: ساعت 14-16 dash format', () => {
+  const res = parseQuickAdd('کارگاه ساعت 14-16', REF_DATE);
   assert.equal(res.timeFrom, 14 * 60);
   assert.equal(res.timeTo, 16 * 60);
   assert.equal(res.text, 'کارگاه');
+});
+
+test('a bare hyphen range is not a clock range without a time cue', () => {
+  /* «صفحه ۱۰-۲۰» and «مبلغ ۱۰۰۰-۲۰۰۰» are counts, not hours, so a hyphen
+     only reads as a span when «ساعت»، a colon or a meridiem says so. */
+  const page = parseQuickAdd('صفحه 10-20 را بخوان', REF_DATE);
+  assert.equal(page.timeFrom, null);
+  assert.equal(page.timeTo, null);
+  assert.equal(page.text, 'صفحه 10-20 را بخوان');
+
+  const money = parseQuickAdd('مبلغ 1000-2000 را بده', REF_DATE);
+  assert.equal(money.timeFrom, null);
+  assert.equal(money.text, 'مبلغ 1000-2000 را بده');
+
+  const bare = parseQuickAdd('کارگاه 14-16', REF_DATE);
+  assert.equal(bare.timeFrom, null);
+  assert.equal(bare.text, 'کارگاه 14-16');
+
+  const colon = parseQuickAdd('کارگاه 14:00-16:00', REF_DATE);
+  assert.equal(colon.timeFrom, 14 * 60);
+  assert.equal(colon.timeTo, 16 * 60);
+  assert.equal(colon.text, 'کارگاه');
 });
 
 test('duration: ۳۰ دقیقه', () => {
@@ -421,4 +443,110 @@ test('dueLabel names today, tomorrow, the day after, and a distant day', () => {
   assert.ok(!/^\d{4}-\d{2}-\d{2}$/.test(far), `distant dates must not print as an ISO key (got "${far}")`);
   assert.ok(far.includes('مهر'), `distant dates should name the Jalali month (got "${far}")`);
   assert.equal(dueLabel(null, REF_DATE), '');
+});
+
+test('«بعد از ظهر» with spaces reads as PM, like the closed-up spelling', () => {
+  const spaced = parseQuickAdd('ساعت 5 بعد از ظهر', REF_DATE);
+  assert.equal(spaced.timeFrom, 17 * 60);
+  assert.equal(spaced.text, 'ساعت 5 بعد از ظهر');
+  const closed = parseQuickAdd('ساعت 5 بعدازظهر', REF_DATE);
+  assert.equal(closed.timeFrom, 17 * 60);
+});
+
+test('«ظهر»: hours 1–4 are the afternoon and 12 is noon', () => {
+  assert.equal(parseQuickAdd('ساعت 2 ظهر', REF_DATE).timeFrom, 14 * 60);
+  assert.equal(parseQuickAdd('ساعت 12 ظهر', REF_DATE).timeFrom, 12 * 60);
+  assert.equal(parseQuickAdd('ساعت 1 ظهر', REF_DATE).timeFrom, 13 * 60);
+  assert.equal(parseQuickAdd('ساعت 4 ظهر', REF_DATE).timeFrom, 16 * 60);
+});
+
+test('span meridiem: «1 تا 3 ظهر» is afternoon and «10 تا 2 بعد از ظهر» crosses noon', () => {
+  const noon = parseQuickAdd('1 تا 3 ظهر', REF_DATE);
+  assert.equal(noon.timeFrom, 13 * 60);
+  assert.equal(noon.timeTo, 15 * 60);
+
+  const across = parseQuickAdd('10 تا 2 بعد از ظهر', REF_DATE);
+  assert.equal(across.timeFrom, 10 * 60);
+  assert.equal(across.timeTo, 14 * 60);
+
+  const evening = parseQuickAdd('ساعت 5 تا 7 عصر', REF_DATE);
+  assert.equal(evening.timeFrom, 17 * 60);
+  assert.equal(evening.timeTo, 19 * 60);
+  assert.equal(evening.text, 'ساعت 5 تا 7 عصر');
+});
+
+test('a reversed or empty range is reported, never previewed as saveable', () => {
+  const reversed = parseQuickAdd('جلسه ساعت 18 تا 14', REF_DATE);
+  assert.equal(reversed.timeFrom, null);
+  assert.equal(reversed.timeTo, null);
+  assert.deepEqual(reversed.ignored, ['ساعت 18 تا 14']);
+
+  const equal = parseQuickAdd('جلسه ساعت 10 تا 10', REF_DATE);
+  assert.equal(equal.timeFrom, null);
+  assert.deepEqual(equal.ignored, ['ساعت 10 تا 10']);
+
+  /* Still a real span when the ends are in order. */
+  const ordered = parseQuickAdd('جلسه ساعت 10 تا 12', REF_DATE);
+  assert.equal(ordered.timeFrom, 10 * 60);
+  assert.equal(ordered.timeTo, 12 * 60);
+});
+
+test('decimal durations: 3.5 / ۱٫۵ ساعت and 42.5 دقیقه', () => {
+  const hours = parseQuickAdd('مطالعه 3.5 ساعت', REF_DATE);
+  assert.equal(hours.durationMin, 210);
+  assert.equal(hours.text, 'مطالعه');
+
+  const persian = parseQuickAdd('مطالعه ۱٫۵ ساعت', REF_DATE);
+  assert.equal(persian.durationMin, 90);
+  assert.equal(persian.text, 'مطالعه');
+
+  const half = parseQuickAdd('مطالعه 2٫5 ساعت', REF_DATE);
+  assert.equal(half.durationMin, 150);
+
+  const minutes = parseQuickAdd('پیاده‌روی 42.5 دقیقه', REF_DATE);
+  assert.equal(minutes.durationMin, 43);   // rounded to whole minutes
+  assert.equal(minutes.text, 'پیاده‌روی');
+});
+
+test('an impossible Jalali day is refused and reported instead of overflowing', () => {
+  const day32 = parseQuickAdd('جلسه 32 فروردین', REF_DATE);
+  assert.equal(day32.dueDate, null);
+  assert.deepEqual(day32.ignored, ['32 فروردین']);
+  assert.equal(day32.text, 'جلسه 32 فروردین');
+
+  const day0 = parseQuickAdd('جلسه 0 فروردین', REF_DATE);
+  assert.equal(day0.dueDate, null);
+  assert.deepEqual(day0.ignored, ['0 فروردین']);
+
+  /* 30 Esfand exists only in a leap year (1403 is, 1404/1405 are not). */
+  assert.ok(parseQuickAdd('جلسه 30 اسفند 1403', REF_DATE).dueDate);
+  assert.equal(parseQuickAdd('جلسه 30 اسفند 1404', REF_DATE).dueDate, null);
+
+  /* A real date is still parsed and stripped. */
+  const good = parseQuickAdd('جلسه 15 اردیبهشت', REF_DATE);
+  assert.ok(good.dueDate);
+  assert.deepEqual(good.ignored, []);
+  assert.equal(good.text, 'جلسه');
+});
+
+test('«هفته بعد» after a weekday names the next week and leaves no stray text', () => {
+  /* REF_DATE is Friday; the next Saturday is one day out, and «هفته بعد» adds 7. */
+  for (const raw of ['شنبه هفته بعد dentist', 'شنبه هفتهٔ بعد dentist']) {
+    const res = parseQuickAdd(raw, REF_DATE);
+    assert.equal(res.dueDate, shiftKey(TODAY_KEY, 8), raw);
+    assert.equal(res.text, 'dentist', raw);
+  }
+  assert.equal(parseQuickAdd('هفته آینده شنبه dentist', REF_DATE).text, 'dentist');
+  assert.equal(parseQuickAdd('سه‌شنبه هفته دیگر dentist', REF_DATE).dueDate, shiftKey(TODAY_KEY, 11));
+});
+
+test('an unknown hashtag stays in the title instead of being eaten', () => {
+  const res = parseQuickAdd('خرید نان #نانوایی', REF_DATE);
+  assert.equal(res.cat, null);
+  assert.ok(res.text.includes('#نانوایی'), `unknown tag must survive (got "${res.text}")`);
+
+  /* A known tag is still taken out and mapped. */
+  const known = parseQuickAdd('خرید نان #خانه', REF_DATE);
+  assert.equal(known.cat, 'home');
+  assert.equal(known.text, 'خرید نان');
 });

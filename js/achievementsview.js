@@ -23,9 +23,8 @@
 import { $, faNum, dayKey, esc } from './utils.js';
 import { state } from './state.js';
 import { subscribe } from './bus.js';
-import { STORAGE_KEYS } from './constants.js';
 import { loadAchv, saveAchv, loadFreeze, saveFreeze, loadTourAwarded } from './store.js';
-import { collectTotals } from './ledger.js';
+import { collectTotals, readLedger } from './ledger.js';
 import { getBooks } from './library.js';
 import { getHistory } from './focushistory.js';
 import { formatJalaliDate, dateToJalali, JALALI_MONTHS } from './jalali.js';
@@ -34,7 +33,7 @@ import { confetti, beep } from './confetti.js';
 import { isBusy } from './calm.js';
 import { markThemePicker } from './theme.js';
 import {
-  FAMILIES, TIER_NAMES, KIND_LABEL, byId, iconOf, emptyState, normalizeState,
+  FAMILIES, TIER_NAMES, KIND_LABEL, iconOf, emptyState, normalizeState,
   evaluate, nearest, weekBoard, rewardsOf,
 } from './achievements.js';
 
@@ -64,11 +63,10 @@ function fingerprint() {
   }
   const books = getBooks().map(b =>
     `${b.id}:${(b.highlights || []).length}:${(b.notes || []).length}:${(b.completedPages || []).length}:${Object.keys(b.stats || {}).length}`).join(',');
-  let led = 0;
-  try {
-    const raw = JSON.parse(localStorage.getItem(STORAGE_KEYS.ledger));
-    led = raw && raw.days ? Object.keys(raw.days).length : 0;
-  } catch { /* unreadable ledger counts as empty */ }
+  /* The ledger's own sanitizing reader, not a raw parse: it validates the shape
+     and drops keys the calendar would not write, so a corrupt entry cannot
+     change the fingerprint in a way the badge engine did not plan for. */
+  const led = Object.keys(readLedger().days).length;
   const moods = state.moods && typeof state.moods === 'object' ? Object.keys(state.moods).length : 0;
   return [
     tasks.length, done, lastDone,

@@ -1,5 +1,13 @@
 /* ═══ Audio Engine: Procedural Music + Ambient Sound + User Tracks (IndexedDB) ═══ */
-import { safeSet } from './store.js';
+import { safeSet, readString } from './store.js';
+
+/* Both volume keys are raw numbers written as strings. A missing key falls back
+   to 0.8; a corrupt one falls back the same way, because parseFloat of a
+   non-number is NaN and a gain of NaN silently mutes the whole engine. */
+const readVolume = key => {
+  const v = parseFloat(readString(key, '0.8'));
+  return Number.isFinite(v) ? v : 0.8;
+};
 
 let ctx = null, musicGain = null, ambGain = null;
 
@@ -8,12 +16,12 @@ function ensureCtx() {
   if (ctx.state === 'suspended') ctx.resume();
   if (!musicGain) {
     musicGain = ctx.createGain();
-    musicGain.gain.value = parseFloat(localStorage.getItem('daftarche-vol-music') ?? '0.8');
+    musicGain.gain.value = readVolume('daftarche-vol-music');
     musicGain.connect(ctx.destination);
   }
   if (!ambGain) {
     ambGain = ctx.createGain();
-    ambGain.gain.value = parseFloat(localStorage.getItem('daftarche-vol-amb') ?? '0.8');
+    ambGain.gain.value = readVolume('daftarche-vol-amb');
     ambGain.connect(ctx.destination);
   }
   return ctx;
@@ -22,19 +30,27 @@ function ensureCtx() {
 export function unlockAudio() { try { ensureCtx(); } catch (e) {} }
 
 /* ── Volume ── */
+/* Dragging a range input fires `input` on every pixel. The gain follows the
+   thumb immediately, but the stored value is written once the hand settles:
+   a slider drag is a gesture, not a burst of settings. */
+const VOL_SAVE_MS = 250;
+let volMusicTimer = 0, volAmbTimer = 0;
+
 export function setMusicVolume(v) {
   if (musicGain) musicGain.gain.value = v;
   if (userAudio) userAudio.volume = v * .95;
-  safeSet('daftarche-vol-music', v);
+  clearTimeout(volMusicTimer);
+  volMusicTimer = setTimeout(() => { volMusicTimer = 0; safeSet('daftarche-vol-music', v); }, VOL_SAVE_MS);
 }
 export function setAmbVolume(v) {
   if (ambGain) ambGain.gain.value = v;
-  safeSet('daftarche-vol-amb', v);
+  clearTimeout(volAmbTimer);
+  volAmbTimer = setTimeout(() => { volAmbTimer = 0; safeSet('daftarche-vol-amb', v); }, VOL_SAVE_MS);
 }
 export function getVolumes() {
   return {
-    m: parseFloat(localStorage.getItem('daftarche-vol-music') ?? '0.8'),
-    a: parseFloat(localStorage.getItem('daftarche-vol-amb') ?? '0.8'),
+    m: readVolume('daftarche-vol-music'),
+    a: readVolume('daftarche-vol-amb'),
   };
 }
 
@@ -259,6 +275,18 @@ export async function removeUserTrack(id) {
    open handle and the files survive the wipe. Resolves true only when the
    database is really gone. */
 export function clearUserAudioData() {
+  /* Nothing of the engine may outlive the wipe: an oscillator still running
+     would keep making sound from a page that has just said everything was
+     cleared, and an open AudioContext would hold the hardware. */
+  stopProc();
+  stopUser();
+  clearTimeout(volMusicTimer); volMusicTimer = 0;
+  clearTimeout(volAmbTimer); volAmbTimer = 0;
+  if (ctx) {
+    try { ctx.close(); } catch (e) { /* already closed */ }
+    ctx = null; musicGain = null; ambGain = null;
+  }
+  whiteBuf = brownBuf = dropBuf = null;
   return new Promise(resolve => {
     const remove = () => {
       const req = indexedDB.deleteDatabase(DB_NAME);

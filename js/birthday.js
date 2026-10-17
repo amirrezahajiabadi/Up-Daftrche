@@ -31,7 +31,7 @@
    Everything with a date in it is a pure function, so the rule can be tested by
    feeding it dates instead of waiting a year for one. */
 
-import { dateToJalali, jalaliToDate, jalaliDaysInMonth, JALALI_MONTHS } from "./jalali.js";
+import { dateToJalali, JALALI_MONTHS } from "./jalali.js";
 import { $, faDigits } from "./utils.js";
 import { renderMonthGrid, renderMonthHead, stepMonth, walkGridKeys } from "./jalalical.js";
 import { loadName } from "./store.js";

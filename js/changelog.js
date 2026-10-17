@@ -16,6 +16,7 @@
    it is unavailable the running release is unknown and the dialog stays shut. */
 
 import { esc } from './utils.js';
+import { safeSet, readString } from './store.js';
 
 export const APP_VERSION = self.DAFTARCHE_RELEASE || '';
 
@@ -199,17 +200,6 @@ export const CHANGELOG = [
     ],
   },
   {
-    version: '3.1.0',
-    date: 'مهر ۱۴۰۵',
-    title: 'ناوبری تازه، یک تم تازه',
-    highlights: [
-      { icon: '🧭', text: 'نوار پایین نرم‌تر شد: ۴ تب اصلی و یک دکمهٔ «بیشتر»' },
-      { icon: '🗂️', text: 'هفته، آمار، نشان‌ها، پروفایل و تنظیمات رفتن زیر «بیشتر»' },
-      { icon: '🖋️', text: 'تم تازهٔ «کاغذی» — کاغذ آفتابی و جوهر تیره، برای خواندن و نوشتن' },
-      { icon: '🖥️', text: 'روی دسکتاپ، ریل کناری به دو گروه تقسیم شد و محتوا جمع‌وجورتر' },
-    ],
-  },
-  {
     version: '3.0.0',
     date: 'مهر ۱۴۰۵',
     title: 'آشنایی با دفترچه کامل‌تر شد',
@@ -230,6 +220,17 @@ export const CHANGELOG = [
       { icon: '👀', text: 'متن‌های کم‌رنگ و چیپ‌های انتخاب‌شده خواناتر شدن، توی هر تم' },
       { icon: '📅', text: 'ثبت سریع به‌جای تاریخ خام «امروز/فردا/پس‌فردا» نشون می‌ده و ساعت نامعتبر رو هشدار می‌ده' },
       { icon: '🎧', text: 'توی تمرکز غرق‌کننده، صدا و موسیقی کنار می‌رن و با یه دکمه برمی‌گردن' },
+    ],
+  },
+  {
+    version: '3.1.0',
+    date: 'مهر ۱۴۰۵',
+    title: 'ناوبری تازه، یک تم تازه',
+    highlights: [
+      { icon: '🧭', text: 'نوار پایین نرم‌تر شد: ۴ تب اصلی و یک دکمهٔ «بیشتر»' },
+      { icon: '🗂️', text: 'هفته، آمار، نشان‌ها، پروفایل و تنظیمات رفتن زیر «بیشتر»' },
+      { icon: '🖋️', text: 'تم تازهٔ «کاغذی» — کاغذ آفتابی و جوهر تیره، برای خواندن و نوشتن' },
+      { icon: '🖥️', text: 'روی دسکتاپ، ریل کناری به دو گروه تقسیم شد و محتوا جمع‌وجورتر' },
     ],
   },
 ];
@@ -344,12 +345,13 @@ export function openReleaseNotes() {
      same as now → already read, nothing to say.
      older       → a real update: announce it. */
 function markSeen(version) {
-  try { localStorage.setItem(SEEN_KEY, version); } catch (e) { /* storage unavailable */ }
+  safeSet(SEEN_KEY, version);
 }
 
 export function initChangelogCheck() {
-  let seen = null;
-  try { seen = localStorage.getItem(SEEN_KEY); } catch (e) { /* storage unavailable: treat as a first visit */ }
+  /* Storage that cannot be read is treated as a first visit, and the guarded
+     read says so without throwing (js/store.js). */
+  const seen = readString(SEEN_KEY, null);
 
   if (!APP_VERSION) return;
   /* Never seen a release here: stamp this one and stay quiet. Stamping matters —

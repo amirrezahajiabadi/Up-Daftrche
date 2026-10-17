@@ -27,7 +27,7 @@
 
 import { state } from './state.js';
 import { STORAGE_KEYS, CATS } from './constants.js';
-import { loadFreeze, safeSet } from './store.js';
+import { loadFreeze, safeSet, readJSON } from './store.js';
 import { dayKey, shiftKey } from './utils.js';
 import { getBooks, bookComplete } from './library.js';
 import { getHistory } from './focushistory.js';
@@ -64,8 +64,7 @@ const daysApart = (a, b) => Math.round((keyToDate(b) - keyToDate(a)) / 864e5);
    ledger that cannot be parsed must cost the reader nothing but the floors. */
 
 export function readLedger() {
-  let raw = null;
-  try { raw = JSON.parse(localStorage.getItem(STORAGE_KEYS.ledger)); } catch { /* unreadable */ }
+  const raw = readJSON(STORAGE_KEYS.ledger, null);
   if (!raw || typeof raw !== 'object' || raw.v !== LEDGER_VERSION || !raw.days || typeof raw.days !== 'object') {
     return { v: LEDGER_VERSION, seededAt: null, days: {} };
   }

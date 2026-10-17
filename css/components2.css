@@ -121,16 +121,16 @@ html[data-mode="dark"] .badge-status.warning{color:#ffcd8a}
 
 /* ═══ 10. Bottom Sheet ═══
    Pattern only — behavior (drag, swipe, focus trap) stays in existing code. */
-.bottom-sheet{position:fixed;bottom:0;left:0;right:0;z-index:95;background:var(--color-surface);
+.bottom-sheet{position:fixed;bottom:0;inset-inline:0;z-index:95;background:var(--color-surface);
   border-radius:var(--radius-xl) var(--radius-xl) 0 0;box-shadow:var(--shadow-2);
   max-height:70vh;display:flex;flex-direction:column;padding-bottom:env(safe-area-inset-bottom,0)}
 
 /* ═══ 11. Toast ═══
    Non-blocking, short, with optional action + auto-dismiss progress bar. */
-.toast{position:fixed;bottom:calc(var(--nav-height) + env(safe-area-inset-bottom,0) + 16px);
+.toast{position:fixed;bottom:max(24px,calc(var(--nav-height) + env(safe-area-inset-bottom,0px) + 16px));
   /* Below the focus pill (99) so a running session's pill always stays on top
      when the undo toast rises into the same strip of the screen. */
-  inset-inline-start:50%;transform:translateX(50%);z-index:98;
+  inset-inline-start:calc(50% + (var(--rail-offset, 0px) / 2));transform:translateX(50%);z-index:98;
   display:flex;align-items:center;gap:var(--space-3);
   background:var(--color-text-primary);color:var(--color-bg);
   font-family:var(--font-ui);font-size:13px;font-weight:500;
@@ -389,5 +389,7 @@ html[data-mode="dark"] .toast-sticky .toast-btn{color:var(--color-text-on-accent
 
 @media (max-width:480px){
   .btn{min-height:44px;padding:9px var(--space-3)}
-  .toast{bottom:calc(var(--nav-height) + env(safe-area-inset-bottom,0) + 12px)}
+  .toast{bottom:calc(var(--nav-height) + env(safe-area-inset-bottom,0) + 12px);max-width:calc(100vw - 20px)}
+  body.has-focus-pill .toast{bottom:calc(var(--nav-height) + env(safe-area-inset-bottom,0) + 60px)!important}
 }
+body.has-focus-pill .toast{bottom:calc(var(--nav-height) + env(safe-area-inset-bottom,0px) + 64px)!important}
