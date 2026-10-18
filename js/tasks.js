@@ -64,7 +64,6 @@ function animateChipFlip(chip) {
 
 /* ── Estimated Duration ── */
 const DUR_CYCLE = [null, 5, 15, 30, 60, 90];
-let durClickTimer = null;
 function nextDur(cur) {
   const i = DUR_CYCLE.indexOf(cur);
   return DUR_CYCLE[(i + 1) % DUR_CYCLE.length];
@@ -576,13 +575,12 @@ export function initTasks() {
       }
     }
     else if (e.target.closest('.dur-chip')) {
+      /* The chip answers on the click itself. It used to wait 240 ms in case a
+         second click was coming, which made a single tap on the one control that
+         sets a duration feel like it had not registered. */
       const btn = e.target.closest('.dur-chip');
-      // Defer the cycle briefly so a double-click can open the editor instead
-      clearTimeout(durClickTimer);
-      durClickTimer = setTimeout(() => {
-        task.durationMin = nextDur(task.durationMin); save();
-        refreshDurChip(li, task); animateChipFlip(btn); notify();
-      }, 240);
+      task.durationMin = nextDur(task.durationMin); save();
+      refreshDurChip(li, task); animateChipFlip(btn); notify();
     }
   });
 
@@ -611,7 +609,6 @@ export function initTasks() {
     }
     const durEl = e.target.closest('.dur-chip');
     if (durEl) {
-      clearTimeout(durClickTimer);
       const isEn = getLang() === 'en';
       const inp = document.createElement('input');
       inp.className = 'dur-input'; inp.type = 'number'; inp.min = '1'; inp.max = '480';
