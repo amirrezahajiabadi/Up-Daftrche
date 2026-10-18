@@ -1769,10 +1769,14 @@ function updateMarkBtn() {
   if (!btn || !curBook) return;
   const read = bookDone(curBook).has(curPage);
   btn.classList.toggle('is-read', read);
-  btn.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg><span id="markReadText" class="sr-only">${read ? 'خوانده شد' : 'خواندم'}</span>`;
-  btn.title = read ? 'خوانده شد — کلیک برای تغییر به خوانده‌نشده' : 'علامت‌گذاری صفحه به عنوان خوانده شده';
+  /* The tick does two things at once — it marks the page and turns it — so the
+     label says both. Nothing changes in the button's footprint: the wording
+     lives in the tooltip and in the screen-reader text. */
+  const markLabel = 'علامت‌زدن و رفتن به صفحهٔ بعد';
+  btn.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg><span id="markReadText" class="sr-only">${read ? 'خوانده شد' : markLabel}</span>`;
+  btn.title = read ? 'خوانده شد — کلیک برای تغییر به خوانده‌نشده' : markLabel;
   btn.setAttribute('aria-pressed', String(read));
-  btn.setAttribute('aria-label', read ? 'صفحه خوانده شد' : 'علامت‌گذاری صفحه به عنوان خوانده شده');
+  btn.setAttribute('aria-label', read ? 'صفحه خوانده شد' : markLabel);
   $('#pageWrap')?.classList.toggle('is-read', read);
 }
 
@@ -1790,7 +1794,13 @@ function togglePageRead() {
   updateBook(curBook.id, { completedPages: curBook.completedPages, stats: curBook.stats, lastReadAt: Date.now() });
   updatePageUI();
   updateGoalBar();
+  /* Marking the last unread page finishes the book: the celebration is the
+     answer to that tap, and there is no next page to turn to. */
   if (bookComplete(curBook)) celebrateCompletion();
+  /* Otherwise the tick carries the reader forward, so finishing a page and
+     moving on is one action instead of two. Unmarking stays put — nothing was
+     completed, so there is nothing to advance past. */
+  else if (marked && curPage < (curBook.numPages || Infinity)) gotoPage(curPage + 1);
 }
 
 /* ── Goal bar ── */
