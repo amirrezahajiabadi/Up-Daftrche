@@ -22,6 +22,11 @@ bindPersistence({ save, notify });
 
 export const matches = t => {
   if (state.filter === 'nodue') return !t.done && !t.dueDate;
+  /* A deadline is stored as a bare YYYY-MM-DD, so it orders itself: anything
+     earlier than today's key has passed, and a finished task is never late.
+     The key is read per call, not once at boot, so a list left open overnight
+     answers with the new day. */
+  if (state.filter === 'overdue') return !t.done && !!t.dueDate && t.dueDate < dueKeyFromOffset(0);
   if (state.filter === 'active') return !t.done;
   if (state.filter === 'done') return t.done;
   return true;
@@ -244,6 +249,7 @@ export function updateEmpty() {
       state.query ? 'No matching tasks found. Try a different search.'
       : !state.tasks.length ? 'No tasks on the table right now.'
       : state.catFilter !== 'all' ? `No tasks in “${t(`categories.${state.catFilter}`)}”.`
+      : state.filter === 'overdue' ? 'Nothing is overdue.'
       : state.filter === 'done' ? 'You haven’t completed any tasks yet.'
       : allDone ? 'All your tasks are done!'
       : voc + 'Your task list is empty. Add your first task!';
@@ -253,6 +259,7 @@ export function updateEmpty() {
       state.query ? 'چیزی پیدا نشد. عبارت دیگری را امتحان کن.'
       : !state.tasks.length ? 'فعلاً کاری روی میز نیست.'
       : state.catFilter !== 'all' ? `توی دستهٔ «${CATS.find(c => c.key === state.catFilter)?.label}» کاری نیست.`
+      : state.filter === 'overdue' ? 'کاری از مهلت نگذشته.'
       : state.filter === 'done' ? 'هنوز کاری را تمام نکرده‌ای.'
       : allDone ? 'همهٔ کارهات انجام شده.'
       : voc + 'لیستت خالیه. اولین کارت رو اضافه کن.';
