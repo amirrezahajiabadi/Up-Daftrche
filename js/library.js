@@ -2,6 +2,7 @@
 import { $, faNum, dayKey, esc, nextId, normalizeFa } from './utils.js';
 import { readJSON, safeSet, STORAGE_ERROR_EVENT } from './store.js';
 import { showNotice } from './dialog.js';
+import { getLang, t } from './i18n.js';
 
 const META_KEY = 'daftarche-books-meta';
 /* Read through the storage layer's guarded reader: a corrupt value falls back
@@ -105,15 +106,17 @@ let pendingDelete = null; // { book, index, commit }
 function softDeleteBook(id) {
   const idx = books.findIndex(b => b.id === id);
   if (idx < 0) return;
+  const isEn = getLang() === 'en';
   const book = books[idx];
-  const title = book.title || 'کتاب';
+  const title = book.title || (isEn ? 'Book' : 'کتاب');
   settlePendingDelete();
   const commit = () => { delBookBlob(id); pendingDelete = null; };
   pendingDelete = { book, index: idx, commit };
   books = books.filter(b => b.id !== id);
   saveMeta();
   renderShelf();
-  showNotice(`«${title}» حذف شد.`, { actionLabel: 'برگردون', onAction: restorePendingDelete });
+  const noticeMsg = isEn ? `“${title}” deleted.` : `«${title}» حذف شد.`;
+  showNotice(noticeMsg, { actionLabel: isEn ? 'Undo' : 'برگردون', onAction: restorePendingDelete });
   /* The notice's own timer is not exported, so the same 5s is armed here: whether
      the offer was taken or simply ran out, the file follows the metadata. */
   setTimeout(() => { if (pendingDelete?.commit === commit) commit(); }, 5000);
@@ -162,10 +165,11 @@ const bookStatus = b => bookComplete(b) ? 'done' : ((bookDone(b).size > 0 || (b.
 
 /* Tactile notebook cover fallback when PDF has no cover thumbnail yet */
 function notebookCoverMarkup(title) {
+  const isEn = getLang() === 'en';
   return `
     <div class="book-cover-notebook">
       <div class="nb-pattern" aria-hidden="true"></div>
-      <div class="nb-header"><span>دفتَرچه</span><span>PDF</span></div>
+      <div class="nb-header"><span>${isEn ? 'Daftarche' : 'دفتَرچه'}</span><span>PDF</span></div>
       <div class="nb-title">${esc(title)}</div>
       <div class="nb-footer">${BOOK_ICON}</div>
     </div>`;
@@ -205,15 +209,24 @@ function updateLibraryStats() {
   const tCnt = $('#statTimeCount');
   const nCnt = $('#statNotesCount');
 
-  if (bCnt) bCnt.textContent = faNum(books.length);
-  if (bSub) bSub.textContent = `${faNum(reading)} مطالعه · ${faNum(done)} تمام`;
-  if (pCnt) pCnt.textContent = faNum(totalPages);
+  const isEn = getLang() === 'en';
+  if (bCnt) bCnt.textContent = isEn ? String(books.length) : faNum(books.length);
+  if (bSub) bSub.textContent = isEn
+    ? `${reading} reading · ${done} completed`
+    : `${faNum(reading)} مطالعه · ${faNum(done)} تمام`;
+  if (pCnt) pCnt.textContent = isEn ? String(totalPages) : faNum(totalPages);
   if (tCnt) {
-    tCnt.textContent = totalMins >= 60
-      ? `${faNum(Math.floor(totalMins / 60))}س ${faNum(totalMins % 60)}د`
-      : `${faNum(totalMins)} د`;
+    if (isEn) {
+      tCnt.textContent = totalMins >= 60
+        ? `${Math.floor(totalMins / 60)}h ${totalMins % 60}m`
+        : `${totalMins}m`;
+    } else {
+      tCnt.textContent = totalMins >= 60
+        ? `${faNum(Math.floor(totalMins / 60))}س ${faNum(totalMins % 60)}د`
+        : `${faNum(totalMins)} د`;
+    }
   }
-  if (nCnt) nCnt.textContent = faNum(totalNotes);
+  if (nCnt) nCnt.textContent = isEn ? String(totalNotes) : faNum(totalNotes);
 }
 
 /* ── Shelf + Currently Reading ── */
@@ -267,12 +280,20 @@ export function renderShelf() {
      grid; the count badge above it saying «خالی» is the same sentence twice, and
      the heading over both is a header for a list that is not there. Both go
      quiet together. */
+  const isEn = getLang() === 'en';
   const head = $('.shelf-head');
   if (head) head.hidden = books.length === 0;
   const cnt = $('#shelfCount');
   if (cnt) {
-    if (filtered.length !== books.length) cnt.textContent = `${faNum(filtered.length)} از ${faNum(books.length)}`;
-    else cnt.textContent = `${faNum(books.length)} کتاب`;
+    if (filtered.length !== books.length) {
+      cnt.textContent = isEn
+        ? `${filtered.length} of ${books.length}`
+        : `${faNum(filtered.length)} از ${faNum(books.length)}`;
+    } else {
+      cnt.textContent = isEn
+        ? `${books.length} ${books.length === 1 ? 'book' : 'books'}`
+        : `${faNum(books.length)} کتاب`;
+    }
   }
 
   /* Currently Reading card — shown when viewing all books and no active search */
@@ -288,35 +309,39 @@ export function renderShelf() {
       let goalLine = '';
       if (last.goal?.pagesPerDay) {
         const todayPages = last.stats?.[dayKey(new Date())]?.pages || 0;
-        goalLine = `<span class="lr-goal" title="هدف امروز: ${faNum(todayPages)} از ${faNum(last.goal.pagesPerDay)} صفحه">🎯 ${faNum(todayPages)}/${faNum(last.goal.pagesPerDay)} امروز</span>`;
+        const gTitle = isEn
+          ? `Today's goal: ${todayPages} of ${last.goal.pagesPerDay} pages`
+          : `هدف امروز: ${faNum(todayPages)} از ${faNum(last.goal.pagesPerDay)} صفحه`;
+        const gBadge = isEn
+          ? `🎯 ${todayPages}/${last.goal.pagesPerDay} today`
+          : `🎯 ${faNum(todayPages)}/${faNum(last.goal.pagesPerDay)} امروز`;
+        goalLine = `<span class="lr-goal" title="${gTitle}">${gBadge}</span>`;
       } else if (last.goal?.text) {
         goalLine = `<span class="lr-goal" title="${esc(last.goal.text)}">🎯 ${esc(last.goal.text)}</span>`;
       }
       const card = document.createElement('div');
       card.className = 'lastread';
-      /* The whole card opens the book, but it is a plain div: a keyboard user
-         tabbing through the shelf had no way in — the only focusable thing in
-         it was the «ادامه مطالعه» button, so the card's own click target was
-         mouse-only. It now carries the same button contract as `.book-cover`
-         (role, tabindex, label, Enter/Space) and the button's own activation is
-         left to the button. */
       card.setAttribute('role', 'button');
       card.setAttribute('tabindex', '0');
-      card.setAttribute('aria-label', `ادامهٔ مطالعهٔ ${last.title}`);
+      card.setAttribute('aria-label', isEn ? `Continue reading ${last.title}` : `ادامهٔ مطالعهٔ ${last.title}`);
+      const kickerText = isEn ? 'Currently Reading' : 'در حال مطالعه';
+      const pctBadge = isEn ? `${pct}%` : `${faNum(pct)}٪`;
+      const subInfo = isEn
+        ? `${done} of ${last.numPages} pages · p. ${last.lastPage || 1}${t.minutes ? ` · ⏱ ${t.minutes}m` : ''}${t.notes ? ` · 📝 ${t.notes}` : ''}`
+        : `${faNum(done)} صفحه از ${faNum(last.numPages)} · ص ${faNum(last.lastPage || 1)}${t.minutes ? ` · ⏱ ${faNum(t.minutes)}د` : ''}${t.notes ? ` · 📝 ${faNum(t.notes)}` : ''}`;
+      const ctaBtnText = isEn ? 'Continue Reading →' : 'ادامه مطالعه ←';
       card.innerHTML = `
         ${last.cover ? `<img src="${last.cover}" alt="">` : notebookCoverMarkup(last.title)}
         <div class="lr-info">
-          <span class="lr-kicker">در حال مطالعه</span>
-          <div class="lr-top"><span class="lr-title">${esc(last.title)}</span><span class="lr-pct">${faNum(pct)}٪</span></div>
+          <span class="lr-kicker">${kickerText}</span>
+          <div class="lr-top"><span class="lr-title">${esc(last.title)}</span><span class="lr-pct">${pctBadge}</span></div>
           <div class="lr-track"><i style="width:${pct}%"></i></div>
-          <span class="lr-sub">${faNum(done)} صفحه از ${faNum(last.numPages)} · ص ${faNum(last.lastPage || 1)}${t.minutes ? ` · ⏱ ${faNum(t.minutes)}د` : ''}${t.notes ? ` · 📝 ${faNum(t.notes)}` : ''}</span>
+          <span class="lr-sub">${subInfo}</span>
           ${goalLine}
         </div>
-        <button type="button" class="lr-btn">ادامه مطالعه ←</button>`;
+        <button type="button" class="lr-btn">${ctaBtnText}</button>`;
       card.addEventListener('click', () => window.dispatchEvent(new CustomEvent('open-book', { detail: last.id })));
       card.addEventListener('keydown', e => {
-        /* A keypress on the nested button is the button's own, and it bubbles
-           here — opening the book twice in one press. */
         if (e.target.closest('.lr-btn')) return;
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
@@ -331,8 +356,8 @@ export function renderShelf() {
     const noResult = document.createElement('div');
     noResult.className = 'shelf-no-result';
     noResult.innerHTML = `
-      <p class="shelf-no-result-text">کتابی با این عنوان یا فیلتر پیدا نشد.</p>
-      <button type="button" class="shelf-reset-btn" id="shelfResetBtn">پاک کردن جستجو و فیلترها</button>
+      <p class="shelf-no-result-text">${isEn ? 'No books found matching this title or filter.' : 'کتابی با این عنوان یا فیلتر پیدا نشد.'}</p>
+      <button type="button" class="shelf-reset-btn" id="shelfResetBtn">${isEn ? 'Clear search and filters' : 'پاک کردن جستجو و فیلترها'}</button>
     `;
     grid.appendChild(noResult);
     $('#shelfResetBtn')?.addEventListener('click', () => {
@@ -368,33 +393,47 @@ export function renderShelf() {
 }
 
 function bookCard(b, i, isDone) {
+  const isEn = getLang() === 'en';
   const done = bookDone(b).size;
   const pct = bookPct(b);
   const st = bookStatus(b);
   const t = bookTotals(b);
-  const cta = st === 'done' ? '✓ تمام شد' : (st === 'reading' ? '📖 ادامه' : '📖 شروع');
+  const cta = isEn
+    ? (st === 'done' ? '✓ Completed' : (st === 'reading' ? '📖 Continue' : '📖 Start'))
+    : (st === 'done' ? '✓ تمام شد' : (st === 'reading' ? '📖 ادامه' : '📖 شروع'));
   const card = document.createElement('div');
   card.className = 'book-card' + (isDone ? ' book-done' : '');
   card.style.animationDelay = (i * 50) + 'ms';
+  const pctBadge = isEn ? `${pct}%` : `${faNum(pct)}٪`;
+  const doneLabel = isEn ? 'Completed reading' : 'مطالعهٔ کامل‌شده';
+  const metaPages = b.numPages
+    ? (isEn ? `<span>${done} of ${b.numPages} p.</span>` : `<span>${faNum(done)} از ${faNum(b.numPages)} ص</span>`)
+    : (isEn ? '<span>Unread</span>' : '<span>خوانده نشده</span>');
+  const metaMins = t.minutes > 0 ? (isEn ? `<span>· ⏱ ${t.minutes}m</span>` : `<span>· ⏱ ${faNum(t.minutes)} د</span>`) : '';
+  const metaNotes = t.notes ? (isEn ? `<span>· 📝 ${t.notes}</span>` : `<span>· 📝 ${faNum(t.notes)}</span>`) : '';
+  const goalTitle = isEn ? 'Reading goal' : 'هدف مطالعه';
+  const renameTitle = isEn ? 'Rename' : 'تغییر نام';
+  const delTitle = isEn ? 'Delete book' : 'حذف کتاب';
+  const delAria = isEn ? 'Delete' : 'حذف';
   card.innerHTML = `
-    <div class="book-cover" data-act="open" role="button" tabindex="0" aria-label="باز کردن کتاب ${esc(b.title)}">
+    <div class="book-cover" data-act="open" role="button" tabindex="0" aria-label="${isEn ? `Open book ${esc(b.title)}` : `باز کردن کتاب ${esc(b.title)}`}">
       ${b.cover ? `<img src="${b.cover}" alt="">` : notebookCoverMarkup(b.title)}
       <span class="book-prog" style="width:${pct}%"></span>
-      ${st === 'reading' ? `<span class="book-pct-badge">${faNum(pct)}٪</span>` : ''}
-      ${st === 'done' ? `<span class="book-done-badge" aria-label="مطالعهٔ کامل‌شده">✓</span>` : ''}
+      ${st === 'reading' ? `<span class="book-pct-badge">${pctBadge}</span>` : ''}
+      ${st === 'done' ? `<span class="book-done-badge" aria-label="${doneLabel}">✓</span>` : ''}
     </div>
     <div class="book-title" data-act="open" role="button" tabindex="0">${esc(b.title)}</div>
     <div class="book-meta">
-      ${b.numPages ? `<span>${faNum(done)} از ${faNum(b.numPages)} ص</span>` : '<span>خوانده نشده</span>'}
-      ${t.minutes > 0 ? `<span>· ⏱ ${faNum(t.minutes)} د</span>` : ''}
-      ${t.notes ? `<span>· 📝 ${faNum(t.notes)}</span>` : ''}
+      ${metaPages}
+      ${metaMins}
+      ${metaNotes}
     </div>
     <div class="book-actions">
       <button type="button" class="b-go" data-act="open">${cta}</button>
       <div class="b-sub-actions">
-        <button type="button" class="b-icon-btn b-ghost" data-act="goal" aria-label="هدف مطالعه" title="هدف مطالعه">${TARGET_ICON}</button>
-        <button type="button" class="b-icon-btn b-rename" data-act="rename" aria-label="تغییر نام کتاب" title="تغییر نام">${PENCIL_ICON}</button>
-        <button type="button" class="b-icon-btn b-del" data-act="del" aria-label="حذف" title="حذف کتاب">${TRASH}</button>
+        <button type="button" class="b-icon-btn b-ghost" data-act="goal" aria-label="${goalTitle}" title="${goalTitle}">${TARGET_ICON}</button>
+        <button type="button" class="b-icon-btn b-rename" data-act="rename" aria-label="${renameTitle}" title="${renameTitle}">${PENCIL_ICON}</button>
+        <button type="button" class="b-icon-btn b-del" data-act="del" aria-label="${delAria}" title="${delTitle}">${TRASH}</button>
       </div>
     </div>`;
   card.addEventListener('click', e => {
@@ -601,11 +640,15 @@ export function initLibrary() {
       setTimeout(() => openGoal(id), 400);
     } catch (err) {
       console.warn('کتاب ذخیره نشد:', err);
-      showImportError('کتاب ذخیره نشد؛ شاید حافظهٔ مرورگر پر است. یک بار دیگر امتحان کن.');
+      showImportError(getLang() === 'en' ? 'Book could not be saved. Storage might be full. Please try again.' : 'کتاب ذخیره نشد؛ شاید حافظهٔ مرورگر پر است. یک بار دیگر امتحان کن.');
     } finally {
       /* Whatever happened, the picker is cleared so choosing the same file
          again is a change the browser will report. */
       fileInput.value = '';
     }
   });
+
+  if (typeof window !== 'undefined') {
+    window.addEventListener('daftarche:lang-changed', () => renderShelf());
+  }
 }

@@ -208,6 +208,8 @@ html[data-mode="dark"] .pri-row button.sel.high{color:#ff8f8f}
 .switch:hover::after{transform:translateY(-50%) scale(1.15)}
 .switch.on{background:var(--green);border-color:var(--green)}
 .switch.on::after{inset-inline-end:calc(100% - 19px);background:var(--color-text-on-success)}
+html[dir="ltr"] .switch::after{inset-inline-end:auto;inset-inline-start:3px}
+html[dir="ltr"] .switch.on::after{inset-inline-end:auto;inset-inline-start:calc(100% - 19px)}
 
 /* Scene and music chips — same family as the rest of the product */
 .scene-chips{display:flex;gap:7px;flex-wrap:wrap}
@@ -228,6 +230,7 @@ html[data-mode="dark"] .pri-row button.sel.high{color:#ff8f8f}
 .vol{flex:1;min-width:140px;display:flex;align-items:center;gap:8px}
 .vol span{font-size:11px;color:var(--muted);flex-shrink:0;font-weight:500}
 .vol input[type=range]{flex:1;min-width:0;-webkit-appearance:none;appearance:none;height:5px;border-radius:var(--radius-pill);background:linear-gradient(to left,var(--accent) var(--v,80%),var(--border) var(--v,80%));outline:none;cursor:pointer}
+html[dir="ltr"] .vol input[type=range]{background:linear-gradient(to right,var(--accent) var(--v,80%),var(--border) var(--v,80%))}
 .vol input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--surface);border:2.5px solid var(--accent);box-shadow:var(--shadow-sm);transition:transform var(--duration-fast);cursor:grab}
 .vol input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2)}
 .vol input[type=range]::-webkit-slider-thumb:active{cursor:grabbing;transform:scale(1.1)}

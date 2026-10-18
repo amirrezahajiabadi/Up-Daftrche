@@ -23,6 +23,7 @@ import { openShortcuts } from './shortcuts.js';
 import { collectBackup, parseBackup, applyBackup, mergeBackup, backupFileName, BACKUP_MAX_CHARS } from './backup.js';
 import { confirmDialog, showNotice } from './dialog.js';
 import { clearAll } from './store.js';
+import { getLang, setLang, formatDurationI18n, formatNumber, t } from './i18n.js';
 
 /* What the page says about itself, painted on entry. The picker is marked here
    as well as by js/theme.js because the two halves of the table are remembered
@@ -33,17 +34,33 @@ export function renderSettings() {
   renderBirthdayRow();
 
   const pm = $('#profPomo');
-  if (pm) pm.textContent = faNum(state.pomoMin) + ' دقیقه';
+  if (pm) pm.textContent = formatDurationI18n(state.pomoMin);
 
   /* The release number alone — the row it sits in is already labelled «نسخه»,
-     so the cell must not say the word twice. Persian digits, "2.0.0" → "۲.۰".
+     so the cell must not say the word twice. Persian digits in fa, Latin in en.
      The number comes from js/version.js; without that file the cell is left
      empty rather than showing a wrong version. */
   const pv = $('#profVersion');
-  if (pv && APP_VERSION) pv.textContent = APP_VERSION.split('.').slice(0, 2).join('.').replace(/\d/g, d => '۰۱۲۳۴۵۶۷۸۹'[d]);
+  if (pv && APP_VERSION) {
+    const rawVer = APP_VERSION.split('.').slice(0, 2).join('.');
+    pv.textContent = getLang() === 'fa' ? rawVer.replace(/\d/g, d => '۰۱۲۳۴۵۶۷۸۹'[d]) : rawVer;
+  }
 
   renderPersistRow();
   renderThemeAutoRow();
+  renderLangRow();
+}
+
+function renderLangRow() {
+  const current = getLang();
+  const host = $('#langSwitch');
+  if (!host) return;
+  host.querySelectorAll('.seg-btn').forEach(b => {
+    const on = b.dataset.lang === current;
+    b.classList.toggle('sel', on);
+    b.setAttribute('aria-checked', String(on));
+    b.tabIndex = on ? 0 : -1;
+  });
 }
 
 function renderThemeAutoRow() {
@@ -53,27 +70,34 @@ function renderThemeAutoRow() {
   const on = isAutoTheme();
   btn.setAttribute('aria-checked', String(on));
   btn.classList.toggle('on', on);
-  text.textContent = on ? 'فعال' : 'غیرفعال';
+  text.textContent = on ? t('settings.autoThemeActive') : t('settings.autoThemeInactive');
 }
 
 function renderPersistRow() {
   const persistText = $('#persistStatusText');
   const persistHint = $('#persistHint');
   if (!persistText) return;
+  const isEn = getLang() === 'en';
+  const activeLabel = isEn ? 'Active' : 'فعال';
+  const inactiveLabel = isEn ? 'Inactive' : 'غیرفعال';
+  const activeHint = isEn
+    ? 'Data is stored in persistent browser storage and will not be automatically cleared.'
+    : 'اطلاعات در حافظهٔ پایدار مرورگر نگهداری می‌شوند و خودکار پاک نخواهند شد.';
+  const inactiveHint = isEn
+    ? 'Persistent storage is inactive; the browser may clear data under storage pressure. Regular backups are recommended.'
+    : 'حافظهٔ پایدار فعال نیست؛ ممکن است مرورگر در کمبود حافظه داده‌ها را پاک کند. پشتیبان‌گیری منظم توصیه می‌شود.';
+
   if (typeof navigator !== 'undefined' && navigator.storage?.persisted) {
     navigator.storage.persisted().then(persisted => {
-      if (persisted) {
-        persistText.textContent = 'فعال';
-        if (persistHint) persistHint.textContent = 'اطلاعات در حافظهٔ پایدار مرورگر نگهداری می‌شوند و خودکار پاک نخواهند شد.';
-      } else {
-        persistText.textContent = 'غیرفعال';
-        if (persistHint) persistHint.textContent = 'حافظهٔ پایدار فعال نیست؛ ممکن است مرورگر در کمبود حافظه داده‌ها را پاک کند. پشتیبان‌گیری منظم توصیه می‌شود.';
-      }
+      persistText.textContent = persisted ? activeLabel : inactiveLabel;
+      if (persistHint) persistHint.textContent = persisted ? activeHint : inactiveHint;
     }).catch(() => {
-      persistText.textContent = 'غیرفعال';
+      persistText.textContent = inactiveLabel;
+      if (persistHint) persistHint.textContent = inactiveHint;
     });
   } else {
-    persistText.textContent = 'غیرفعال';
+    persistText.textContent = inactiveLabel;
+    if (persistHint) persistHint.textContent = inactiveHint;
   }
 }
 
@@ -102,6 +126,29 @@ export function initSettings() {
   window.addEventListener('theme-auto-changed', renderThemeAutoRow);
   renderThemeAutoRow();
 
+  const langSwitch = $('#langSwitch');
+  if (langSwitch) {
+    langSwitch.addEventListener('click', e => {
+      const btn = e.target.closest('.seg-btn');
+      if (btn && btn.dataset.lang) {
+        setLang(btn.dataset.lang);
+        renderSettings();
+      }
+    });
+    langSwitch.addEventListener('keydown', e => {
+      const step = e.key === 'ArrowLeft' ? 1 : e.key === 'ArrowRight' ? -1 : 0;
+      if (!step) return;
+      e.preventDefault();
+      const current = getLang();
+      const next = current === 'fa' ? 'en' : 'fa';
+      setLang(next);
+      renderSettings();
+      langSwitch.querySelector(`[data-lang="${next}"]`)?.focus();
+    });
+  }
+  window.addEventListener('daftarche:lang-changed', renderSettings);
+  renderLangRow();
+
   /* ── Backup ──
      Export writes every daftarche-* key to one JSON file; import validates a
      file completely before touching anything, then asks how it should land —
@@ -111,6 +158,7 @@ export function initSettings() {
   const say = msg => { if (status) status.textContent = msg; };
 
   $('#backupExport')?.addEventListener('click', () => {
+    const isEn = getLang() === 'en';
     try {
       const backup = collectBackup(localStorage, { release: APP_VERSION });
       const blob = new Blob([JSON.stringify(backup)], { type: 'application/json' });
@@ -122,9 +170,9 @@ export function initSettings() {
       a.click();
       a.remove();
       setTimeout(() => URL.revokeObjectURL(url), 10000);
-      say('پشتیبان ساخته شد؛ فایل رو یه جای امن نگه دار.');
+      say(isEn ? 'Backup created; store the file in a safe place.' : 'پشتیبان ساخته شد؛ فایل رو یه جای امن نگه دار.');
     } catch {
-      say('ساختن پشتیبان نشد. دوباره امتحان کن.');
+      say(isEn ? 'Failed to create backup. Please try again.' : 'ساختن پشتیبان نشد. دوباره امتحان کن.');
     }
   });
 
@@ -133,22 +181,37 @@ export function initSettings() {
   fileInput?.addEventListener('change', async () => {
     const file = fileInput.files && fileInput.files[0];
     fileInput.value = '';   // so choosing the same file twice still fires
+    const isEn = getLang() === 'en';
     if (!file) return;
-    if (file.size > BACKUP_MAX_CHARS) { say('این فایل خیلی بزرگه و پشتیبان دفترچه نیست.'); return; }
+    if (file.size > BACKUP_MAX_CHARS) {
+      say(isEn ? 'This file is too large and is not a valid Daftarche backup.' : 'این فایل خیلی بزرگه و پشتیبان دفترچه نیست.');
+      return;
+    }
 
     let text;
-    try { text = await file.text(); } catch { say('فایل خوانده نشد.'); return; }
+    try { text = await file.text(); } catch {
+      say(isEn ? 'Failed to read file.' : 'فایل خوانده نشد.');
+      return;
+    }
 
     /* Only a file that passed every check reaches the question — an invalid
        one is reported and nothing is asked. */
-    const parsed = parseBackup(text);
+    const parsed = parseBackup(text, getLang());
     if (!parsed.ok) { say(parsed.reason); return; }
 
     /* The decision dialog. Cancelling it — the Escape key, the backdrop, the
        «انصراف» button — answers null and touches nothing. */
     const when = parsed.backup.exportedAt ? new Date(parsed.backup.exportedAt) : null;
     const whenEl = $('#backupWhen');
-    if (whenEl) whenEl.textContent = when && !isNaN(when) ? when.toLocaleDateString('fa-IR') : 'اخیراً';
+    if (whenEl) {
+      if (when && !isNaN(when)) {
+        whenEl.textContent = isEn
+          ? when.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+          : when.toLocaleDateString('fa-IR');
+      } else {
+        whenEl.textContent = isEn ? 'recently' : 'اخیراً';
+      }
+    }
     const choice = await new Promise(resolve => {
       const overlay = $('#backupOverlay');
       if (!overlay) { resolve(null); return; }
@@ -173,13 +236,18 @@ export function initSettings() {
       document.addEventListener('keydown', onEscape);
       overlay.hidden = false;
     });
-    if (choice === null) { say('وارد شدن پشتیبان لغو شد؛ چیزی عوض نشد.'); return; }
+    if (choice === null) {
+      say(isEn ? 'Backup import cancelled; nothing was changed.' : 'وارد شدن پشتیبان لغو شد؛ چیزی عوض نشد.');
+      return;
+    }
 
     let res;
-    if (choice === 'merge') res = mergeBackup(localStorage, parsed.backup);
-    else res = applyBackup(localStorage, parsed.backup);
+    if (choice === 'merge') res = mergeBackup(localStorage, parsed.backup, getLang());
+    else res = applyBackup(localStorage, parsed.backup, getLang());
     if (!res.ok) { say(res.reason); return; }
-    say(choice === 'merge' ? 'ادغام شد؛ دفترچه دوباره بالا می‌آد…' : 'بازگردانی شد؛ دفترچه دوباره بالا می‌آد…');
+    say(choice === 'merge'
+      ? (isEn ? 'Merged successfully; reloading Daftarche…' : 'ادغام شد؛ دفترچه دوباره بالا می‌آد…')
+      : (isEn ? 'Restored successfully; reloading Daftarche…' : 'بازگردانی شد؛ دفترچه دوباره بالا می‌آد…'));
     setTimeout(() => location.reload(), 600);
   });
 
@@ -194,11 +262,14 @@ export function initSettings() {
        confirm cannot say «برگشت‌ناپذیر» in the notebook's voice, and its two
        buttons are laid out for a left-to-right box, so «تأیید» and «انصراف»
        land in the opposite order from every other confirm on this page. */
+    const isEn = getLang() === 'en';
     const ok = await confirmDialog({
-      title: 'همهٔ داده‌ها پاک بشه؟',
-      body: 'همهٔ کارها، آمار، کتاب‌ها و موسیقی‌ها پاک می‌شن. این کار قابل برگشت نیست.',
-      confirmLabel: 'پاک کن',
-      cancelLabel: 'انصراف',
+      title: isEn ? 'Erase all data?' : 'همهٔ داده‌ها پاک بشه؟',
+      body: isEn
+        ? 'All tasks, stats, library books, and audio files will be permanently erased. This cannot be undone.'
+        : 'همهٔ کارها، آمار، کتاب‌ها و موسیقی‌ها پاک می‌شن. این کار قابل برگشت نیست.',
+      confirmLabel: isEn ? 'Erase Data' : 'پاک کن',
+      cancelLabel: isEn ? 'Cancel' : 'انصراف',
       danger: true,
     });
     if (!ok) return;
@@ -211,7 +282,10 @@ export function initSettings() {
       /* Nothing left to reload into a toast on this page — the wipe may have
          taken the storage the toast would have been painted over — so the
          message is a notice and the reload waits for it to have been read. */
-      showNotice('فایل‌های کتاب یا موسیقی پاک نشدن؛ اگه تب دیگه‌ای از دفترچه بازه ببندش و دوباره امتحان کن.', { actionLabel: 'باشه' });
+      showNotice(isEn
+        ? 'Some library or audio files could not be cleared; please close other open tabs and try again.'
+        : 'فایل‌های کتاب یا موسیقی پاک نشدن؛ اگه تب دیگه‌ای از دفترچه بازه ببندش و دوباره امتحان کن.',
+        { actionLabel: isEn ? 'OK' : 'باشه' });
       setTimeout(() => location.reload(), 400);
       return;
     }

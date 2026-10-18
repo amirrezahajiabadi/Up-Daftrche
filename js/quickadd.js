@@ -6,6 +6,7 @@
 import { dayKey, shiftKey, parseDurationMin, formatClock, faNum, esc } from './utils.js';
 import { JALALI_MONTHS, gregorianToJalali, jalaliToGregorian, isValidJalali } from './jalali.js';
 import { CATS } from './constants.js';
+import { getLang, t, formatDurationI18n, formatClockI18n } from './i18n.js';
 
 const FA_NUMS = '۰۱۲۳۴۵۶۷۸۹';
 const AR_NUMS = '٠١٢٣٤٥٦٧٨٩';
@@ -389,6 +390,14 @@ const DUE_DAY_FMT = new Intl.DateTimeFormat('fa-IR', { weekday: 'long', day: 'nu
 export function dueLabel(key, refDate = new Date()) {
   if (!key) return '';
   const today = dayKey(refDate);
+  const isEn = getLang() === 'en';
+  if (isEn) {
+    if (key === today) return t('tasks.today');
+    if (key === shiftKey(today, 1)) return t('tasks.tomorrow');
+    if (key === shiftKey(today, 2)) return t('tasks.dayAfter');
+    const [y, m, d] = key.split('-').map(Number);
+    return new Intl.DateTimeFormat('en-US', { weekday: 'short', month: 'short', day: 'numeric' }).format(new Date(y, m - 1, d));
+  }
   if (key === today) return '\u0627\u0645\u0631\u0648\u0632';
   if (key === shiftKey(today, 1)) return '\u0641\u0631\u062f\u0627';
   if (key === shiftKey(today, 2)) return '\u067e\u0633\u200c\u0641\u0631\u062f\u0627';
@@ -398,27 +407,40 @@ export function dueLabel(key, refDate = new Date()) {
 
 export function renderQuickAddPreview(container, parsed, onRemove) {
   if (!container) return;
+  const isEn = getLang() === 'en';
   const chips = [];
   if (parsed.dueDate) {
     chips.push({ key: 'due', icon: '📅', text: dueLabel(parsed.dueDate) });
   }
   if (parsed.timeFrom !== null) {
-    const tStr = parsed.timeTo !== null
-      ? `${formatClock(parsed.timeFrom)} تا ${formatClock(parsed.timeTo)}`
-      : formatClock(parsed.timeFrom);
+    const from = isEn ? formatClockI18n(parsed.timeFrom, 'en') : formatClock(parsed.timeFrom);
+    const to = parsed.timeTo !== null ? (isEn ? formatClockI18n(parsed.timeTo, 'en') : formatClock(parsed.timeTo)) : null;
+    const tStr = to ? (isEn ? `${from} – ${to}` : `${from} تا ${to}`) : from;
     chips.push({ key: 'time', icon: '⏰', text: tStr });
   }
   if (parsed.cat) {
     const catObj = CATS.find(c => c.key === parsed.cat);
-    chips.push({ key: 'cat', icon: '🏷️', text: catObj ? catObj.label : parsed.cat });
+    let catText = parsed.cat;
+    if (isEn) {
+      const canonicalKey = catObj ? catObj.key : (CATEGORY_MAP[parsed.cat] || parsed.cat);
+      const translated = t(`categories.${canonicalKey}`);
+      catText = (translated && !translated.startsWith('categories.')) ? translated : (catObj ? catObj.label : parsed.cat);
+    } else {
+      catText = catObj ? catObj.label : parsed.cat;
+    }
+    chips.push({ key: 'cat', icon: '🏷️', text: catText });
   }
   if (parsed.durationMin) {
-    chips.push({ key: 'dur', icon: '⏱️', text: `${faNum(parsed.durationMin)} دقیقه` });
+    const durText = isEn ? formatDurationI18n(parsed.durationMin, 'en') : `${faNum(parsed.durationMin)} دقیقه`;
+    chips.push({ key: 'dur', icon: '⏱️', text: durText });
   }
   /* A token that looked like a time but fell outside the range, so the writer
      can see what was set aside instead of wondering where it went. */
   if (parsed.ignored && parsed.ignored.length) {
-    chips.push({ key: 'ignored', icon: '\u26a0\ufe0f', text: `${parsed.ignored.join('\u060c ')} \u0646\u0627\u0645\u0639\u062a\u0628\u0631` });
+    const ignText = isEn
+      ? `${parsed.ignored.join(', ')} invalid`
+      : `${parsed.ignored.join('\u060c ')} \u0646\u0627\u0645\u0639\u062a\u0628\u0631`;
+    chips.push({ key: 'ignored', icon: '\u26a0\ufe0f', text: ignText });
   }
 
   if (!chips.length) {
@@ -432,7 +454,7 @@ export function renderQuickAddPreview(container, parsed, onRemove) {
     <span class="quickadd-chip" data-key="${c.key}">
       <span>${c.icon}</span>
       <span>${esc(c.text)}</span>
-      <button type="button" class="quickadd-chip-del" data-remove="${c.key}" aria-label="حذف ${esc(c.text)}">×</button>
+      <button type="button" class="quickadd-chip-del" data-remove="${c.key}" aria-label="${isEn ? `Remove ${esc(c.text)}` : `حذف ${esc(c.text)}`}">×</button>
     </span>
   `).join('');
 

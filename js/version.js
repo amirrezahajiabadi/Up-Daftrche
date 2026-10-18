@@ -18,5 +18,5 @@
                half old and half new.
 
    Both values live here and nowhere else. */
-self.DAFTARCHE_RELEASE = '3.1.0';
-self.DAFTARCHE_BUILD = 'v119';
+self.DAFTARCHE_RELEASE = '3.2.0';
+self.DAFTARCHE_BUILD = 'v123';

@@ -11,6 +11,7 @@ import { openDuePicker } from './duepicker.js';
 import { formatJalaliDate } from './jalali.js';
 import { rememberDone } from './ledger.js';
 import { parseQuickAdd, renderQuickAddPreview, stripQuickAddToken } from './quickadd.js';
+import { getLang, t, formatNumber, formatDurationI18n, formatClockI18n } from './i18n.js';
 
 const listEl = $('#taskList');
 const save = () => saveTasks(state.tasks);
@@ -71,23 +72,33 @@ function nextDur(cur) {
 function refreshDurChip(li, task) {
   const btn = li.querySelector('.dur-chip');
   if (!btn) return;
+  const isEn = getLang() === 'en';
   if (!task.durationMin) {
     btn.className = 'dur-chip none';
-    btn.textContent = '+ زمان';
-    btn.title = 'افزودن زمان تقریبی';
+    btn.textContent = isEn ? '+ Time' : '+ زمان';
+    btn.title = isEn ? 'Add estimated duration' : 'افزودن زمان تقریبی';
     return;
   }
-  const label = formatDuration(task.durationMin);
+  const label = isEn ? formatDurationI18n(task.durationMin, 'en') : formatDuration(task.durationMin);
   btn.className = 'dur-chip';
   btn.textContent = label;
-  btn.title = `زمان تقریبی: ${label} — کلیک برای تغییر`;
+  btn.title = isEn ? `Est. duration: ${label} — click to change` : `زمان تقریبی: ${label} — کلیک برای تغییر`;
 }
 
-/* ── Due Date (Jalali) ── */
+/* ── Due Date (Jalali & Gregorian) ── */
 export function dueLabel(key) {
   if (!key) return null;
   const d = new Date(key + 'T00:00:00');
   const diff = Math.round((d - startOfToday()) / 864e5);
+  if (getLang() === 'en') {
+    const enDate = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(d);
+    if (diff < 0) return { cls: 'late', text: t('tasks.overdue'), date: enDate, ltr: true };
+    if (diff === 0) return { cls: 'today', text: t('tasks.today'), date: enDate, ltr: true };
+    if (diff === 1) return { cls: 'soon', text: t('tasks.tomorrow'), date: enDate, ltr: true };
+    if (diff === 2) return { cls: 'soon', text: t('tasks.dayAfter'), date: enDate, ltr: true };
+    if (diff <= 7) return { cls: 'soon', text: t('tasks.daysLeft', { n: diff }), date: enDate, ltr: true };
+    return { cls: 'far', text: enDate, date: enDate, ltr: true };
+  }
   const date = formatJalaliDate(d);
   if (diff < 0) return { cls: 'late', text: 'گذشته از مهلت', date };
   if (diff === 0) return { cls: 'today', text: 'امروز', date };
@@ -99,13 +110,19 @@ export function dueLabel(key) {
 function refreshDueChip(li, task) {
   const btn = li.querySelector('.due-chip');
   if (!btn) return;
-  if (!task.dueDate) { btn.className = 'due-chip none'; btn.innerHTML = '+ مهلت'; btn.title = 'افزودن مهلت'; return; }
+  const isEn = getLang() === 'en';
+  if (!task.dueDate) {
+    btn.className = 'due-chip none';
+    btn.innerHTML = isEn ? '+ Due' : '+ مهلت';
+    btn.title = isEn ? 'Add due date' : 'افزودن مهلت';
+    return;
+  }
   const dl = dueLabel(task.dueDate);
   // A completed task never reads as overdue — show its date neutrally instead
   const doneLate = task.done && dl.cls === 'late';
   btn.className = `due-chip ${doneLate ? 'far' : dl.cls}`;
   btn.innerHTML = doneLate || dl.ltr ? `<span dir="ltr">${doneLate ? dl.date : dl.text}</span>` : dl.text;
-  btn.title = `مهلت — ${dl.date} — کلیک برای تغییر`;
+  btn.title = isEn ? `Due date: ${dl.date} — click to change` : `مهلت — ${dl.date} — کلیک برای تغییر`;
 }
 
 /* ── Planned span ──
@@ -114,56 +131,81 @@ function refreshDueChip(li, task) {
    list, today): a span that read differently in each would be a bug in two of
    them. It is a plan, not an alarm — nothing rings from it. */
 export function timeRangeLabel(task) {
+  if (getLang() === 'en') {
+    const from = formatClockI18n(task && task.timeFrom, 'en');
+    const to = formatClockI18n(task && task.timeTo, 'en');
+    return from && to ? `${from} – ${to}` : null;
+  }
   const from = formatClock(task && task.timeFrom);
   const to = formatClock(task && task.timeTo);
   return from && to ? `${from} تا ${to}` : null;
 }
 
 /* ── Build Item ── */
+const BUILTIN_CAT_ALIASES = {
+  'خانه': 'home', 'خونه': 'home', 'منزل': 'home',
+  'درس': 'study', 'دانشگاه': 'study', 'مدرسه': 'study', 'مطالعه': 'study', 'کتاب': 'study',
+  'کار': 'project', 'پروژه': 'project', 'شغل': 'project', 'شرکت': 'project', 'وظیفه': 'project',
+  'خرید': 'shopping', 'بازار': 'shopping',
+  'سلامت': 'health', 'ورزش': 'health', 'باشگاه': 'health', 'دکتر': 'health', 'پزشک': 'health', 'دارو': 'health',
+  'متفرقه': 'misc', 'شخصی': 'misc', 'سایر': 'misc',
+};
+
 function createTaskEl(task, delay = 0) {
+  const isEn = getLang() === 'en';
   const li = document.createElement('li');
   li.className = 'task' + (task.done ? ' done' : '');
   li.dataset.id = task.id; li.dataset.p = task.p || 'mid';
   li.draggable = true; li.style.animationDelay = delay + 'ms';
-  const cat = CATS.find(c => c.key === (task.cat || 'misc')) || CATS[5];
+  const rawCat = task.cat || 'misc';
+  const canonicalCatKey = BUILTIN_CAT_ALIASES[rawCat] || rawCat;
+  const cat = CATS.find(c => c.key === canonicalCatKey);
+  const catLabel = cat
+    ? (isEn ? t(`categories.${cat.key}`) : cat.label)
+    : rawCat;
+  const catColor = cat ? cat.color : '#a79c8a';
   const dl = dueLabel(task.dueDate);
   const doneLate = dl && task.done && dl.cls === 'late';
   const dueText = dl && (doneLate || dl.ltr) ? `<span dir="ltr">${doneLate ? dl.date : dl.text}</span>` : dl ? dl.text : '';
   const dueHtml = dl
-    ? `<button class="due-chip ${doneLate ? 'far' : dl.cls}" title="مهلت — ${dl.date} — کلیک برای تغییر">${dueText}</button>`
-    : `<button class="due-chip none" title="افزودن مهلت">+ مهلت</button>`;
-  const durLabel = formatDuration(task.durationMin);
+    ? `<button class="due-chip ${doneLate ? 'far' : dl.cls}" title="${isEn ? `Due date: ${dl.date} — click to change` : `مهلت — ${dl.date} — کلیک برای تغییر`}">${dueText}</button>`
+    : `<button class="due-chip none" title="${isEn ? 'Add due date' : 'افزودن مهلت'}">${isEn ? '+ Due' : '+ مهلت'}</button>`;
+  const durLabel = isEn ? formatDurationI18n(task.durationMin, 'en') : formatDuration(task.durationMin);
   const durHtml = durLabel
-    ? `<button class="dur-chip" title="زمان تقریبی: ${durLabel} — کلیک برای تغییر">${durLabel}</button>`
-    : `<button class="dur-chip none" title="افزودن زمان تقریبی">+ زمان</button>`;
+    ? `<button class="dur-chip" title="${isEn ? `Est. duration: ${durLabel} — click to change` : `زمان تقریبی: ${durLabel} — کلیک برای تغییر`}">${durLabel}</button>`
+    : `<button class="dur-chip none" title="${isEn ? 'Add estimated duration' : 'افزودن زمان تقریبی'}">${isEn ? '+ Time' : '+ زمان'}</button>`;
   const spanLabel = timeRangeLabel(task);
-  const spanHtml = spanLabel ? `<span class="span-chip" title="بازهٔ این کار در روز">${spanLabel}</span>` : '';
+  const spanHtml = spanLabel ? `<span class="span-chip" title="${isEn ? 'Scheduled time of day' : 'بازهٔ این کار در روز'}">${spanLabel}</span>` : '';
+  const pKey = li.dataset.p || 'mid';
+  const priTitle = isEn
+    ? t('tasks.priorityLabel', { p: t('tasks.priority' + (pKey === 'high' ? 'High' : pKey === 'low' ? 'Low' : 'Mid')) }) + ' — click to change'
+    : `اولویت: ${P_LABEL[li.dataset.p]} — کلیک برای تغییر`;
   li.innerHTML = `
     <span class="grip" aria-hidden="true">${ICONS.grip}</span>
-    <button class="pri-dot" title="اولویت: ${P_LABEL[li.dataset.p]} — کلیک برای تغییر" aria-label="تغییر اولویت"></button>
-    <button class="check" aria-label="تکمیل">${ICONS.check}</button>
+    <button class="pri-dot" title="${priTitle}" aria-label="${isEn ? 'Change priority' : 'تغییر اولویت'}"></button>
+    <button class="check" aria-label="${isEn ? 'Complete task' : 'تکمیل'}">${ICONS.check}</button>
     <span class="title"></span>
-    <button class="cat-tag" style="--cc:${cat.color}" title="دسته: ${cat.label} — کلیک برای تغییر">${cat.label}</button>
+    <button class="cat-tag" style="--cc:${catColor}" title="${isEn ? `Category: ${catLabel} — click to change` : `دسته: ${catLabel} — کلیک برای تغییر`}">${catLabel}</button>
     ${spanHtml}
     ${durHtml}
     ${dueHtml}
     ${notificationsSupported() ? bellHtml(task) : ''}
     <div class="task-menu-wrap">
-      <button class="task-more-btn" type="button" aria-label="عملیات کار" title="عملیات بیشتر" aria-haspopup="menu" aria-expanded="false">
+      <button class="task-more-btn" type="button" aria-label="${isEn ? 'Task actions' : 'عملیات کار'}" title="${isEn ? 'More actions' : 'عملیات بیشتر'}" aria-haspopup="menu" aria-expanded="false">
         <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg>
       </button>
       <div class="task-menu" role="menu" hidden>
         <button type="button" class="task-menu-item item-edit" role="menuitem">
           <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg>
-          <span>ویرایش</span>
+          <span>${isEn ? 'Edit' : 'ویرایش'}</span>
         </button>
         <button type="button" class="task-menu-item item-focus" role="menuitem">
           ${ICONS.clock}
-          <span>شروع تمرکز</span>
+          <span>${isEn ? 'Start Focus' : 'شروع تمرکز'}</span>
         </button>
         <button type="button" class="task-menu-item item-del danger" role="menuitem">
           ${ICONS.trash}
-          <span>حذف</span>
+          <span>${isEn ? 'Delete' : 'حذف'}</span>
         </button>
       </div>
     </div>`;
@@ -196,22 +238,33 @@ export function updateEmpty() {
   $('#emptyAddBtn')?.remove();
   if (anyVisible) return;
   const allDone = state.tasks.length && state.tasks.every(t => t.done);
-  $('#artDone').hidden = !allDone; $('#artEmpty').hidden = allDone;
-  const voc = state.userName ? `${state.userName} جان، ` : '';
-  $('#emptyMsg').textContent =
-    state.query ? 'چیزی پیدا نشد. عبارت دیگری را امتحان کن.'
-    : !state.tasks.length ? 'فعلاً کاری روی میز نیست.'
-    : state.catFilter !== 'all' ? `توی دستهٔ «${CATS.find(c => c.key === state.catFilter)?.label}» کاری نیست.`
-    : state.filter === 'done' ? 'هنوز کاری را تمام نکرده‌ای.'
-    : allDone ? 'همهٔ کارهات انجام شده.'
-    : voc + 'لیستت خالیه. اولین کارت رو اضافه کن.';
+  const isEn = getLang() === 'en';
+  if (isEn) {
+    const voc = state.userName ? `${state.userName}, ` : '';
+    $('#emptyMsg').textContent =
+      state.query ? 'No matching tasks found. Try a different search.'
+      : !state.tasks.length ? 'No tasks on the table right now.'
+      : state.catFilter !== 'all' ? `No tasks in “${t(`categories.${state.catFilter}`)}”.`
+      : state.filter === 'done' ? 'You haven’t completed any tasks yet.'
+      : allDone ? 'All your tasks are done!'
+      : voc + 'Your task list is empty. Add your first task!';
+  } else {
+    const voc = state.userName ? `${state.userName} جان، ` : '';
+    $('#emptyMsg').textContent =
+      state.query ? 'چیزی پیدا نشد. عبارت دیگری را امتحان کن.'
+      : !state.tasks.length ? 'فعلاً کاری روی میز نیست.'
+      : state.catFilter !== 'all' ? `توی دستهٔ «${CATS.find(c => c.key === state.catFilter)?.label}» کاری نیست.`
+      : state.filter === 'done' ? 'هنوز کاری را تمام نکرده‌ای.'
+      : allDone ? 'همهٔ کارهات انجام شده.'
+      : voc + 'لیستت خالیه. اولین کارت رو اضافه کن.';
+  }
   // A single calm CTA when the shelf is truly empty — no pressure copy
   if (!state.tasks.length || allDone) {
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'empty-add';
     btn.id = 'emptyAddBtn';
-    btn.textContent = allDone ? 'افزودن کار جدید' : 'افزودن کار';
+    btn.textContent = allDone ? (isEn ? 'Add new task' : 'افزودن کار جدید') : (isEn ? 'Add task' : 'افزودن کار');
     btn.addEventListener('click', () => $('#taskInput')?.focus());
     $('#empty').appendChild(btn);
   }
@@ -294,14 +347,21 @@ export function moveTaskToDay(id, key) {
 let undoTimer = null, undoQueue = [];
 function showUndo(task, index) {
   undoQueue.push({ task, index });
-  /* The toast names the task that was just deleted, not the first of the run. */
   const toast = $('#undoToast');
-  const title = task && task.text ? (task.text.length > 25 ? task.text.slice(0, 24).trim() + '…' : task.text) : 'کار';
+  const isEn = getLang() === 'en';
+  const fallbackTitle = isEn ? 'Task' : 'کار';
+  const title = task && task.text ? (task.text.length > 25 ? task.text.slice(0, 24).trim() + '…' : task.text) : fallbackTitle;
   const label = toast?.querySelector('.toast-text');
   if (label) {
-    label.textContent = undoQueue.length > 1
-      ? `${faNum(undoQueue.length)} کار حذف شد`
-      : `${title} حذف شد`;
+    if (isEn) {
+      label.textContent = undoQueue.length > 1
+        ? `${undoQueue.length} tasks deleted`
+        : `${title} deleted`;
+    } else {
+      label.textContent = undoQueue.length > 1
+        ? `${faNum(undoQueue.length)} کار حذف شد`
+        : `${title} حذف شد`;
+    }
   }
   // Reset the toast bar animation
   const bar = toast.querySelector('.toast-bar');
@@ -459,16 +519,24 @@ export function initTasks() {
     else if (e.target.closest('.pri-dot')) {
       const dot = e.target.closest('.pri-dot');
       task.p = P_CYCLE[task.p || 'mid']; save(); li.dataset.p = task.p;
-      dot.title = `اولویت: ${P_LABEL[task.p]} — کلیک برای تغییر`;
+      const isEn = getLang() === 'en';
+      const pKey = task.p || 'mid';
+      dot.title = isEn
+        ? t('tasks.priorityLabel', { p: t('tasks.priority' + (pKey === 'high' ? 'High' : pKey === 'low' ? 'Low' : 'Mid')) }) + ' — click to change'
+        : `اولویت: ${P_LABEL[task.p]} — کلیک برای تغییر`;
       animatePriDotChange(dot);
     }
     else if (e.target.closest('.cat-tag')) {
       const btn = e.target.closest('.cat-tag');
-      const idx = CATS.findIndex(c => c.key === (task.cat || 'misc'));
-      const nxt = CATS[(idx + 1) % CATS.length];
+      const rawCat = task.cat || 'misc';
+      const canonicalKey = BUILTIN_CAT_ALIASES[rawCat] || rawCat;
+      const idx = CATS.findIndex(c => c.key === canonicalKey);
+      const nxt = CATS[(idx >= 0 ? idx + 1 : 0) % CATS.length];
       task.cat = nxt.key; save();
-      btn.style.setProperty('--cc', nxt.color); btn.textContent = nxt.label;
-      btn.title = `دسته: ${nxt.label} — کلیک برای تغییر`;
+      const isEn = getLang() === 'en';
+      const nxtLabel = isEn ? t(`categories.${nxt.key}`) : nxt.label;
+      btn.style.setProperty('--cc', nxt.color); btn.textContent = nxtLabel;
+      btn.title = isEn ? `Category: ${nxtLabel} — click to change` : `دسته: ${nxt.label} — کلیک برای تغییر`;
       animateChipFlip(btn); notify();
       if (state.catFilter !== 'all' && state.catFilter !== nxt.key) setTimeout(() => hideFromView(li), 500);
     }
@@ -534,10 +602,12 @@ export function initTasks() {
     const durEl = e.target.closest('.dur-chip');
     if (durEl) {
       clearTimeout(durClickTimer);
+      const isEn = getLang() === 'en';
       const inp = document.createElement('input');
-      inp.className = 'dur-input'; inp.type = 'number'; inp.min = '1'; inp.max = '480'; inp.placeholder = 'دقیقه';
+      inp.className = 'dur-input'; inp.type = 'number'; inp.min = '1'; inp.max = '480';
+      inp.placeholder = isEn ? 'min' : 'دقیقه';
       inp.value = task.durationMin || '';
-      inp.setAttribute('aria-label', 'مدت زمان تقریبی به دقیقه');
+      inp.setAttribute('aria-label', isEn ? 'Estimated duration in minutes' : 'مدت زمان تقریبی به دقیقه');
       durEl.replaceWith(inp); inp.focus(); inp.select();
       let doneE = false;
       const commit = () => {
@@ -764,10 +834,14 @@ export function initTasks() {
 /* ── Add Form ── */
 function buildCatRow() {
   const row = $('#catRow .cat-scroll');
+  if (!row) return;
+  row.innerHTML = '';
+  const isEn = getLang() === 'en';
   CATS.forEach(c => {
     const b = document.createElement('button'); b.type = 'button'; b.dataset.cat = c.key;
     b.style.setProperty('--cc', c.color);
-    b.innerHTML = `<span class="dot"></span>${c.label}`;
+    const label = isEn ? t(`categories.${c.key}`) : c.label;
+    b.innerHTML = `<span class="dot"></span>${label}`;
     if (c.key === state.selCat) b.classList.add('sel');
     row.appendChild(b);
   });
@@ -790,14 +864,17 @@ export function initAddForm() {
   const dueCustomBtn = $('#dueCustom');
   const renderDueRow = () => {
     if (!dueRow || !dueCustomBtn) return;
+    const isEn = getLang() === 'en';
     dueRow.querySelectorAll('button[data-due]').forEach(b => b.classList.remove('sel'));
     if (/^\d{4}-\d{2}-\d{2}$/.test(state.selDue)) {
       dueCustomBtn.classList.add('sel');
-      dueCustomBtn.textContent = formatJalaliDate(new Date(state.selDue + 'T00:00:00'));
+      dueCustomBtn.textContent = isEn
+        ? new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(new Date(state.selDue + 'T00:00:00'))
+        : formatJalaliDate(new Date(state.selDue + 'T00:00:00'));
     } else {
       const q = dueRow.querySelector(`button[data-due="${state.selDue}"]`);
       if (q) q.classList.add('sel');
-      dueCustomBtn.textContent = 'تاریخ…';
+      dueCustomBtn.textContent = isEn ? 'Date…' : 'تاریخ…';
     }
   };
   dueRow.addEventListener('click', e => {
@@ -814,12 +891,20 @@ export function initAddForm() {
   });
   renderDueRow();
 
+  window.addEventListener('daftarche:lang-changed', () => {
+    buildCatRow();
+    renderDueRow();
+    renderList();
+  });
+
   /* Duration row: presets, plus a custom minute input with validation */
   const durInput = $('#durCustom');
   const durHint = $('#durHint');
   const showDurHint = show => {
     if (durHint) {
-      durHint.textContent = 'زمان باید عددی صحیح بین ۱ تا ۴۸۰ دقیقه باشه';
+      durHint.textContent = getLang() === 'en'
+        ? 'Duration must be an integer between 1 and 480 minutes'
+        : 'زمان باید عددی صحیح بین ۱ تا ۴۸۰ دقیقه باشه';
       durHint.hidden = !show;
     }
   };

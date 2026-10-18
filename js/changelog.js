@@ -17,6 +17,7 @@
 
 import { esc } from './utils.js';
 import { safeSet, readString } from './store.js';
+import { isEn, t } from './i18n.js';
 
 export const APP_VERSION = self.DAFTARCHE_RELEASE || '';
 
@@ -233,6 +234,19 @@ export const CHANGELOG = [
       { icon: '🖥️', text: 'روی دسکتاپ، ریل کناری به دو گروه تقسیم شد و محتوا جمع‌وجورتر' },
     ],
   },
+  {
+    version: '3.2.0',
+    date: 'مهر ۱۴۰۵',
+    dateEn: 'October 2026',
+    title: 'تجربهٔ کامل و اصیل انگلیسی',
+    titleEn: 'Full English Experience & Settings Localization',
+    highlights: [
+      { icon: '🌐', text: 'پشتیبانی کامل از زبان انگلیسی با تغییر سریع از تنظیمات (Language Switcher)', textEn: 'Complete English experience with seamless language switching in Settings' },
+      { icon: '🔤', text: 'تایپوگرافی اصیل با فونت‌های محلی Manrope و Bricolage Grotesque', textEn: 'Tailored typography using Manrope and Bricolage Grotesque font families' },
+      { icon: '📅', text: 'تقویم میلادی کامل برای انتخاب تاریخ و برنامه‌ریزی هفتگی با شروع از دوشنبه', textEn: 'Full Gregorian calendar integration with Monday week starts in planner' },
+      { icon: '🧭', text: 'چیدمان طبیعی چپ‌به‌راست (LTR) و هماهنگی کامل تمام صفحات و انیمیشن‌ها', textEn: 'Native LTR interface layout with polished micro-interactions and dialogs' },
+    ],
+  },
 ];
 
 const SEEN_KEY = 'daftarche-seen-version';
@@ -240,13 +254,19 @@ const SEEN_KEY = 'daftarche-seen-version';
 /* ── rendering ─────────────────────────────────────────────────────────── */
 
 function entryHtml(entry) {
-  const items = entry.highlights.map(h =>
-    `<li class="changelog-item"><span class="changelog-icon" aria-hidden="true">${esc(h.icon)}</span><span>${esc(h.text)}</span></li>`
-  ).join('');
+  const en = isEn();
+  const items = entry.highlights.map(h => {
+    const text = (en && h.textEn) ? h.textEn : h.text;
+    return `<li class="changelog-item"><span class="changelog-icon" aria-hidden="true">${esc(h.icon)}</span><span>${esc(text)}</span></li>`;
+  }).join('');
+  const parts = entry.version.split('.');
+  const verLabel = en ? `Version ${parts[0]}.${parts[1] || '0'}` : `نسخهٔ ${esc(faVer(entry.version))}`;
+  const dateLabel = (en && entry.dateEn) ? entry.dateEn : entry.date;
+  const title = (en && entry.titleEn) ? entry.titleEn : entry.title;
   return `
     <div class="changelog-entry">
-      <div class="changelog-ver"><b>نسخهٔ ${esc(faVer(entry.version))}</b><span>${esc(entry.date)}</span></div>
-      <h3 class="changelog-title">${esc(entry.title)}</h3>
+      <div class="changelog-ver"><b>${esc(verLabel)}</b><span>${esc(dateLabel)}</span></div>
+      <h3 class="changelog-title">${esc(title)}</h3>
       <ul class="changelog-list">${items}</ul>
     </div>`;
 }
@@ -273,10 +293,10 @@ function build() {
       <span class="badge" aria-hidden="true">
         <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.4 7.6L22 12l-7.6 2.4L12 22l-2.4-7.6L2 12l7.6-2.4z"/></svg>
       </span>
-      <h2 id="changelogTitle">دفترچه به‌روز شد</h2>
-      <p class="changelog-sub">یه کم تازه‌تر شدیم — اینا عوض شدن</p>
+      <h2 id="changelogTitle">${esc(t('changelog.title'))}</h2>
+      <p class="changelog-sub">${esc(t('changelog.subtitle'))}</p>
       <div class="changelog-body"></div>
-      <button class="go" id="changelogOk">فهمیدم</button>
+      <button class="go" id="changelogOk">${esc(t('changelog.ok'))}</button>
     </div>`;
   document.body.appendChild(overlay);
 }
@@ -296,6 +316,12 @@ function close() {
 function openChangelog(entries) {
   if (!overlay) build();
   if (!overlay.hidden) return;
+  const tEl = overlay.querySelector('#changelogTitle');
+  if (tEl) tEl.textContent = t('changelog.title');
+  const subEl = overlay.querySelector('.changelog-sub');
+  if (subEl) subEl.textContent = t('changelog.subtitle');
+  const okBtn = overlay.querySelector('#changelogOk');
+  if (okBtn) okBtn.textContent = t('changelog.ok');
   /* The entries are written in at open time: which ones belong to this reader is
      only known by the boot check that opens the dialog. */
   const body = overlay.querySelector('.changelog-body');

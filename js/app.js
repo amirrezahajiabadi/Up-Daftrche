@@ -28,6 +28,7 @@ import { initModalContainment } from './modal.js';
 import { initPWA } from './pwa.js';
 import { initStorageWarning } from './storagewarn.js';
 import { initShortcuts } from './shortcuts.js';
+import { initLang, getLang, formatDateI18n, applyI18nToDOM, t } from './i18n.js';
 
 /* Each section is initialized separately; an error in one section doesn't break the rest of the app */
 const safe = (name, fn) => {
@@ -661,14 +662,22 @@ function initVisibility() {
 /* ═══ Name ═══ */
 const greetBase = () => {
   const h = new Date().getHours();
+  if (getLang() === 'en') {
+    return h < 5 ? 'Good night' : h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : h < 21 ? 'Good evening' : 'Good night';
+  }
   return h < 5 ? 'شب بخیر' : h < 12 ? 'صبح بخیر' : h < 17 ? 'ظهر بخیر' : h < 21 ? 'عصر بخیر' : 'شب بخیر';
 };
 
 function applyName() {
+  const isEn = getLang() === 'en';
   const gt = $('#greetText');
-  if (gt) gt.textContent = greetBase() + (state.userName ? `، ${state.userName}` : '');
+  if (gt) gt.textContent = greetBase() + (state.userName ? (isEn ? `, ${state.userName}` : `، ${state.userName}`) : '');
   const ti = $('#taskInput');
-  if (ti) ti.placeholder = state.userName ? `${state.userName}، یه کار جدید بنویس…` : 'یه کار جدید بنویس…';
+  if (ti) {
+    ti.placeholder = isEn
+      ? (state.userName ? t('tasks.nameAddPlaceholder', { name: state.userName }) : t('tasks.addPlaceholder'))
+      : (state.userName ? `${state.userName}، یه کار جدید بنویس…` : 'یه کار جدید بنویس…');
+  }
   renderProfile();
 }
 
@@ -678,9 +687,12 @@ function applyName() {
 let nameFlowDone = null;
 
 function openNameModal(edit = false, done = null) {
-  const t = $('#nameTitle'), i = $('#nameInput'), o = $('#nameOverlay');
-  if (!t || !i || !o) return;
-  t.textContent = edit ? 'اسمت رو عوض کن' : 'سلام! اسمت چیه؟';
+  const tEl = $('#nameTitle'), i = $('#nameInput'), o = $('#nameOverlay');
+  if (!tEl || !i || !o) return;
+  const isEn = getLang() === 'en';
+  tEl.textContent = edit
+    ? (isEn ? 'Change your name' : 'اسمت رو عوض کن')
+    : (isEn ? 'Hello! What’s your name?' : 'سلام! اسمت چیه؟');
   i.value = edit ? state.userName : '';
   nameFlowDone = done;
   o.hidden = false;
@@ -787,8 +799,27 @@ safe('مهلت', initDuePicker);
    permission from a task card. */
 if (notificationsSupported()) safe('یادآوری‌ها', () => initNotifications(() => state.tasks));
 
-const dl = $('#dateLine');
-if (dl) dl.textContent = new Intl.DateTimeFormat('fa-IR', { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date());
+safe('زبان', () => {
+  initLang();
+  applyI18nToDOM();
+});
+
+const updateDateLine = () => {
+  const dl = $('#dateLine');
+  if (dl) dl.textContent = formatDateI18n(new Date(), { weekday: 'long', day: 'numeric', month: 'long' });
+};
+updateDateLine();
+
+if (typeof window !== 'undefined') {
+  window.addEventListener('daftarche:lang-changed', () => {
+    updateDateLine();
+    applyI18nToDOM();
+    applyName();
+    renderSettings();
+    renderList();
+    notify();
+  });
+}
 
 safe('نام', applyName);
 /* Painted at boot as well as on entry, because the page can be the one the URL

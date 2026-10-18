@@ -5,6 +5,7 @@ import { $, faNum, startOfToday } from './utils.js';
 import { CATS } from './constants.js';
 import { subscribe } from './bus.js';
 import { renderList, collapse } from './tasks.js';
+import { getLang, t, formatNumber } from './i18n.js';
 
 /* ── Footer counter ──
    The progress ring and the sentence under it moved to the stats page
@@ -14,32 +15,32 @@ import { renderList, collapse } from './tasks.js';
 function updateProgress() {
   const total = state.tasks.length;
   const done = state.tasks.filter(t => t.done).length;
+  const remaining = total - done;
 
-  $('#counter').textContent = total ? `${faNum(total - done)} کار باقی‌مانده` : '';
+  if (getLang() === 'en') {
+    $('#counter').textContent = total ? `${formatNumber(remaining)} ${remaining === 1 ? 'task remaining' : 'tasks remaining'}` : '';
+  } else {
+    $('#counter').textContent = total ? `${faNum(remaining)} کار باقی‌مانده` : '';
+  }
   $('#clearBtn').style.visibility = done ? 'visible' : 'hidden';
 }
 
 /* ── Category bar ── */
 function buildCatBar() {
   const wrap = $('#cats');
+  if (!wrap) return;
+  wrap.innerHTML = '';
+  const isEn = getLang() === 'en';
   const mk = (key, label, color) => {
     const b = document.createElement('button');
-    b.className = 'cat-chip' + (key === 'all' ? ' active' : '');
+    b.className = 'cat-chip' + (key === state.catFilter ? ' active' : '');
     b.dataset.cat = key;
     b.style.setProperty('--cc', color);
     b.innerHTML = `<span class="dot"></span>${label}<span class="cnt"></span>`;
     return b;
   };
-  wrap.appendChild(mk('all', 'همه', 'var(--accent)'));
-  CATS.forEach(c => wrap.appendChild(mk(c.key, c.label, c.color)));
-  wrap.addEventListener('click', e => {
-    const b = e.target.closest('.cat-chip');
-    if (!b || b.classList.contains('active')) return;
-    wrap.querySelector('.active').classList.remove('active');
-    b.classList.add('active');
-    state.catFilter = b.dataset.cat;
-    renderList();
-  });
+  wrap.appendChild(mk('all', isEn ? t('categories.all') : 'همه', 'var(--accent)'));
+  CATS.forEach(c => wrap.appendChild(mk(c.key, isEn ? t(`categories.${c.key}`) : c.label, c.color)));
 }
 
 function updateCatCounts() {
@@ -48,7 +49,7 @@ function updateCatCounts() {
     const n = k === 'all'
       ? state.tasks.filter(t => !t.done).length
       : state.tasks.filter(t => !t.done && (t.cat || 'misc') === k).length;
-    ch.querySelector('.cnt').textContent = n ? faNum(n) : '';
+    ch.querySelector('.cnt').textContent = n ? formatNumber(n) : '';
   });
 }
 
@@ -124,6 +125,22 @@ export function initProgress() {
   $('#clearBtn').onclick = () => {
     [...$('#taskList').querySelectorAll('.task.done')].forEach((el, i) => setTimeout(() => collapse(el, el.dataset.id), i * 80));
   };
+
+  $('#cats')?.addEventListener('click', e => {
+    const b = e.target.closest('.cat-chip');
+    if (!b || b.classList.contains('active')) return;
+    $('#cats .active')?.classList.remove('active');
+    b.classList.add('active');
+    state.catFilter = b.dataset.cat;
+    renderList();
+  });
+
+  window.addEventListener('daftarche:lang-changed', () => {
+    buildCatBar();
+    updateCatCounts();
+    updateProgress();
+    movePill();
+  });
 
   subscribe(() => { updateProgress(); updateCatCounts(); updateFrog(); });
 }

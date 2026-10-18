@@ -11,6 +11,9 @@ import { $, faNum, dayKey, parseDurationMin } from './utils.js';
 import { getHistory } from './focushistory.js';
 import { qorqoriMarkup } from './qorqori.js';
 import { fekrbazMarkup } from './fekrbaz.js';
+import { getLang, formatNumber } from './i18n.js';
+
+const num = n => formatNumber(n, getLang());
 
 /* ── Sample-size rules (centralized — no magic numbers elsewhere) ── */
 const MIN_SAMPLES = 3;      // below this: no pattern at all
@@ -132,6 +135,7 @@ export function computeInsights(now = Date.now()) {
 /* ── Insight 1: task completion vs duration ── */
 function taskPattern(relevant, done7) {
   const doneIds = new Set(done7.map(t => t.id));
+  const isEn = getLang() === 'en';
 
   /* Completion counts alone are summary info, not a pattern — a pattern needs
      a comparison between two groups with enough samples on both sides. */
@@ -145,11 +149,19 @@ function taskPattern(relevant, done7) {
     const r2 = rate(nodurDone, nodur.length);
     if (r1 !== null && r2 !== null && Math.abs(r1 - r2) >= MIN_RATE_GAP) {
       const higher = r1 > r2 ? 'durated' : 'plain';
+      let text;
+      if (isEn) {
+        text = higher === 'durated'
+          ? 'Tasks with an estimated duration were completed more often.'
+          : 'Tasks without an estimated duration were completed more often this week.';
+      } else {
+        text = higher === 'durated'
+          ? 'کارهایی که براشون زمان مشخص کرده بودی، بیشتر کامل شدن.'
+          : 'کارهای بدون زمان مشخص، این هفته بیشتر کامل شدن.';
+      }
       return [{
         type: 'task-duration',
-        text: higher === 'durated'
-          ? 'کارهایی که براشون زمان مشخص کرده بودی، بیشتر کامل شدن.'
-          : 'کارهای بدون زمان مشخص، این هفته بیشتر کامل شدن.',
+        text,
         evidence: { durated: { total: dur.length, done: durDone, rate: r1 }, plain: { total: nodur.length, done: nodurDone, rate: r2 } },
       }];
     }
@@ -164,11 +176,19 @@ function taskPattern(relevant, done7) {
     const rs = rate(sDone, short.length);
     const rl = rate(lDone, long.length);
     if (rs !== null && rl !== null && Math.abs(rs - rl) >= MIN_RATE_GAP) {
+      let text;
+      if (isEn) {
+        text = rs > rl
+          ? 'Shorter tasks (up to 30 min) were completed more often this week.'
+          : 'Longer tasks were completed more often this week.';
+      } else {
+        text = rs > rl
+          ? `بیشتر کارهای کوتاه‌تر (تا ${faNum(30)} دقیقه) این هفته کامل شدن.`
+          : 'کارهای طولانی‌تر این هفته بیشتر کامل شدن.';
+      }
       return [{
         type: 'task-length',
-        text: rs > rl
-          ? `بیشتر کارهای کوتاه‌تر (تا ${faNum(30)} دقیقه) این هفته کامل شدن.`
-          : 'کارهای طولانی‌تر این هفته بیشتر کامل شدن.',
+        text,
         evidence: { short: { total: short.length, done: sDone, rate: rs }, long: { total: long.length, done: lDone, rate: rl } },
       }];
     }
@@ -184,11 +204,20 @@ function focusPattern(sessions) {
   const success = sessions.filter(s => s.taskCompleted);
   const r = rate(success.length, sessions.length);
   if (r === null) return [];
+  const isEn = getLang() === 'en';
+  let text;
+  if (isEn) {
+    text = r >= 50
+      ? 'Most focus sessions led to completing a real task.'
+      : 'Focus sessions started, but fewer led to completed tasks.';
+  } else {
+    text = r >= 50
+      ? 'بیشتر تمرکزهات به کار واقعی رسیدن.'
+      : 'تمرکزهات شروع شدن ولی کمتر به تکمیل کار رسیده‌ان.';
+  }
   return [{
     type: 'focus',
-    text: r >= 50
-      ? 'بیشتر تمرکزهات به کار واقعی رسیدن.'
-      : 'تمرکزهات شروع شدن ولی کمتر به تکمیل کار رسیده‌ان.',
+    text,
     evidence: { sessions: sessions.length, finished: finished.length, completedTasks: success.length, rate: r },
     focusRelated: true,
   }];
@@ -221,11 +250,20 @@ function energyPattern(moodDays, relevant, done7, now) {
   if (rl === null || rh === null || Math.abs(rl - rh) < MIN_RATE_GAP) return [];
 
   const betterHigh = rh > rl;
+  const isEn = getLang() === 'en';
+  let text;
+  if (isEn) {
+    text = betterHigh
+      ? 'On days with higher energy, tasks were completed more often.'
+      : 'Interestingly, tasks still moved forward on lower-energy days.';
+  } else {
+    text = betterHigh
+      ? 'روی روزهایی که انرژی‌ات بالاتر بوده، کارها بیشتر کامل شدن.'
+      : 'جالبه: روی روزهایی که انرژی‌ات پایین‌تر بوده هم کارها پیش رفتن.';
+  }
   return [{
     type: 'energy',
-    text: betterHigh
-      ? 'روی روزهایی که انرژی‌ات بالاتر بوده، کارها بیشتر کامل شدن.'
-      : 'جالبه: روی روزهایی که انرژی‌ات پایین‌تر بوده هم کارها پیش رفتن.',
+    text,
     evidence: { lowDays: low.length, highDays: high.length, lowRate: rl, highRate: rh },
     khabalo: !betterHigh,
   }];
@@ -235,20 +273,38 @@ function energyPattern(moodDays, relevant, done7, now) {
 function makeSuggestion(insights) {
   const first = insights[0];
   if (!first) return null;
+  const isEn = getLang() === 'en';
   if (first.type === 'task-duration') {
+    if (isEn) {
+      return first.evidence.durated.rate > first.evidence.plain.rate
+        ? 'Setting a short time estimate for upcoming tasks might help you tackle them better.'
+        : 'Working through some tasks without worrying about duration might keep things simpler.';
+    }
     return first.evidence.durated.rate > first.evidence.plain.rate
       ? 'شاید برای کارهای بعدی‌ات یه زمان کوچیک مشخص کنی، رابطهٔ بهتری باهاشون پیدا کنی.'
       : 'شاید بعضی کارها رو بدون درگیر شدن با زمان، ساده‌تر جلو ببری.';
   }
   if (first.type === 'task-length') {
+    if (isEn) {
+      return first.evidence.short.rate > first.evidence.long.rate
+        ? 'Starting with a 15-minute task might feel easier.'
+        : 'Taking dedicated time for larger tasks might help you make more progress.';
+    }
     return first.evidence.short.rate > first.evidence.long.rate
       ? 'شاید شروع با یه کار ۱۵ دقیقه‌ای برات راحت‌تر باشه.'
       : 'شاید وقتی برای کارهای بزرگ‌تر وقت می‌ذاری، بهتر جلو می‌ری.';
   }
   if (first.type === 'focus') {
-    return 'شاید تمرکزهای کوتاه‌تر ولی منظم‌تر کمکت کنه کارها کامل بشن.';
+    return isEn
+      ? 'Shorter, more frequent focus sessions might help you finish tasks.'
+      : 'شاید تمرکزهای کوتاه‌تر ولی منظم‌تر کمکت کنه کارها کامل بشن.';
   }
   if (first.type === 'energy') {
+    if (isEn) {
+      return first.evidence.highRate > first.evidence.lowRate
+        ? 'Consider scheduling important tasks on higher-energy days.'
+        : 'Low-energy days still show progress — that is plenty.';
+    }
     return first.evidence.highRate > first.evidence.lowRate
       ? 'شاید کارهای مهم رو بذاری روی روزهایی که انرژی بیشتری داری.'
       : 'روزهای کم‌انرژی هم پیشرفت خودشون رو دارن — همین کافیه.';
@@ -273,17 +329,19 @@ export function renderInsights() {
   if (!hasAnything) return;
 
   /* Summary chips — only show what the data actually supports */
+  const isEn = getLang() === 'en';
   const chips = [];
   if (summary.doneCount > 0 || summary.createdCount > 0) {
-    chips.push({ v: faNum(summary.doneCount), l: 'کار انجام‌شده' });
-    if (summary.completionRate !== null) chips.push({ v: pctFa(summary.completionRate), l: 'نرخ تکمیل' });
+    chips.push({ v: num(summary.doneCount), l: isEn ? (summary.doneCount === 1 ? 'task done' : 'tasks done') : 'کار انجام‌شده' });
+    if (summary.completionRate !== null) chips.push({ v: isEn ? `${num(summary.completionRate)}%` : pctFa(summary.completionRate), l: isEn ? 'completion rate' : 'نرخ تکمیل' });
   }
   if (summary.focusCount > 0) {
-    chips.push({ v: faNum(summary.focusCount), l: 'تمرکز' });
-    if (summary.focusMinutes !== null) chips.push({ v: faNum(summary.focusMinutes), l: 'دقیقه تمرکز' });
+    chips.push({ v: num(summary.focusCount), l: isEn ? (summary.focusCount === 1 ? 'session' : 'sessions') : 'تمرکز' });
+    if (summary.focusMinutes !== null) chips.push({ v: num(summary.focusMinutes), l: isEn ? 'min focus' : 'دقیقه تمرکز' });
   }
   if (summary.moodAvg !== null) {
-    chips.push({ v: faNum(Math.round(summary.moodAvg * 10) / 10), l: 'میانگین حال' });
+    const avgNum = Math.round(summary.moodAvg * 10) / 10;
+    chips.push({ v: num(avgNum), l: isEn ? 'avg mood' : 'میانگین حال' });
   }
   const sum = $('#insightsSummary');
   if (sum) sum.innerHTML = chips.map(c => `<div class="stat-chip"><b>${c.v}</b><span>${c.l}</span></div>`).join('');
@@ -312,4 +370,9 @@ export function initInsights() {
   import('./bus.js').then(({ subscribe }) => subscribe(() => {
     if ($('#page-stats')?.classList.contains('active')) renderInsights();
   }));
+  if (typeof window !== 'undefined') {
+    window.addEventListener('daftarche:lang-changed', () => {
+      if ($('#page-stats')?.classList.contains('active')) renderInsights();
+    });
+  }
 }

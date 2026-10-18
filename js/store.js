@@ -144,3 +144,7 @@ export const saveTourDone   = ()    => safeSet(STORAGE_KEYS.tourDone, 'yes');
    count as completing the tour or unlock an achievement reward on next boot. */
 export const saveTourAwarded = () => safeSet(STORAGE_KEYS.tourAwarded, 'yes');
 export const loadTourAwarded = ()    => readString(STORAGE_KEYS.tourAwarded) === 'yes';
+
+export const loadLang = ()           => readString(STORAGE_KEYS.lang, 'fa');
+export const saveLang = lang         => safeSet(STORAGE_KEYS.lang, lang === 'en' ? 'en' : 'fa');
+

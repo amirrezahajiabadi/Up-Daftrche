@@ -3,6 +3,7 @@
 import { state } from './state.js';
 import { $ } from './utils.js';
 import { flashTask } from './tasks.js';
+import { t } from './i18n.js';
 
 let rollFinal = null;
 
@@ -15,7 +16,7 @@ function openRoll() {
   box.classList.remove('landed', 'tick');
   rollFinal = null;
   if (!pool.length) {
-    txt.textContent = 'همه کارا انجام شده، دمت گرم!';
+    txt.textContent = t('tasks.diceEmpty');
     box.classList.add('landed');
     return;
   }

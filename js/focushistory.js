@@ -12,6 +12,7 @@
 import { loadFocusHistory, saveFocusHistory } from './store.js';
 import { startOfToday } from './utils.js';
 import { formatJalaliDate } from './jalali.js';
+import { getLang } from './i18n.js';
 
 export const HISTORY_CAP = 100;
 
@@ -101,11 +102,16 @@ export function getHistory() {
 export const RATING_LABEL = { good: 'خوب بود', okay: 'معمولی بود', hard: 'سخت بود' };
 export const RATING_FACE = { good: '😊', okay: '😐', hard: '😵' };
 
-/* A day as the reader remembers it: امروز / دیروز, then the Jalali date. */
-export function historyDayLabel(ts) {
+/* A day as the reader remembers it: امروز / دیروز, then the date. */
+export function historyDayLabel(ts, lang = getLang()) {
   const d = new Date(ts);
   const today = startOfToday();
   const diff = Math.round((today - new Date(d.getFullYear(), d.getMonth(), d.getDate())) / 864e5);
+  if (lang === 'en') {
+    if (diff === 0) return 'Today';
+    if (diff === 1) return 'Yesterday';
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  }
   if (diff === 0) return 'امروز';
   if (diff === 1) return 'دیروز';
   return formatJalaliDate(d);
