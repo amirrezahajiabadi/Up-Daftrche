@@ -36,6 +36,17 @@ export function clearAll() {
   catch (error) { reportStorageError(null, error); return false; }
 }
 
+/* Ask the browser to keep this origin's data out of its eviction sweep. A
+   refusal is normal (the browser may decide on its own criteria, and a private
+   window never grants it), so the answer is ignored and nothing waits on it.
+   Shared here because both kinds of data need it: a task list and, far more
+   expensively, a book's PDF in IndexedDB (js/library.js). */
+export function tryPersistStorage() {
+  if (typeof navigator !== 'undefined' && navigator.storage && navigator.storage.persist) {
+    navigator.storage.persist().catch(() => {});
+  }
+}
+
 /* Guarded read of one stored value: a corrupt entry falls back instead of
    throwing, so a malformed value can never take an import down at module
    evaluation time. Exported for the modules that own their own key and would

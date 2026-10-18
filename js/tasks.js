@@ -1,5 +1,5 @@
 import { state, getTask } from './state.js';
-import { saveTasks } from './store.js';
+import { saveTasks, tryPersistStorage } from './store.js';
 import { $, faNum, startOfToday, dueKeyFromOffset, normalizeFa, parseDurationMin, formatDuration, formatClock, parseTimeRange } from './utils.js';
 import { P_CYCLE, P_LABEL, CATS, ICONS } from './constants.js';
 import { notify } from './bus.js';
@@ -285,6 +285,22 @@ export function setTaskDone(id, done) {
     rememberDone();
   } else task.doneAt = null;
   save(); notify();
+  if (done) {
+    /* Completing one task used to be silent unless it happened to be the last
+       one, so a single tick felt unacknowledged. The row that was just ticked
+       answers with a short pulse; confetti stays reserved for finishing the
+       whole list. */
+    /* Escaped, because an id that arrived in an imported backup is not
+       guaranteed to be the hex string this app writes itself. */
+    const safeId = typeof CSS !== 'undefined' && CSS.escape ? CSS.escape(id) : id;
+    document.querySelectorAll(`.task[data-id="${safeId}"], .t-row[data-id="${safeId}"], .wk-row[data-id="${safeId}"]`)
+      .forEach(row => {
+        row.classList.remove('task-done-pulse');
+        void row.offsetWidth; // restart the animation on a repeat completion
+        row.classList.add('task-done-pulse');
+        setTimeout(() => row.classList.remove('task-done-pulse'), 400);
+      });
+  }
   if (done && state.tasks.every(t => t.done)) confetti();
 }
 
@@ -312,12 +328,6 @@ export function addTask(text, p = 'mid', cat = 'misc', dueDate, durationMin = nu
   save(); notify();
   tryPersistStorage();
   return task;
-}
-
-function tryPersistStorage() {
-  if (typeof navigator !== 'undefined' && navigator.storage && navigator.storage.persist) {
-    navigator.storage.persist().catch(() => {});
-  }
 }
 
 /* ── Moving a task to another day ──

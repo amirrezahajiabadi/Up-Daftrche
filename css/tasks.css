@@ -262,3 +262,15 @@
   .cat-tag,.due-chip,.dur-chip{font-size:11px;padding:3px 8px}
   .empty .art svg{width:72px}
 }
+
+/* micro-feedback on single task completion */
+@media (prefers-reduced-motion: no-preference) {
+  .task-done-pulse {
+    animation: task-pulse 0.4s ease-out;
+  }
+  @keyframes task-pulse {
+    0%   { transform: scale(1); }
+    40%  { transform: scale(1.03); }
+    100% { transform: scale(1); }
+  }
+}

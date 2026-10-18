@@ -1,6 +1,6 @@
 /* ═══ Library: Reading Workspace — Shelf, Reading State, Goal, Storage ═══ */
 import { $, faNum, dayKey, esc, nextId, normalizeFa } from './utils.js';
-import { readJSON, safeSet, STORAGE_ERROR_EVENT } from './store.js';
+import { readJSON, safeSet, STORAGE_ERROR_EVENT, tryPersistStorage } from './store.js';
 import { showNotice } from './dialog.js';
 import { getLang, t } from './i18n.js';
 
@@ -299,9 +299,12 @@ export function renderShelf() {
   /* Currently Reading card — shown when viewing all books and no active search */
   const slot = $('#lastReadSlot');
   slot.innerHTML = '';
+  /* The card and the grid show the same shelf, so the book the card already
+     presents is held here and skipped below rather than shown twice. */
+  let last = null;
   if (!shelfSearchQuery && shelfFilter === 'all') {
     const allActive = books.filter(b => bookStatus(b) !== 'done');
-    const last = [...allActive].filter(b => b.numPages).sort((a, b) => (b.lastReadAt || 0) - (a.lastReadAt || 0))[0];
+    last = [...allActive].filter(b => b.numPages).sort((a, b) => (b.lastReadAt || 0) - (a.lastReadAt || 0))[0];
     if (last) {
       const done = bookDone(last).size;
       const pct = bookPct(last);
@@ -380,6 +383,8 @@ export function renderShelf() {
   /* Shelf cards */
   if (shelfFilter === 'all' && !shelfSearchQuery) {
     active.forEach((b, i) => {
+      /* Already the card above the grid — a second copy here read as two books. */
+      if (b.id === last?.id) return;
       grid.appendChild(bookCard(b, i, false));
     });
     finished.forEach((b, i) => {
@@ -629,6 +634,11 @@ export function initLibrary() {
        silently replace each other. */
     const id = nextId();
     try {
+      /* A book's file is the biggest thing this app stores, and it lives in
+         IndexedDB, where only a persistent origin is safe from eviction. Asking
+         at the moment of the first import is the one moment the browser can
+         answer in context. */
+      tryPersistStorage();
       await putBook({ id, blob: f });
       books.unshift({
         id, title: f.name.replace(/\.pdf$/i, ''), addedAt: Date.now(),
