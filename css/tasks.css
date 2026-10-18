@@ -274,3 +274,16 @@
     100% { transform: scale(1); }
   }
 }
+
+/* ═══ Empty chips wait for the row to be engaged ═══
+   Every row otherwise opens with two dashed placeholders («+ مهلت», «+ زمان»),
+   which at list scale is the loudest thing on the page. The chip keeps its DOM
+   node, its tab order and its click target; only its paint waits for the row to
+   be hovered or to hold focus — so a keyboard user tabs to it and it appears.
+   Touch screens get no hover and no second way to add a deadline, so there the
+   chips stay visible exactly as before. */
+@media (hover:hover) {
+  .task .due-chip.none,.task .dur-chip.none{opacity:0;pointer-events:none;transition:opacity var(--duration-fast),transform var(--duration-fast)}
+  .task:hover .due-chip.none,.task:hover .dur-chip.none,
+  .task:focus-within .due-chip.none,.task:focus-within .dur-chip.none{opacity:.65;pointer-events:auto}
+}
