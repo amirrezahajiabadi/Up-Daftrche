@@ -647,7 +647,10 @@ export function initLibrary() {
       });
       saveMeta(); renderShelf();
       window.dispatchEvent(new CustomEvent('open-book', { detail: id }));
-      setTimeout(() => openGoal(id), 400);
+      /* The goal sheet belongs to the book that was just imported, so it opens on
+         the next tick instead of 400 ms later — long enough for the reader to
+         have rendered, short enough that the sheet reads as part of the import. */
+      setTimeout(() => openGoal(id), 0);
     } catch (err) {
       console.warn('کتاب ذخیره نشد:', err);
       showImportError(getLang() === 'en' ? 'Book could not be saved. Storage might be full. Please try again.' : 'کتاب ذخیره نشد؛ شاید حافظهٔ مرورگر پر است. یک بار دیگر امتحان کن.');
