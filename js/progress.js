@@ -59,6 +59,14 @@ function movePill() {
   if (!act || !pill) return;
   pill.style.width = act.offsetWidth + 'px';
   pill.style.transform = `translateX(${act.offsetLeft}px)`;
+  /* On a phone the bar scrolls sideways, so the chip the highlight is under can
+     sit half outside it — a highlight that cannot be seen says nothing. Only a
+     bar that really scrolls is asked to move, so a resize (which also lands
+     here) can never scroll the page to reach the filters. */
+  const bar = act.closest('.filters');
+  if (bar && bar.scrollWidth > bar.clientWidth + 1) {
+    act.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  }
 }
 
 /* Measuring the active filter forces layout; a resize fires many events per

@@ -105,9 +105,10 @@ export const TRANSLATIONS = {
       durCustom: 'زمان دلخواه',
       minutePlaceholder: 'دقیقه',
       durCustomAria: 'مدت زمان دلخواه به دقیقه',
+      filterToday: 'امروز',
       filterActive: 'در حال انجام',
-      filterNoDue: 'بدون مهلت',
       filterDone: 'انجام شده',
+      filterOverdue: 'کار های عقب افتاده',
       clearDone: 'پاک‌کردن انجام‌شده‌ها',
       nameAddPlaceholder: '{name}، مثلاً «فردا ساعت ۳ جلسه با علی» یا فقط عنوان کار',
       clearSearch: 'پاک کردن جستجو',
@@ -543,9 +544,10 @@ export const TRANSLATIONS = {
       durCustom: 'Custom…',
       minutePlaceholder: 'min',
       durCustomAria: 'Custom duration in minutes',
+      filterToday: 'Today',
       filterActive: 'In progress',
-      filterNoDue: 'No deadline',
       filterDone: 'Completed',
+      filterOverdue: 'Overdue',
       clearDone: 'Clear completed',
       nameAddPlaceholder: '{name}, e.g. “Meeting with Ali tomorrow at 3” — or just a title',
       clearSearch: 'Clear search',
@@ -1070,12 +1072,14 @@ export function applyI18nToDOM(root = (typeof document !== 'undefined' ? documen
   // Filter chips in tasks page
   const fAll = root.querySelector('#filters button[data-filter="all"]');
   if (fAll) fAll.textContent = t('tasks.filterAll');
+  const fToday = root.querySelector('#filters button[data-filter="today"]');
+  if (fToday) fToday.textContent = t('tasks.filterToday');
   const fActive = root.querySelector('#filters button[data-filter="active"]');
   if (fActive) fActive.textContent = t('tasks.filterActive');
-  const fNoDue = root.querySelector('#filters button[data-filter="nodue"]');
-  if (fNoDue) fNoDue.textContent = t('tasks.filterNoDue');
   const fDone = root.querySelector('#filters button[data-filter="done"]');
   if (fDone) fDone.textContent = t('tasks.filterDone');
+  const fOverdue = root.querySelector('#filters button[data-filter="overdue"]');
+  if (fOverdue) fOverdue.textContent = t('tasks.filterOverdue');
 
   // Clear completed button
   const clearBtn = root.querySelector('#clearBtn');

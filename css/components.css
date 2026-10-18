@@ -289,7 +289,13 @@ html[dir="ltr"] .vol input[type=range]{background:linear-gradient(to right,var(-
   .cats{gap:6px}
   .cat-chip{font-size:11px;padding:5px 11px}
   .cat-chip .dot{width:7px;height:7px}
-  .filters button{font-size:12px;padding:8px 2px;white-space:nowrap}
+  /* Five labels — «کار های عقب افتاده» among them — no longer fit as five equal
+     shares of a phone's width, and an equal share clipped that chip. The bar
+     scrolls sideways instead, the way the category chips already do, so every
+     label stays whole and no chip is squeezed into an ellipsis. */
+  .filters{overflow-x:auto;overflow-y:hidden;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  .filters::-webkit-scrollbar{display:none}
+  .filters button{font-size:12px;padding:8px 11px;white-space:nowrap;flex:0 0 auto}
   .vibe-card{padding:14px 14px}
   .vibe-head strong{font-size:14px}
   .scene-chips button{font-size:11px;padding:5px 12px}
@@ -322,7 +328,7 @@ html[dir="ltr"] .vol input[type=range]{background:linear-gradient(to right,var(-
   .chart{height:56px;gap:4px}
   .scene-chips button{font-size:11px;padding:4px 10px}
   .vol{min-width:0;width:100%}
-  .filters button{font-size:11px;padding:7px 1px;white-space:nowrap}
+  .filters button{font-size:11px;padding:7px 9px;white-space:nowrap}
   .cat-chip{font-size:11px;padding:4px 9px}
 }
 
