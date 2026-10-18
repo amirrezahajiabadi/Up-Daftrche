@@ -676,7 +676,7 @@ function applyName() {
   if (ti) {
     ti.placeholder = isEn
       ? (state.userName ? t('tasks.nameAddPlaceholder', { name: state.userName }) : t('tasks.addPlaceholder'))
-      : (state.userName ? `${state.userName}، یه کار جدید بنویس…` : 'یه کار جدید بنویس…');
+      : (state.userName ? `${state.userName}، مثلاً «فردا ساعت ۳ جلسه با علی» یا فقط عنوان کار` : 'مثلاً «فردا ساعت ۳ جلسه با علی» یا فقط عنوان کار');
   }
   renderProfile();
 }
