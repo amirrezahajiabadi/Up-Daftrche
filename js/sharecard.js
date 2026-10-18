@@ -60,7 +60,7 @@ import { loadCardStyle, saveCardStyle } from './store.js';
 import { THEMES as APP_THEMES, themesOfMode } from './constants.js';
 import { currentMode } from './theme.js';
 import { pickerRow, toggleRow } from './chipgroup.js';
-import { QORQORI_URL } from './qorqori.js';
+import { QORQORI_URL, qorqoriArt } from './qorqori.js';
 
 const SIZE = 1080;            // the square card, and the width of every card
 const STORY_H = 1920;         // the 9:16 stories card
@@ -523,52 +523,35 @@ function drawFace(ctx, face, cx, cy, r, c) {
 }
 
 /* ── The companion, in the mood the window earned ──
-   The sprite is a set of symbols that reference each other, and an SVG opened as
-   an image resolves nothing outside itself — so the chosen pose is inlined into
-   a standalone document: every symbol it uses is spliced into it, and what comes
-   out carries no external reference at all. The palette variables keep their
-   fallbacks, which is exactly how the character is drawn in the app. */
+   An SVG opened as an image resolves nothing outside itself, so the artwork
+   cannot be referenced from the card: it is fetched once and travels into the
+   document as a data URL, and the accents come from the same builder the page
+   uses. That also means the palette variables fall back to their literal values
+   here, which is why they are written as fallbacks in js/qorqori.js. */
 
-let spritePromise = null;
+let artPromise = null;
 
-function spriteText() {
-  if (!spritePromise) {
-    spritePromise = fetch(QORQORI_URL)
-      .then(r => (r.ok ? r.text() : ''))
+function artSource() {
+  if (!artPromise) {
+    artPromise = fetch(QORQORI_URL)
+      .then(r => (r.ok ? r.blob() : null))
+      .then(blob => blob ? new Promise(resolve => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result));
+        /* An unreadable file is a card without a companion, not a failed card. */
+        reader.onerror = () => resolve('');
+        reader.readAsDataURL(blob);
+      }) : '')
       .catch(() => '');
   }
-  return spritePromise;
+  return artPromise;
 }
 
 async function mascotImage(expr) {
-  const text = await spriteText();
-  if (!text || typeof DOMParser === 'undefined') return null;
-  let doc;
-  try { doc = new DOMParser().parseFromString(text, 'image/svg+xml'); } catch { return null; }
-  const symbols = new Map([...doc.querySelectorAll('symbol')].map(s => [s.id, s]));
-  const pose = symbols.get(`qorqori-${expr}`) || symbols.get('qorqori-default');
-  if (!pose) return null;
+  const href = await artSource();
+  if (!href) return null;
 
-  /* Each shared part is drawn once per pose — the body under the arms, not the
-     body twice — and the walk is depth-first, because a symbol may use another. */
-  const used = new Set();
-  const inline = node => {
-    if (node.nodeType === 3) return node.textContent;
-    if (node.nodeType !== 1) return '';
-    if (node.tagName.toLowerCase() === 'use') {
-      const id = (node.getAttribute('href') || node.getAttribute('xlink:href') || '').replace('#', '');
-      const target = symbols.get(id);
-      if (!target || used.has(id)) return '';
-      used.add(id);
-      return [...target.childNodes].map(inline).join('');
-    }
-    const attrs = [...node.attributes].map(a => ` ${a.name}="${a.value}"`).join('');
-    return `<${node.tagName}${attrs}>${[...node.childNodes].map(inline).join('')}</${node.tagName}>`;
-  };
-
-  const svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="400" height="400">'
-    + [...pose.childNodes].map(inline).join('') + '</svg>';
-  const url = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml' }));
+  const url = URL.createObjectURL(new Blob([qorqoriArt(expr, href, 400)], { type: 'image/svg+xml' }));
   const img = new Image();
   img.src = url;
   try {

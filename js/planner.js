@@ -350,6 +350,13 @@ function onSubmit(e) {
      of the one thing the reader had just said. */
   if (spanSlot === 'custom' && !time) { syncSpan(); return; }
   addTask(text, 'mid', cat, due, dur, time);
+  const wkBtn = form.querySelector('.wk-go');
+  if (wkBtn) {
+    wkBtn.classList.remove('add-pop');
+    void wkBtn.offsetWidth;
+    wkBtn.classList.add('add-pop');
+    setTimeout(() => wkBtn.classList.remove('add-pop'), 340);
+  }
   if (preview) { preview.hidden = true; preview.innerHTML = ''; }
   if (input) { input.value = ''; input.focus(); }
 }

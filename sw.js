@@ -123,7 +123,6 @@ const SHELL = [
   'assets/fonts/Estedad-Mad.woff2',
   'assets/fonts/Estedad[wght].woff2',
   'assets/icons/apple-touch-icon.png',
-  'assets/icons/daftarche-electron.png',
   'assets/icons/daftarche.ico',
   'assets/icons/favicon.svg',
   'assets/icons/icon-192.png',
@@ -133,7 +132,7 @@ const SHELL = [
   'assets/characters/fekrbaz/fekrbaz.svg',
   'assets/characters/jingool/jingool.svg',
   'assets/characters/khabalo/khabalo.svg',
-  'assets/characters/qorqori/qorqori.svg',
+  'assets/characters/qorqori/qorqori.png',
   'assets/characters/rizolo/rizolo.svg',
 ];
 

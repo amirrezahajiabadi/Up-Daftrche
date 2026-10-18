@@ -1,5 +1,5 @@
 import { state } from './state.js';
-import { PRIMARY_PAGES } from './constants.js';
+import { PRIMARY_PAGES, MORE_PAGES } from './constants.js';
 import { $ } from './utils.js';
 import { saveName, safeSet, readString } from './store.js';
 import { initTheme } from './theme.js';
@@ -111,6 +111,16 @@ function initNavigation() {
       if (active) t.setAttribute('aria-current', 'page');
       else t.removeAttribute('aria-current');
     });
+    const isMore = MORE_PAGES.includes(page);
+    const moreBox = $('#sideRailMoreBox');
+    const moreToggle = $('#sideRailMoreToggle');
+    if (moreBox && moreToggle) {
+      if (isMore && !moreBox.classList.contains('is-expanded')) {
+        moreBox.classList.add('is-expanded');
+        moreToggle.setAttribute('aria-expanded', 'true');
+      }
+      moreToggle.classList.toggle('active', isMore && !moreBox.classList.contains('is-expanded'));
+    }
     /* A page switch lands at the top of the new page immediately.
        Scrolling there smoothly fought the incoming page's own entrance
        animation, and on a long list it turned one tap into a second of travel.
@@ -238,6 +248,17 @@ function initNavigation() {
       if (!tab || tab.classList.contains('active')) return;
       go(tab.dataset.page);
     });
+    const moreToggle = $('#sideRailMoreToggle');
+    const moreBox = $('#sideRailMoreBox');
+    if (moreToggle && moreBox) {
+      moreToggle.addEventListener('click', () => {
+        const next = !moreBox.classList.contains('is-expanded');
+        moreBox.classList.toggle('is-expanded', next);
+        moreToggle.setAttribute('aria-expanded', String(next));
+        const activeInMore = MORE_PAGES.includes(trail[trail.length - 1]);
+        moreToggle.classList.toggle('active', activeInMore && !next);
+      });
+    }
   }
 
   /* ── The dock answers the pointer, not just the press ──
@@ -422,7 +443,7 @@ function initSwipeNavigation(curPage, go) {
   const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const rtl = () => document.documentElement.dir === 'rtl';
   const IGNORE = 'input, textarea, select, button, a, label, iframe, canvas, '
-    + '[contenteditable], [data-no-swipe]';
+    + '[contenteditable], [data-no-swipe], .task, .tasks, .wk-row, [draggable="true"]';
   let drag = null;
 
   const overlayOpen = () =>
@@ -695,6 +716,17 @@ function initName() {
     if (e.target === e.currentTarget && state.userName) e.currentTarget.hidden = true;
   });
   window.addEventListener('edit-name', () => openNameModal(true));
+  const nameInput = $('#nameInput');
+  if (nameInput) {
+    nameInput.addEventListener('pointerdown', () => {
+      nameInput.classList.remove('name-craft-pop');
+      void nameInput.offsetWidth;
+      nameInput.classList.add('name-craft-pop');
+    });
+    nameInput.addEventListener('animationend', () => {
+      nameInput.classList.remove('name-craft-pop');
+    });
+  }
 }
 
 /* ═══ Search ═══ */

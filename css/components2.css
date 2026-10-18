@@ -255,7 +255,7 @@ html[data-mode="dark"] .toast-sticky .toast-btn{color:var(--color-text-on-accent
 .char-slot{display:grid;place-items:center;flex-shrink:0}
 .char-slot svg{display:block;max-width:100%;max-height:100%}
 .char-slot-hero{width:104px;height:104px}
-.char-slot-avatar{width:48px;height:48px;border-radius:var(--radius-sm)}
+.char-slot-avatar{width:48px;height:48px;background:transparent}
 .char-slot-empty{width:96px;height:96px}
 .char-slot-emotional{width:64px;height:64px}
 @media (max-width:480px){

@@ -12,9 +12,9 @@
 .today-add:focus-within .ta-ico{transform:rotate(90deg) scale(1.1);opacity:1}
 .today-add input{flex:1;min-width:0;border:none;outline:none;background:transparent;color:var(--text);font-family:var(--font-ui);font-size:15px;padding:9px 0;font-weight:400}
 .today-add input::placeholder{color:var(--muted);font-weight:400}
-.today-go{width:44px;height:44px;flex-shrink:0;border:none;border-radius:50%;background:var(--accent);color:var(--color-text-on-accent);cursor:pointer;display:grid;place-items:center;box-shadow:var(--shadow-accent);transition:transform var(--duration-fast) var(--ease-spring),box-shadow var(--duration-fast)}
-.today-go:hover{transform:translateY(-1px)}
-.today-go:active{transform:translateY(2px) scale(.97);box-shadow:0 1px 0 0 color-mix(in srgb,var(--color-accent-strong) 35%,transparent)}
+.today-go{width:44px;height:44px;min-width:44px;min-height:44px;flex-shrink:0;border:none;border-radius:50%;background:var(--accent);color:var(--color-text-on-accent);cursor:pointer;display:grid;place-items:center;box-shadow:none;transition:transform var(--duration-fast) var(--ease-spring),background var(--duration-fast);-webkit-tap-highlight-color:transparent}
+.today-go:hover{background:var(--color-accent-strong);transform:scale(1.02);box-shadow:none}
+.today-go:active{transform:scale(.94);box-shadow:none}
 .today-add.shake{animation:shake var(--duration-base) ease;border-color:var(--danger)!important}
 
 /* ── Section titles ── */
@@ -68,7 +68,7 @@
 .frog-main-row{display:flex;flex-direction:column;align-items:center;gap:8px;width:100%}
 .frog-info{display:flex;flex-direction:column;align-items:center;gap:6px;width:100%}
 /* Idle motion: one slow, very low-character breathing drift for the hero only */
-.frog-emoji{font-size:48px;line-height:1;transform-origin:bottom center;filter:drop-shadow(0 8px 12px color-mix(in srgb,var(--color-text-primary) 12%,transparent));animation:drift 6s ease-in-out infinite}
+.frog-emoji{font-size:48px;line-height:1;transform-origin:bottom center;animation:drift 6s ease-in-out infinite}
 @keyframes frogFloat{0%,100%{transform:translateY(0) rotate(-1deg)}50%{transform:translateY(-4px) rotate(1deg)}}
 .frog-kicker{display:inline-flex;align-items:center;gap:7px;background:var(--accent-soft);color:var(--color-accent-text);font-family:var(--font-ui);font-size:11.5px;font-weight:700;padding:4px 12px;border-radius:var(--radius-pill)}
 .frog-name{font-family:var(--font-personality);font-size:20px;font-weight:700;line-height:1.5;word-break:break-word;max-width:100%}
@@ -127,10 +127,12 @@ html[data-mode="dark"] .frog-empty-done .frog-empty-title{color:var(--color-succ
    able to appear and disappear without the row being rebuilt. */
 .t-row.done .t-due{display:none}
 .t-dur{flex-shrink:0;font-size:11px;font-weight:600;padding:3px 9px;border-radius:var(--radius-pill);color:var(--color-accent-text);background:var(--accent-soft)}
+.t-row.removing{transition:opacity 260ms cubic-bezier(.2,0,0,1),transform 260ms cubic-bezier(.2,0,0,1),height 280ms cubic-bezier(.2,0,0,1),padding 280ms cubic-bezier(.2,0,0,1),margin 280ms cubic-bezier(.2,0,0,1),border-color 200ms!important;opacity:0!important;transform:scale(.94) translateY(-4px)!important;height:0!important;min-height:0!important;padding-block:0!important;margin-block:0!important;border-color:transparent!important;pointer-events:none!important;overflow:hidden!important}
 .t-del{position:relative;border:none;background:transparent;color:var(--muted);width:28px;height:28px;border-radius:var(--radius-xs);cursor:pointer;display:grid;place-items:center;flex-shrink:0;opacity:0;transform:scale(.8);transition:all var(--duration-fast)}
 .t-del::after{content:'';position:absolute;inset:-8px;border-radius:var(--radius-sm)}
 .t-row:hover .t-del,.t-del:focus-visible{opacity:1;transform:none}
 .t-del:hover{color:var(--danger);background:color-mix(in srgb,var(--color-danger) 12%,transparent);transform:scale(1.12)!important}
+.t-del:active{transform:scale(.88)!important}
 @media (hover:none){.t-del{opacity:.55;transform:none}}
 .t-empty{list-style:none;text-align:center;padding:20px 12px;color:var(--muted);font-size:13px;line-height:1.9;font-weight:400;background:color-mix(in srgb,var(--surface) 55%,transparent);border:1.5px dashed var(--border);border-radius:var(--radius-lg)}
 /* Navigation to the full list stays quieter than the Decision Hero CTA */

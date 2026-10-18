@@ -1,23 +1,92 @@
-/* ═══ Qorqori: Daftarche mascot — sprite markup & avatar ═══
-   Expressions live as symbols in assets/characters/qorqori/qorqori.svg;
-   the palette is CSS variables on the .qorqori class so colors can be
-   tuned without touching the asset. Adding a new pose is just a new
-   symbol in the sprite plus an entry here. */
+/* ═══ Qorqori: Daftarche mascot — rendered art, mood accents, avatar ═══
+   The companion is a rendered illustration now: one square PNG with alpha in
+   assets/characters/qorqori/qorqori.png, painted into the same 200x200 drawing
+   space the hand-drawn sprite used, framed to the same visual weight. Every
+   place that sizes `.qorqori` — the Today hero, the Focus scene, the profile
+   thumb and the character grid, the achievements pages, the share card — keeps
+   framing it exactly as before, with no layout change anywhere.
 
-export const QORQORI_URL = 'assets/characters/qorqori/qorqori.svg';
+   A render cannot change its face, so the moods the eight drawn expressions used
+   to carry are carried by accents instead: the sparkle, the thought dots, the z
+   and the confetti the sprite already spoke in, in the same drawing space and
+   the same palette. That is the honest reading — an accent says how the
+   companion feels rather than pretending the artwork owns a second face — and
+   the expression names are unchanged, so not one call site had to move.
+
+   The artwork travels as an `href` rather than being baked in, so the same
+   builder can hand the share card a self-contained document: an SVG opened as an
+   image resolves nothing outside itself, and there the PNG rides along as a data
+   URL. */
+
+export const QORQORI_URL = 'assets/characters/qorqori/qorqori.png';
 
 export const QORQORI_EXPRS = [
   'default', 'happy', 'determined', 'thinking',
   'sleepy', 'surprised', 'proud', 'celebrating',
 ];
 
-/* Decorative by default: aria-hidden so the character stays out of the
-   accessibility tree (surrounding text carries the meaning). */
-export function qorqoriMarkup(expr = 'default') {
-  const e = QORQORI_EXPRS.includes(expr) ? expr : 'default';
-  return `<svg class="qorqori" viewBox="0 0 200 200" aria-hidden="true"><use href="${QORQORI_URL}#qorqori-${e}"/></svg>`;
+/* The drawing space the art was framed for. The figure fills its middle 87.5%,
+   which is where the sprite drew its body, so the numbers below are all in the
+   coordinates the accents were always written in. */
+const ART_BOX = '0 0 200 200';
+
+/* ═══ Mood accents ═══
+   One entry per expression, drawn in the art's own coordinates so they scale
+   with it. The figure is a rounded block centred in the box, which leaves x < 48
+   and x > 150 free above y=50 — so every accent sits in the corner beside the
+   head and none of them ever lands on the character, at any size. `default` is
+   the calm face itself and needs nothing. */
+const ACCENTS = {
+  default: '',
+
+  /* A single spark: pleased, and quietly so. */
+  happy: '<path d="M166 22.5 L168.6 27.5 L173.5 30 L168.6 32.5 L166 37.5 L163.4 32.5 L158.5 30 L163.4 27.5 Z" fill="var(--q-star,#f0b95c)"/>',
+
+  /* A mark that has found its centre. */
+  determined: '<circle cx="170" cy="32" r="8.4" fill="none" stroke="var(--q-line,#21261a)" stroke-width="2.2" opacity=".45"/><circle cx="170" cy="32" r="3" fill="var(--q-star,#f0b95c)"/>',
+
+  /* The sprite's thought dots, drifting up off the shoulder. */
+  thinking: '<circle cx="155" cy="31" r="3.4" fill="var(--q-line,#21261a)" opacity=".7"/><circle cx="164" cy="20" r="2.5" fill="var(--q-line,#21261a)" opacity=".55"/><circle cx="172" cy="10" r="1.8" fill="var(--q-line,#21261a)" opacity=".4"/>',
+
+  /* The sprite's z, kept to a single stroke so it survives a small size. */
+  sleepy: '<path d="M167 18 h9.5 l-9.5 10 h9.5" stroke="var(--q-line,#21261a)" stroke-width="2.6" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity=".7"/>',
+
+  /* Something just went off. */
+  surprised: '<g stroke="var(--q-line,#21261a)" stroke-width="2.6" stroke-linecap="round" opacity=".75"><path d="M166 22 L162.6 14.4"/><path d="M181.6 33 L189.4 33"/><path d="M175 44.6 L178.4 52.2"/></g>',
+
+  /* The sprite's star, worn over the shoulder. */
+  proud: '<path d="M168 18 L172.1 25.9 L180 30 L172.1 34.1 L168 42 L163.9 34.1 L156 30 L163.9 25.9 Z" fill="var(--q-star,#f0b95c)"/>',
+
+  /* The sprite's celebration: a star on each side and confetti between them. */
+  celebrating: '<path d="M33 22 L36.4 28.6 L43 32 L36.4 35.4 L33 42 L29.6 35.4 L23 32 L29.6 28.6 Z" fill="var(--q-star,#f0b95c)"/><path d="M170 23 L173.3 29 L179 32 L173.3 35 L170 41 L166.7 35 L161 32 L166.7 29 Z" fill="var(--q-star,#f0b95c)"/><circle cx="20" cy="52" r="2.6" fill="var(--q-star,#f0b95c)" opacity=".8"/><circle cx="185" cy="55" r="2.6" fill="var(--q-star,#f0b95c)" opacity=".8"/>',
+};
+
+/* An unknown or absent mood is the calm one, never a missing picture. */
+const moodOf = expr => (QORQORI_EXPRS.includes(expr) ? expr : 'default');
+
+const art = href => `<image class="qorqori-art" href="${href}" x="0" y="0" width="200" height="200"/>`;
+
+/* The art and its accent as one standalone SVG document. `size` is for the call
+   that has to rasterise it — an SVG image with no intrinsic size has none to
+   give the canvas. */
+export function qorqoriArt(expr = 'default', href = QORQORI_URL, size = 0) {
+  const e = moodOf(expr);
+  const box = size ? `width="${size}" height="${size}" ` : '';
+  return `<svg xmlns="http://www.w3.org/2000/svg" ${box}viewBox="${ART_BOX}">${art(href)}${ACCENTS[e]}</svg>`;
 }
 
-/* Simplified Qorqori bust used as the profile avatar, drawn in the same
-   palette and outline language so it is the same character at small size. */
-export const QORQORI_AVATAR = `<svg viewBox="0 0 64 64"><circle cx="32" cy="32" r="32" fill="#eef3e2"/><path d="M13 64c2-13 9-19 19-19s17 6 19 19z" fill="#8aa96f"/><path d="M32 7c12 0 20 8 20 20 0 13-8 20-20 20S12 40 12 27c0-12 8-20 20-20z" fill="#93b37c" stroke="#42593a" stroke-width="2.5"/><ellipse cx="23" cy="26.5" rx="4.6" ry="5.1" fill="#fbfaf4" stroke="#42593a" stroke-width="1.6"/><ellipse cx="41" cy="27.5" rx="4.1" ry="4.7" fill="#fbfaf4" stroke="#42593a" stroke-width="1.6"/><circle cx="24" cy="27.5" r="2.1" fill="#333d2c"/><circle cx="40" cy="28.5" r="1.8" fill="#333d2c"/><path d="M27 36.5q5 3.6 10 0" stroke="#42593a" stroke-width="2" fill="none" stroke-linecap="round"/><circle cx="16.5" cy="33" r="2.3" fill="#e8a77f" opacity=".5"/><circle cx="47.5" cy="33.5" r="2.1" fill="#e8a77f" opacity=".5"/></svg>`;
+/* Decorative by default: aria-hidden so the character stays out of the
+   accessibility tree (surrounding text carries the meaning). The mood rides
+   along as a class, which is what lets the noisier moods move (see
+   css/qorqori.css) without this file knowing anything about animation. */
+export function qorqoriMarkup(expr = 'default', viewBox = ART_BOX) {
+  const e = moodOf(expr);
+  return `<svg class="qorqori qorqori--${e}" viewBox="${viewBox}" aria-hidden="true">${art(QORQORI_URL)}${ACCENTS[e]}</svg>`;
+}
+
+/* The companion as the interface's own face: the header button and a tile in the
+   character grid, both 44-56px. It is the whole figure rather than a bust:
+   a charming rendered character with two arms at the sides and pocket on front,
+   balanced and centered in the frame. A whole figure sized down reads honestly
+   at 44px, and it cannot be cut wrong. */
+export const QORQORI_AVATAR = qorqoriMarkup('default');

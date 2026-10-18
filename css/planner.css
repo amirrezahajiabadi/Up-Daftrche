@@ -76,10 +76,11 @@
   appearance:none;-webkit-appearance:none;background:transparent;color:var(--text);
   font-family:var(--font-ui);font-size:15px;font-weight:400;padding:9px 0}
 .wk-add input::placeholder{color:var(--muted);font-weight:400}
-.wk-go{flex:0 0 auto;width:44px;height:44px;border:none;border-radius:50%;background:var(--accent);
+.wk-go{flex:0 0 auto;width:44px;height:44px;min-width:44px;min-height:44px;border:none;border-radius:50%;background:var(--accent);
   color:var(--color-text-on-accent);cursor:pointer;display:grid;place-items:center;
-  box-shadow:var(--shadow-accent);transition:transform var(--duration-fast) var(--ease-spring),box-shadow var(--duration-fast)}
-.wk-add .wk-go:active{transform:translateY(3px);box-shadow:0 1px 0 0 color-mix(in srgb,var(--color-accent-strong) 35%,transparent)}
+  box-shadow:none;transition:transform var(--duration-fast) var(--ease-spring),background var(--duration-fast);-webkit-tap-highlight-color:transparent}
+.wk-go:hover{background:var(--color-accent-strong);transform:scale(1.02);box-shadow:none}
+.wk-add .wk-go:active{transform:scale(.94);box-shadow:none}
 .wk-go:focus-visible{outline:2px solid var(--color-focus);outline-offset:2px}
 
 /* ── The optional span ── */
@@ -138,7 +139,9 @@
 .wk-del::after{content:'';position:absolute;inset:-8px;border-radius:var(--radius-sm)}
 .wk-row:hover .wk-del,.wk-del:focus-visible{opacity:1;transform:none}
 .wk-del:hover{color:var(--danger);background:color-mix(in srgb,var(--color-danger) 12%,transparent)}
+.wk-del:active{transform:scale(.88)!important}
 @media (hover:none){.wk-del{opacity:.55;transform:none}}
+.wk-row.removing{transition:opacity 260ms cubic-bezier(.2,0,0,1),transform 260ms cubic-bezier(.2,0,0,1),height 280ms cubic-bezier(.2,0,0,1),padding 280ms cubic-bezier(.2,0,0,1),margin 280ms cubic-bezier(.2,0,0,1),border-color 200ms!important;opacity:0!important;transform:scale(.94) translateY(-4px)!important;height:0!important;min-height:0!important;padding-block:0!important;margin-block:0!important;border-color:transparent!important;pointer-events:none!important;overflow:hidden!important}
 .wk-empty{list-style:none;text-align:center;padding:18px 12px;color:var(--muted);font-size:12.5px;
   line-height:1.9;font-weight:400;background:var(--color-bg);border:1px solid var(--color-border);
   border-radius:var(--radius-sm)}
@@ -151,14 +154,15 @@
    the card that follows the finger carries the destination in words, because a
    thumb covers a card and a day number both. */
 .wk-grip{flex:0 0 auto;display:grid;place-items:center;position:relative;color:var(--muted);
-  opacity:.42;cursor:grab;touch-action:none;-webkit-touch-callout:none;
-  transition:opacity var(--duration-fast)}
+  opacity:.5;cursor:grab;touch-action:none;-webkit-touch-callout:none;
+  transition:opacity var(--duration-fast),transform var(--duration-fast),color var(--duration-fast)}
 /* A handle the eye barely sees and the finger still finds. */
 .wk-grip::after{content:'';position:absolute;inset:-5px -6px;border-radius:var(--radius-xs)}
-.wk-row:hover .wk-grip{opacity:.7}
+.wk-grip:hover{opacity:1;transform:scale(1.18);color:var(--color-accent)}
+.wk-row:hover .wk-grip{opacity:.85}
 html.wk-dragging{cursor:grabbing;user-select:none;-webkit-user-select:none}
 html.wk-dragging .wk-grip{cursor:grabbing}
-.wk-row.dragging{opacity:.4}
+.wk-row.dragging{opacity:1!important;box-shadow:var(--shadow-md);z-index:50}
 /* The strip is «armed» for the length of a drag (js/planner.js): every cell in
    it is a landing zone, and until now nothing on screen said so — the class was
    toggled and had no rule behind it. A held breath rather than an announcement:

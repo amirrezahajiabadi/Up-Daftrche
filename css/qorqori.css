@@ -1,13 +1,27 @@
 /* ═══ Qorqori: character palette, hero rendering, profile identity ═══ */
 
-/* The palette lives on the character class so it can be tuned without
-   redesigning the asset. The sprite falls back to the same hex values. */
+/* Only the accents need a palette now — the character is a render and carries
+   its own colour. `--q-line` is the linework the artwork itself uses, so the
+   thought dots and the z read as the character's own handwriting rather than as
+   decoration dropped beside it; `--q-star` is the warm the celebration always
+   had. The palette stays on the class so it can be tuned without touching the
+   artwork, and the markup repeats the same values as fallbacks — which is what
+   the share card leans on, because it rasterises that markup in a document with
+   no stylesheet at all. */
 .qorqori{
-  --q-body:#93b37c; --q-body-deep:#7fa066; --q-outline:#42593a;
-  --q-eye:#333d2c; --q-eye-white:#fbfaf4; --q-cheek:#e8a77f;
-  --q-note:#fdf3dd; --q-note-line:#d9c9a6; --q-mouth:#8a5a40; --q-star:#f0b95c;
+  --q-line:#21261a; --q-star:#f0b95c;
   width:100%;height:auto;display:block
 }
+
+/* The one mood that moves. A celebration that is only a picture reads as a
+   sticker; a small lift reads as a jump. It is asked for rather than assumed:
+   the media query means a reader who wants stillness is never handed an
+   animation to disable, and pausing it while the tab is hidden sits with the
+   other ambient loops in css/base.css. */
+@media (prefers-reduced-motion:no-preference){
+  .qorqori--celebrating .qorqori-art{animation:qorqoriJump 1.4s var(--ease-out,ease-in-out) infinite}
+}
+@keyframes qorqoriJump{0%,60%,100%{transform:translateY(0)}28%{transform:translateY(-7px)}}
 
 /* ── Today hero ── */
 .frog-emoji .qorqori{width:104px;height:104px}
@@ -22,7 +36,7 @@
 .char-identity{width:100%;display:flex;align-items:center;gap:14px;padding:8px 10px;border:1.5px solid transparent;border-radius:var(--radius-md);background:transparent;font-family:var(--font-ui);color:var(--text);text-align:start;cursor:pointer;transition:background var(--duration-fast),border-color var(--duration-fast),transform var(--duration-fast)}
 .char-identity:focus-visible{outline:2px solid var(--color-focus);outline-offset:2px}
 .char-identity:active{transform:scale(.99)}
-.char-thumb{width:58px;height:58px;flex-shrink:0;border-radius:var(--radius-lg);background:color-mix(in srgb,var(--green) 14%,transparent);display:grid;place-items:center;padding:3px}
+.char-thumb{width:58px;height:58px;flex-shrink:0;border-radius:var(--radius-lg);background:transparent;display:grid;place-items:center;padding:3px}
 .char-thumb .qorqori{width:52px;height:52px}
 .char-id-text{min-width:0;flex:1}
 .char-id-text b{display:block;font-family:var(--font-personality);font-size:17px;font-weight:700}

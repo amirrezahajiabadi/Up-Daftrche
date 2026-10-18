@@ -353,12 +353,25 @@ function animateOut(el, onDone) {
      list) can tell "leaving on purpose" from "no longer in this view" and
      leave the exit animation alone. */
   el.dataset.exiting = '1';
-  el.style.height = el.offsetHeight + 'px'; el.style.overflow = 'hidden'; el.style.transition = 'all .32s ease';
+  const startH = el.offsetHeight;
+  el.style.height = startH + 'px';
+  el.style.overflow = 'hidden';
   requestAnimationFrame(() => {
-    el.classList.add('removing');
-    Object.assign(el.style, { height: '0', paddingTop: '0', paddingBottom: '0', marginBottom: '0', opacity: '0', transform: 'translateX(40px) scale(.94)', borderColor: 'transparent' });
+    requestAnimationFrame(() => {
+      el.classList.add('removing');
+      el.style.height = '0';
+      el.style.paddingTop = '0';
+      el.style.paddingBottom = '0';
+      el.style.marginTop = '0';
+      el.style.marginBottom = '0';
+      el.style.opacity = '0';
+    });
   });
-  setTimeout(() => { el.remove(); updateEmpty(); onDone && onDone(); }, 330);
+  setTimeout(() => {
+    el.remove();
+    updateEmpty();
+    onDone && onDone();
+  }, 290);
 }
 
 /* Actually delete a task (trash button) — removes it from state and shows the undo toast */
@@ -538,13 +551,200 @@ export function initTasks() {
     }
   });
 
-  listEl.addEventListener('dragstart', e => { const li = e.target.closest('.task'); if (li) { li.classList.add('dragging'); e.dataTransfer.effectAllowed = 'move'; } });
-  listEl.addEventListener('dragend', e => { const li = e.target.closest('.task'); if (li) { li.classList.remove('dragging'); syncOrder(); } });
-  listEl.addEventListener('dragover', e => {
-    e.preventDefault(); const dragging = listEl.querySelector('.dragging'); if (!dragging) return;
-    const after = [...listEl.querySelectorAll('.task:not(.dragging)')].find(el => e.clientY < el.getBoundingClientRect().top + el.offsetHeight / 2);
-    after ? listEl.insertBefore(dragging, after) : listEl.appendChild(dragging);
+  let activeDragId = null;
+  const clearDragVisuals = () => {
+    document.querySelectorAll('.task.dragging').forEach(el => el.classList.remove('dragging'));
+    document.querySelectorAll('.task').forEach(el => {
+      el.style.transition = '';
+      el.style.transform = '';
+    });
+    document.querySelectorAll('.drag-target-over').forEach(el => el.classList.remove('drag-target-over'));
+    activeDragId = null;
+  };
+
+  listEl.addEventListener('dragstart', e => {
+    const li = e.target.closest('.task');
+    if (!li) return;
+    activeDragId = li.dataset.id;
+    e.dataTransfer.setData('text/plain', li.dataset.id);
+    e.dataTransfer.effectAllowed = 'move';
+    setTimeout(() => {
+      li.classList.add('dragging');
+    }, 0);
   });
+
+  listEl.addEventListener('dragend', () => {
+    clearDragVisuals();
+    syncOrder();
+  });
+
+  listEl.addEventListener('drop', e => {
+    e.preventDefault();
+    clearDragVisuals();
+    syncOrder();
+  });
+
+  listEl.addEventListener('dragover', e => {
+    e.preventDefault();
+    const dragging = listEl.querySelector('.task.dragging') || (activeDragId ? listEl.querySelector(`[data-id="${activeDragId}"]`) : null);
+    if (!dragging) return;
+    const siblings = [...listEl.querySelectorAll('.task')].filter(el => el !== dragging);
+    const after = siblings.find(el => e.clientY < el.getBoundingClientRect().top + el.offsetHeight / 2);
+    const target = after || null;
+
+    if (target === dragging.nextElementSibling) return;
+    if (!target && dragging === listEl.lastElementChild) return;
+
+    // Capture initial positions of all siblings for smooth animated swap
+    const rects = new Map();
+    siblings.forEach(el => rects.set(el, el.getBoundingClientRect().top));
+
+    if (target) {
+      listEl.insertBefore(dragging, target);
+    } else {
+      listEl.appendChild(dragging);
+    }
+
+    // Animate displaced siblings smoothly into their new positions
+    siblings.forEach(el => {
+      const oldTop = rects.get(el);
+      if (oldTop !== undefined) {
+        const newTop = el.getBoundingClientRect().top;
+        const delta = oldTop - newTop;
+        if (delta !== 0) {
+          el.style.transition = 'none';
+          el.style.transform = `translateY(${delta}px)`;
+          requestAnimationFrame(() => {
+            el.style.transition = 'transform 220ms cubic-bezier(.2,0,0,1)';
+            el.style.transform = '';
+          });
+        }
+      }
+    });
+  });
+
+  /* Cross-section drag: Category chips (#cats) */
+  const catsBar = $('#cats');
+  if (catsBar) {
+    catsBar.addEventListener('dragover', e => {
+      const chip = e.target.closest('.cat-chip');
+      if (!chip || chip.dataset.cat === 'all') return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      catsBar.querySelectorAll('.cat-chip.drag-target-over').forEach(c => {
+        if (c !== chip) c.classList.remove('drag-target-over');
+      });
+      chip.classList.add('drag-target-over');
+    });
+    catsBar.addEventListener('dragleave', e => {
+      const chip = e.target.closest('.cat-chip');
+      if (chip && !chip.contains(e.relatedTarget)) {
+        chip.classList.remove('drag-target-over');
+      }
+    });
+    catsBar.addEventListener('drop', e => {
+      const chip = e.target.closest('.cat-chip');
+      if (!chip || chip.dataset.cat === 'all') return;
+      e.preventDefault();
+      chip.classList.remove('drag-target-over');
+      const id = e.dataTransfer.getData('text/plain') || activeDragId;
+      const task = getTask(id);
+      if (!task) return;
+      const targetCat = chip.dataset.cat;
+      if (task.cat !== targetCat) {
+        task.cat = targetCat;
+        save();
+        notify();
+        chip.classList.remove('drop-pop');
+        void chip.offsetWidth;
+        chip.classList.add('drop-pop');
+        setTimeout(() => chip.classList.remove('drop-pop'), 260);
+        if (state.catFilter !== 'all' && state.catFilter !== targetCat) {
+          const el = listEl.querySelector(`[data-id="${id}"]`);
+          if (el) hideFromView(el);
+        } else {
+          renderList();
+        }
+      }
+    });
+  }
+
+  /* Cross-section drag: Filter buttons (#filters) */
+  const filtersBar = $('#filters');
+  if (filtersBar) {
+    filtersBar.addEventListener('dragover', e => {
+      const btn = e.target.closest('button[data-filter]');
+      if (!btn) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      filtersBar.querySelectorAll('button.drag-target-over').forEach(b => {
+        if (b !== btn) b.classList.remove('drag-target-over');
+      });
+      btn.classList.add('drag-target-over');
+    });
+    filtersBar.addEventListener('dragleave', e => {
+      const btn = e.target.closest('button[data-filter]');
+      if (btn && !btn.contains(e.relatedTarget)) {
+        btn.classList.remove('drag-target-over');
+      }
+    });
+    filtersBar.addEventListener('drop', e => {
+      const btn = e.target.closest('button[data-filter]');
+      if (!btn) return;
+      e.preventDefault();
+      btn.classList.remove('drag-target-over');
+      const id = e.dataTransfer.getData('text/plain') || activeDragId;
+      const task = getTask(id);
+      if (!task) return;
+      const f = btn.dataset.filter;
+      btn.classList.remove('drop-pop');
+      void btn.offsetWidth;
+      btn.classList.add('drop-pop');
+      setTimeout(() => btn.classList.remove('drop-pop'), 260);
+
+      if (f === 'done' && !task.done) {
+        setTaskDone(task.id, true);
+        renderList();
+      } else if (f === 'active' && task.done) {
+        setTaskDone(task.id, false);
+        renderList();
+      } else if (f === 'nodue' && task.dueDate) {
+        task.dueDate = undefined;
+        save();
+        notify();
+        renderList();
+      }
+    });
+  }
+
+  /* Cross-section drag: Today nav tabs ([data-page="today"]) */
+  document.querySelectorAll('[data-page="today"]').forEach(tab => {
+    tab.addEventListener('dragover', e => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      tab.classList.add('drag-target-over');
+    });
+    tab.addEventListener('dragleave', e => {
+      if (!tab.contains(e.relatedTarget)) tab.classList.remove('drag-target-over');
+    });
+    tab.addEventListener('drop', e => {
+      e.preventDefault();
+      tab.classList.remove('drag-target-over');
+      const id = e.dataTransfer.getData('text/plain') || activeDragId;
+      const task = getTask(id);
+      if (!task) return;
+      task.dueDate = dueKeyFromOffset(0);
+      save();
+      notify();
+      tab.classList.remove('drop-pop');
+      void tab.offsetWidth;
+      tab.classList.add('drop-pop');
+      setTimeout(() => tab.classList.remove('drop-pop'), 260);
+      renderList();
+    });
+  });
+
+  window.addEventListener('dragend', clearDragVisuals);
 
   /* Clear-search button */
   const searchInput = $('#searchInput'), searchClear = $('#searchClear');
@@ -716,6 +916,13 @@ const taskInput = $('#taskInput');
     const durVal = parsed.durationMin !== null ? parsed.durationMin : state.selDur;
     const timeSpan = (parsed.timeFrom !== null && parsed.timeTo !== null) ? { from: parsed.timeFrom, to: parsed.timeTo } : null;
     const task = addTask(text, state.selPri, catVal, dueVal, durVal, timeSpan);
+    const addBtn = e.currentTarget.querySelector('.add-btn');
+    if (addBtn) {
+      addBtn.classList.remove('add-pop');
+      void addBtn.offsetWidth;
+      addBtn.classList.add('add-pop');
+      setTimeout(() => addBtn.classList.remove('add-pop'), 340);
+    }
     if (matches(task) && (state.catFilter === 'all' || state.catFilter === state.selCat) && !state.query) {
       const el = createTaskEl(task);
       listEl.prepend(el);

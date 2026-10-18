@@ -1,6 +1,6 @@
 .frog{display:flex;align-items:center;gap:12px;background:color-mix(in srgb,var(--color-success) 12%,transparent);border:1.5px dashed color-mix(in srgb,var(--color-success) 55%,transparent);border-radius:var(--radius-lg);padding:var(--space-3) var(--space-4);cursor:pointer;transition:transform var(--duration-base),box-shadow var(--duration-base);animation:taskIn var(--duration-slow) var(--ease-out)}
 .frog:hover{transform:translateY(-2px);box-shadow:var(--shadow-sm)}
-.frog-ico{width:42px;height:42px;border-radius:var(--radius-sm);background:var(--surface);display:grid;place-items:center;color:var(--green);flex-shrink:0}
+.frog-ico{width:42px;height:42px;background:transparent;display:grid;place-items:center;color:var(--green);flex-shrink:0}
 .frog-ico svg{animation:drift 4s ease-in-out infinite}
 .frog-txt{flex:1;min-width:0}
 .frog-txt strong{display:block;font-family:var(--font-personality);font-size:14px;font-weight:700;color:var(--color-success);line-height:1.5}
@@ -37,8 +37,11 @@
 .task[data-p="mid"]{--pr:var(--color-warning)}
 .task[data-p="low"]{--pr:var(--color-success)}
 
-.grip{color:var(--muted);opacity:.4;cursor:grab;display:grid;place-items:center;flex-shrink:0}
-.task.dragging{opacity:.45;transform:scale(1.02);cursor:grabbing}
+.grip{color:var(--muted);opacity:.5;cursor:grab;display:grid;place-items:center;flex-shrink:0;transition:opacity var(--duration-fast),transform var(--duration-fast),color var(--duration-fast)}
+.grip:hover{opacity:1;transform:scale(1.18);color:var(--color-accent)}
+.task:hover .grip{opacity:.85}
+.task.dragging{opacity:1!important;box-shadow:var(--shadow-md);z-index:50;cursor:grabbing;background:var(--surface)}
+.task.removing{transition:opacity 260ms cubic-bezier(.2,0,0,1),transform 260ms cubic-bezier(.2,0,0,1),height 280ms cubic-bezier(.2,0,0,1),padding 280ms cubic-bezier(.2,0,0,1),margin 280ms cubic-bezier(.2,0,0,1),border-color 200ms!important;opacity:0!important;transform:scale(.94) translateY(-4px)!important;height:0!important;min-height:0!important;padding-block:0!important;margin-block:0!important;border-color:transparent!important;pointer-events:none!important;overflow:hidden!important}
 
 .pri-dot{width:11px;height:11px;border-radius:50%;background:var(--pr);border:none;cursor:pointer;flex-shrink:0;position:relative;transition:transform var(--duration-fast),background var(--duration-base)}
 /* 41px of finger around an 11px dot. It used to stop at 31px, so the one control
@@ -238,7 +241,7 @@
   .due-chip{font-size:11px;padding:2px 8px}
   .dur-chip{font-size:11px;padding:2px 8px}
   .frog{padding:10px 12px;gap:10px}
-  .frog-ico{width:36px;height:36px;border-radius:var(--radius-xs)}
+  .frog-ico{width:36px;height:36px;background:transparent}
   .frog-ico svg{width:22px;height:22px}
   .frog-txt strong{font-size:13px}
   .frog-txt span{font-size:12px}

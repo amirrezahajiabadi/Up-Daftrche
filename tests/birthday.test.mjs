@@ -568,10 +568,9 @@ test('the name card is paper with a line to write on, not a form on a card', () 
   assert.match(input, /background:transparent/, 'the paper shows through where the box used to be');
   /* 48px, because taking the box away must not take the target with it. */
   assert.match(input, /min-height:48px/);
-  /* Both focus signals, deliberately: colour alone fails a reader who cannot see
-     the change, an outline alone fails a reader looking at the text. */
-  assert.match(ruleOf(CSS, '#nameCard input:focus'), /border-bottom-color:var\(--color-accent\)/);
-  assert.match(ruleOf(CSS, '#nameCard input:focus-visible'), /outline:2px solid/);
+  /* Quiet underline: line color stays default border-strong; no colored halo or outline */
+  assert.match(ruleOf(CSS, '#nameCard input:focus'), /border-bottom-color:var\(--color-border-strong\)/);
+  assert.match(ruleOf(CSS, '#nameCard input:focus-visible'), /outline:none/);
   /* And the button ink: a literal #fff is unreadable in the palettes whose accent
      is light, and this is the first thing anybody reads. */
   assert.match(ruleOf(CSS, '#nameCard .go'), /color:var\(--color-text-on-accent\)/);

@@ -96,6 +96,14 @@ function worker(base = 'https://example.test/daftarche/') {
   };
 }
 
+test('the vector favicon is drawable and stays inside its own palette', () => {
+  const svg = read('assets/icons/favicon.svg');
+  assert.match(svg, /viewBox="0 0 64 64"/);
+  assert.match(svg, /<rect\b/, 'the favicon needs a base rect');
+  assert.match(svg, /<path\b/, 'the favicon needs path geometry');
+  assert.doesNotMatch(svg, /#(?:fff|ffffff|000|000000)\b/i, 'no hardcoded white or black');
+});
+
 for (const base of ['https://example.test/', 'https://example.test/daftarche/']) {
   test(`updated icons work offline in the current build under ${base}`, async () => {
     const app = worker(base);

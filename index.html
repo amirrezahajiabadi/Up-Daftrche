@@ -81,11 +81,11 @@
 <link rel="modulepreload" href="js/library.js">
 <!-- Windows: native shell + legacy fallback read the packaged .ico.
      Browsers take the first icon they support, so the crisp SVG stays first -->
-<link rel="icon" type="image/svg+xml" href="assets/icons/favicon.svg?asset=7e1d928065a65b8b">
-<link rel="icon" type="image/png" sizes="192x192" href="assets/icons/icon-192.png?asset=bb11923905b43133">
-<link rel="icon" type="image/x-icon" href="assets/icons/daftarche.ico?asset=00ccf947ec2ee4a6">
+<link rel="icon" type="image/svg+xml" href="assets/icons/favicon.svg?asset=e6af11b8057e08cd">
+<link rel="icon" type="image/png" sizes="192x192" href="assets/icons/icon-192.png?asset=78e874a3186dbea2">
+<link rel="icon" type="image/x-icon" href="assets/icons/daftarche.ico?asset=dd91e4031e2b6e49">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="apple-touch-icon" sizes="180x180" href="assets/icons/apple-touch-icon.png?asset=1bd59bdb2ae5d569">
+<link rel="apple-touch-icon" sizes="180x180" href="assets/icons/apple-touch-icon.png?asset=2aebf9635d974c98">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="دفتَرچه">
@@ -1218,7 +1218,7 @@ rather than a form describing itself. -->
 <!-- ═══ Side Rail Navigation (Desktop >= 1024px) ═══ -->
 <aside class="side-rail" id="sideRail" aria-label="ناوبری اصلی">
   <div class="side-rail-brand">
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.4 7.6L22 12l-7.6 2.4L12 22l-2.4-7.6L2 12l7.6-2.4z"/></svg>
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l2.4 7.6L22 12l-7.6 2.4L12 22l-2.4-7.6L2 12l7.6-2.4z"/></svg>
     <span>دفتَرچه</span>
   </div>
   <div class="side-rail-group">
@@ -1239,28 +1239,38 @@ rather than a form describing itself. -->
     <span>کتابخانه</span>
   </button>
   </div>
-  <div class="side-rail-sep" aria-hidden="true">بیشتر</div>
-  <div class="side-rail-group">
-  <button class="nav-tab" data-page="week">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="16.5" rx="2.5"/><path d="M3 9.5h18M8 2.5v3.6M16 2.5v3.6M7.5 13.5h2M14.5 13.5h2M7.5 17h2M14.5 17h2"/></svg>
-    <span>هفته</span>
-  </button>
-  <button class="nav-tab" data-page="stats">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V11M10 20V4M16 20v-6M22 20H2"/></svg>
-    <span>آمار من</span>
-  </button>
-  <button class="nav-tab" data-page="achv">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="6"/><path d="M8.5 14.2L7 21l5-2.6L17 21l-1.5-6.8"/></svg>
-    <span>نشان‌ها</span>
-  </button>
-  <button class="nav-tab" data-page="profile">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4.5 20.5v-1a5.5 5.5 0 015.5-5.5h4a5.5 5.5 0 015.5 5.5v1"/></svg>
-    <span>پروفایل</span>
-  </button>
-  <button class="nav-tab" data-page="settings">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h8M18 8h2M4 16h2M10 16h10"/><circle cx="15" cy="8" r="2.4"/><circle cx="7" cy="16" r="2.4"/></svg>
-    <span>تنظیمات</span>
-  </button>
+  <div class="side-rail-more-box" id="sideRailMoreBox">
+    <button type="button" class="side-rail-more-toggle" id="sideRailMoreToggle" aria-expanded="false" aria-controls="sideRailMoreContent">
+      <span class="side-rail-more-lead">
+        <svg class="side-rail-more-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="19" cy="12" r="1.7"/></svg>
+        <span>بیشتر</span>
+      </span>
+      <svg class="side-rail-more-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+    </button>
+    <div class="side-rail-more-collapse" id="sideRailMoreContent">
+      <div class="side-rail-more-inner side-rail-group">
+        <button class="nav-tab" data-page="week">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="16.5" rx="2.5"/><path d="M3 9.5h18M8 2.5v3.6M16 2.5v3.6M7.5 13.5h2M14.5 13.5h2M7.5 17h2M14.5 17h2"/></svg>
+          <span>هفته</span>
+        </button>
+        <button class="nav-tab" data-page="stats">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V11M10 20V4M16 20v-6M22 20H2"/></svg>
+          <span>آمار من</span>
+        </button>
+        <button class="nav-tab" data-page="achv">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="6"/><path d="M8.5 14.2L7 21l5-2.6L17 21l-1.5-6.8"/></svg>
+          <span>نشان‌ها</span>
+        </button>
+        <button class="nav-tab" data-page="profile">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4.5 20.5v-1a5.5 5.5 0 015.5-5.5h4a5.5 5.5 0 015.5 5.5v1"/></svg>
+          <span>پروفایل</span>
+        </button>
+        <button class="nav-tab" data-page="settings">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h8M18 8h2M4 16h2M10 16h10"/><circle cx="15" cy="8" r="2.4"/><circle cx="7" cy="16" r="2.4"/></svg>
+          <span>تنظیمات</span>
+        </button>
+      </div>
+    </div>
   </div>
 </aside>
 

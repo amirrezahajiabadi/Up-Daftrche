@@ -52,7 +52,8 @@ function renderThemeAutoRow() {
   if (!btn || !text) return;
   const on = isAutoTheme();
   btn.setAttribute('aria-checked', String(on));
-  text.textContent = on ? 'روشن' : 'خاموش';
+  btn.classList.toggle('on', on);
+  text.textContent = on ? 'فعال' : 'غیرفعال';
 }
 
 function renderPersistRow() {
@@ -87,10 +88,19 @@ export function initSettings() {
 
   $('#openShortcutsBtn')?.addEventListener('click', () => openShortcuts());
 
-  $('#themeAutoBtn')?.addEventListener('click', () => {
-    setAutoTheme(!isAutoTheme());
-    renderThemeAutoRow();
-  });
+  const autoBtn = $('#themeAutoBtn');
+  if (autoBtn) {
+    autoBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      setAutoTheme(!isAutoTheme());
+    });
+    autoBtn.closest('.settings-row')?.addEventListener('click', e => {
+      if (e.target.closest('#themeAutoBtn')) return;
+      autoBtn.click();
+    });
+  }
+  window.addEventListener('theme-auto-changed', renderThemeAutoRow);
+  renderThemeAutoRow();
 
   /* ── Backup ──
      Export writes every daftarche-* key to one JSON file; import validates a

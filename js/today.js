@@ -445,6 +445,13 @@ export function initToday() {
       const durVal = parsed.durationMin;
       const timeSpan = (parsed.timeFrom !== null && parsed.timeTo !== null) ? { from: parsed.timeFrom, to: parsed.timeTo } : null;
       addTask(text, 'mid', catVal, dueVal, durVal, timeSpan);
+      const goBtn = form.querySelector('.today-go');
+      if (goBtn) {
+        goBtn.classList.remove('add-pop');
+        void goBtn.offsetWidth;
+        goBtn.classList.add('add-pop');
+        setTimeout(() => goBtn.classList.remove('add-pop'), 340);
+      }
       if (todayPreview) { todayPreview.hidden = true; todayPreview.innerHTML = ''; }
       if (input) { input.value = ''; input.focus(); }
     });

@@ -35,7 +35,16 @@ let modeControl = { mark() {} };
 let swatchControl = { mark() {}, setMode() {} };
 
 const root = () => document.documentElement;
-const systemPrefersDark = () => matchMedia('(prefers-color-scheme:dark)').matches;
+
+export const systemPrefersDark = () => {
+  try {
+    if (typeof window === 'undefined' || !window.matchMedia) return false;
+    return window.matchMedia('(prefers-color-scheme: dark)').matches ||
+      window.matchMedia('(prefers-color-scheme:dark)').matches;
+  } catch {
+    return false;
+  }
+};
 
 /* Which half of the table is on screen. Read from the attribute the boot script
    or applyTheme wrote; anything unexpected is the light half, which is where
@@ -77,9 +86,10 @@ function rememberMode(mode, key) {
    last used there, else the first of that half in the table. This is what makes
    the header switch remember instead of reset. */
 export function themeForMode(mode) {
+  const fallback = mode === 'dark' ? NIGHT_THEME : DEFAULT_THEME;
   const remembered = rememberedModes()[mode];
   if (remembered && isThemeUnlocked(remembered)) return remembered;
-  return themesOfMode(mode).find(t => isThemeUnlocked(t.key))?.key || DEFAULT_THEME;
+  return themesOfMode(mode).find(t => isThemeUnlocked(t.key))?.key || fallback;
 }
 
 /* The browser paints its own chrome (Android status bar, Safari toolbar) from
@@ -137,6 +147,10 @@ export function applyTheme(key, { remember = true } = {}) {
    it leaves the current theme alone rather than jumping to the remembered one. */
 export function applyMode(mode) {
   if (!THEME_MODES.includes(mode)) return;
+  if (isAutoTheme()) {
+    saveThemeAuto(false);
+    window.dispatchEvent(new CustomEvent('theme-auto-changed', { detail: false }));
+  }
   applyTheme(mode === currentMode() ? currentTheme() : themeForMode(mode));
 }
 
@@ -147,34 +161,26 @@ export const isAutoTheme = () => loadThemeAuto();
 export function setAutoTheme(enable) {
   saveThemeAuto(enable);
   if (enable) {
-    applyTheme(systemPrefersDark() ? themeForMode('dark') : themeForMode('light'), { remember: false });
+    const mode = systemPrefersDark() ? 'dark' : 'light';
+    applyTheme(themeForMode(mode), { remember: true });
+  } else {
+    const cur = currentTheme();
+    saveTheme(cur);
+    rememberMode(currentMode(), cur);
+    markThemePicker();
   }
+  window.dispatchEvent(new CustomEvent('theme-auto-changed', { detail: enable }));
 }
 
-export const toggleTheme = () =>
+export const toggleTheme = () => {
+  if (isAutoTheme()) {
+    saveThemeAuto(false);
+    window.dispatchEvent(new CustomEvent('theme-auto-changed', { detail: false }));
+  }
   applyTheme(currentMode() === 'dark' ? themeForMode('light') : themeForMode('dark'));
+};
 
 export function initTheme() {
-  /* The inline script has already written the attributes; this settles them for
-     the case where it could not (storage blocked) and makes sure the token the
-     browser chrome is told about is the theme that is really in use. */
-  if (isAutoTheme()) {
-    applyTheme(systemPrefersDark() ? themeForMode('dark') : themeForMode('light'), { remember: false });
-  } else {
-    applyTheme(loadTheme() || currentTheme(), { remember: false });
-  }
-
-  try {
-    if (typeof matchMedia === 'function') {
-      const mq = matchMedia('(prefers-color-scheme: dark)');
-      mq.addEventListener?.('change', e => {
-        if (isAutoTheme()) {
-          applyTheme(e.matches ? themeForMode('dark') : themeForMode('light'), { remember: false });
-        }
-      });
-    }
-  } catch { /* matchMedia listener unavailable */ }
-
   modeControl = modeSwitch($('#themeModeSwitch'), { modes: THEME_MODES, onPick: applyMode });
   swatchControl = swatchRow($('#themeSwatches'), THEMES.map(theme => {
     const reward = rewardFor('theme', theme.key);
@@ -187,9 +193,41 @@ export function initTheme() {
       lockCondition: condition ? `شرط باز شدن: ${condition}` : '',
     };
   }), {
-    group: 'theme', onPick: applyTheme,
+    group: 'theme',
+    onPick: key => {
+      if (isAutoTheme()) {
+        saveThemeAuto(false);
+        window.dispatchEvent(new CustomEvent('theme-auto-changed', { detail: false }));
+      }
+      applyTheme(key);
+    },
     isLocked: key => !isThemeUnlocked(key),
   });
+
+  if (isAutoTheme()) {
+    const mode = systemPrefersDark() ? 'dark' : 'light';
+    applyTheme(themeForMode(mode), { remember: true });
+  } else {
+    applyTheme(loadTheme() || currentTheme(), { remember: false });
+  }
+
+  try {
+    if (typeof window !== 'undefined' && window.matchMedia) {
+      const mq = window.matchMedia('(prefers-color-scheme: dark)');
+      const onSchemeChange = e => {
+        if (isAutoTheme()) {
+          const mode = e.matches ? 'dark' : 'light';
+          applyTheme(themeForMode(mode), { remember: true });
+        }
+      };
+      if (mq.addEventListener) {
+        mq.addEventListener('change', onSchemeChange);
+      } else if (mq.addListener) {
+        mq.addListener(onSchemeChange);
+      }
+    }
+  } catch { /* matchMedia listener unavailable */ }
+
   markThemePicker();
 
   document.querySelectorAll('.theme-btn').forEach(btn => { btn.onclick = toggleTheme; });

@@ -215,6 +215,7 @@ function renderIdentity() {
      into markup: it is the only user content that reaches this DOM, and an
      element never has to be escaped. */
   const paintFace = el => {
+    el.classList.toggle('has-photo', !!photo);
     if (!photo) { el.innerHTML = av.svg; return; }
     const img = document.createElement('img');
     img.src = photo;
