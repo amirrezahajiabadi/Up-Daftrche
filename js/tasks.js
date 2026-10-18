@@ -21,11 +21,10 @@ const save = () => saveTasks(state.tasks);
 bindPersistence({ save, notify });
 
 export const matches = t => {
-  /* A deadline is stored as a bare YYYY-MM-DD, so it orders itself: «امروز» is an
-     equality against today's key, and anything earlier than that key has passed
-     — with a finished task never counted as late. The key is read per call, not
-     once at boot, so a list left open overnight answers with the new day. */
-  if (state.filter === 'today') return t.dueDate === dueKeyFromOffset(0);
+  /* A deadline is stored as a bare YYYY-MM-DD, so it orders itself: anything
+     earlier than today's key has passed, and a finished task is never late.
+     The key is read per call, not once at boot, so a list left open overnight
+     answers with the new day. */
   if (state.filter === 'overdue') return !t.done && !!t.dueDate && t.dueDate < dueKeyFromOffset(0);
   if (state.filter === 'active') return !t.done;
   if (state.filter === 'done') return t.done;
@@ -249,7 +248,6 @@ export function updateEmpty() {
       state.query ? 'No matching tasks found. Try a different search.'
       : !state.tasks.length ? 'No tasks on the table right now.'
       : state.catFilter !== 'all' ? `No tasks in “${t(`categories.${state.catFilter}`)}”.`
-      : state.filter === 'today' ? 'Nothing is due today.'
       : state.filter === 'overdue' ? 'Nothing is overdue.'
       : state.filter === 'done' ? 'You haven’t completed any tasks yet.'
       : allDone ? 'All your tasks are done!'
@@ -260,7 +258,6 @@ export function updateEmpty() {
       state.query ? 'چیزی پیدا نشد. عبارت دیگری را امتحان کن.'
       : !state.tasks.length ? 'فعلاً کاری روی میز نیست.'
       : state.catFilter !== 'all' ? `توی دستهٔ «${CATS.find(c => c.key === state.catFilter)?.label}» کاری نیست.`
-      : state.filter === 'today' ? 'برای امروز کاری نیست.'
       : state.filter === 'overdue' ? 'کاری از مهلت نگذشته.'
       : state.filter === 'done' ? 'هنوز کاری را تمام نکرده‌ای.'
       : allDone ? 'همهٔ کارهات انجام شده.'
@@ -793,15 +790,6 @@ export function initTasks() {
         renderList();
       } else if (f === 'active' && task.done) {
         setTaskDone(task.id, false);
-        renderList();
-      } else if (f === 'today' && task.dueDate !== dueKeyFromOffset(0)) {
-        /* Dropping a task on «امروز» moves its deadline here — the same change
-           the Today tab's own drop target makes, and one that re-arms a reminder
-           that has already rung. */
-        task.dueDate = dueKeyFromOffset(0);
-        if (task.notifiedStatus) task.notifiedStatus = 'none';
-        save();
-        notify();
         renderList();
       }
     });

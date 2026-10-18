@@ -105,7 +105,6 @@ export const TRANSLATIONS = {
       durCustom: 'زمان دلخواه',
       minutePlaceholder: 'دقیقه',
       durCustomAria: 'مدت زمان دلخواه به دقیقه',
-      filterToday: 'امروز',
       filterActive: 'در حال انجام',
       filterDone: 'انجام شده',
       filterOverdue: 'کار های عقب افتاده',
@@ -544,7 +543,6 @@ export const TRANSLATIONS = {
       durCustom: 'Custom…',
       minutePlaceholder: 'min',
       durCustomAria: 'Custom duration in minutes',
-      filterToday: 'Today',
       filterActive: 'In progress',
       filterDone: 'Completed',
       filterOverdue: 'Overdue',
@@ -1072,8 +1070,6 @@ export function applyI18nToDOM(root = (typeof document !== 'undefined' ? documen
   // Filter chips in tasks page
   const fAll = root.querySelector('#filters button[data-filter="all"]');
   if (fAll) fAll.textContent = t('tasks.filterAll');
-  const fToday = root.querySelector('#filters button[data-filter="today"]');
-  if (fToday) fToday.textContent = t('tasks.filterToday');
   const fActive = root.querySelector('#filters button[data-filter="active"]');
   if (fActive) fActive.textContent = t('tasks.filterActive');
   const fDone = root.querySelector('#filters button[data-filter="done"]');
