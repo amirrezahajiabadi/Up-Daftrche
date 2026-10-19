@@ -300,7 +300,7 @@ export const TRANSLATIONS = {
       shortcutsTitle: 'راهنما و میانبرها',
       shortcutsLabel: 'کلیدهای میانبر صفحه‌کلید',
       shortcutsBtn: 'راهنما (؟)',
-      shortcutsHint: 'میانبرهای سریع برای ایجاد کار (N)، جستجو (/) و حرکت بین ردیف‌ها (J/K) با کیبورد.',
+      shortcutsHint: 'میانبرهای سریع برای ایجاد کار (N)، جستجو (/) و حرکت بین ردیف‌ها (J/K) با کیبورد؛ برای جابه‌جایی ردیف Alt را نگه دار و ↑/↓ را بزن.',
       themeModeAria: 'روشن یا تیره',
       autoThemeAria: 'تم خودکار بر اساس تم سیستم',
       clearDataTitle: 'پاک‌کردن همهٔ داده‌ها',
@@ -449,6 +449,7 @@ export const TRANSLATIONS = {
       search: 'جستجو بین کارها',
       nextRow: 'انتخاب ردیف بعدی',
       prevRow: 'انتخاب ردیف قبلی',
+      moveRow: 'جابه‌جایی ردیف',
       help: 'نمایش این راهنما',
       close: 'بستن پنجره‌ها و منوها',
     },
@@ -738,7 +739,7 @@ export const TRANSLATIONS = {
       shortcutsTitle: 'Help & Shortcuts',
       shortcutsLabel: 'Keyboard Shortcuts',
       shortcutsBtn: 'Help (?)',
-      shortcutsHint: 'Speed through your workflow with quick shortcuts for new tasks (N), search (/), and item navigation (J/K).',
+      shortcutsHint: 'Speed through your workflow with shortcuts for new tasks (N), search (/), item navigation (J/K), and reordering with Alt + ↑/↓.',
       themeModeAria: 'Light or dark mode',
       autoThemeAria: 'Automatic theme based on system preference',
       clearDataTitle: 'Delete All Data',
@@ -887,6 +888,7 @@ export const TRANSLATIONS = {
       search: 'Search tasks',
       nextRow: 'Select next row',
       prevRow: 'Select previous row',
+      moveRow: 'Move the row',
       help: 'Show this cheat-sheet',
       close: 'Close dialogs and menus',
     },
@@ -1432,23 +1434,15 @@ export function applyI18nToDOM(root = (typeof document !== 'undefined' ? documen
   if (shortcutsTitle) shortcutsTitle.textContent = isEn ? 'Keyboard Shortcuts' : 'کلیدهای میانبر صفحه‌کلید';
   const shortcutsClose = root.querySelector('#shortcutsClose');
   if (shortcutsClose) shortcutsClose.textContent = isEn ? 'Got it' : 'متوجه شدم';
+  /* Each row says which key it is, so the sheet can grow a row without every
+     label below it sliding up by one — the positional list this replaced did
+     exactly that, and the help key was rewritten onto whichever row happened to
+     sit in slot 4. */
   const shortcutRows = root.querySelectorAll('.shortcuts-table .shortcut-row');
-  if (shortcutRows.length >= 6) {
-    const spans = [
-      isEn ? 'Add new task' : 'افزودن کار جدید',
-      isEn ? 'Search tasks' : 'جستجو بین کارها',
-      isEn ? 'Select next row' : 'انتخاب ردیف بعدی',
-      isEn ? 'Select previous row' : 'انتخاب ردیف قبلی',
-      isEn ? 'Show this cheat-sheet' : 'نمایش این راهنما',
-      isEn ? 'Close dialogs and menus' : 'بستن پنجره‌ها و منوها',
-    ];
-    shortcutRows.forEach((row, i) => {
-      const s = row.querySelector('span');
-      if (s && spans[i]) s.textContent = spans[i];
-    });
-    const helpKbd = shortcutRows[4].querySelector('kbd');
-    if (helpKbd) helpKbd.textContent = isEn ? '?' : '؟';
-  }
+  shortcutRows.forEach(row => {
+    const span = row.querySelector('span[data-i18n]');
+    if (span) span.textContent = t(span.dataset.i18n);
+  });
 
   // Overlays: Avatar & Backup & Due
   const avTitle = root.querySelector('#avatarTitle');

@@ -183,11 +183,20 @@ function createTaskEl(task, delay = 0) {
   const priTitle = isEn
     ? t('tasks.priorityLabel', { p: t('tasks.priority' + (pKey === 'high' ? 'High' : pKey === 'low' ? 'Low' : 'Mid')) }) + ' — click to change'
     : `اولویت: ${P_LABEL[li.dataset.p]} — کلیک برای تغییر`;
+  /* The grip is decorative, so the keys that do the same thing are written on
+     the tick beside it — the row's existing tab stop — rather than as a second
+     stop of their own. */
+  const gripTitle = isEn
+    ? 'Drag to reorder — or hold Alt and press ↑ / ↓'
+    : 'بکش و جابه‌جا کن — یا Alt را نگه دار و ↑ / ↓ را بزن';
   li.innerHTML = `
-    <span class="grip" aria-hidden="true">${ICONS.grip}</span>
+    <span class="grip" aria-hidden="true" title="${gripTitle}">${ICONS.grip}</span>
     <button class="pri-dot" title="${priTitle}" aria-label="${isEn ? 'Change priority' : 'تغییر اولویت'}"></button>
-    <button class="check" aria-label="${isEn ? 'Complete task' : 'تکمیل'}">${ICONS.check}</button>
+    <button class="check" aria-label="${isEn ? 'Complete task' : 'تکمیل'}" aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown">${ICONS.check}</button>
     <span class="title"></span>
+    <button class="task-edit-btn" type="button" aria-label="${isEn ? 'Edit title' : 'ویرایش عنوان'}" title="${isEn ? 'Edit title' : 'ویرایش عنوان'}">
+      <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg>
+    </button>
     <button class="cat-tag" style="--cc:${catColor}" title="${isEn ? `Category: ${catLabel} — click to change` : `دسته: ${catLabel} — کلیک برای تغییر`}">${catLabel}</button>
     ${spanHtml}
     ${durHtml}
@@ -489,11 +498,242 @@ export function flashTask(id) {
 }
 
 /* ── Drag and Drop ── */
+
+/* Write the order that is on screen back into the list.
+
+   Only the rows on screen may be reordered. Taking the hidden ones along — as
+   this used to — moved every task the filter had put away to the end of the
+   array, so tidying up inside «انجام شده» quietly undid the order of the whole
+   list. Instead the visible rows are restored into the slots they already
+   occupied and every other task keeps its place.
+
+   The ids are read off the DOM, so a row that is still animating out (and is
+   already gone from the data) is simply not part of the shuffle. */
 function syncOrder() {
-  const order = [...listEl.querySelectorAll('.task')].map(el => el.dataset.id);
-  const map = Object.fromEntries(state.tasks.map(t => [t.id, t]));
-  state.tasks = [...order.map(id => map[id]), ...state.tasks.filter(t => !order.includes(t.id))];
+  const byId = new Map(state.tasks.map(t => [t.id, t]));
+  const order = [...listEl.querySelectorAll('.task')]
+    .map(el => el.dataset.id)
+    .filter(id => byId.has(id));
+  const onScreen = new Set(order);
+  const slots = [];
+  state.tasks.forEach((t, i) => { if (onScreen.has(t.id)) slots.push(i); });
+
+  const next = state.tasks.slice();
+  slots.forEach((slot, i) => { next[slot] = byId.get(order[i]); });
+  if (next.every((t, i) => t === state.tasks[i])) return;
+  state.tasks = next;
   save();
+}
+
+/* Put a held row where the pointer is, easing the rows it displaces into their
+   new place. Shared by the browser's own drag and by the finger gesture below,
+   so the two can never disagree about where a row lands. */
+function placeRow(row, clientY) {
+  const siblings = [...listEl.querySelectorAll('.task')]
+    .filter(el => el !== row && !el.classList.contains('removing'));
+  const after = siblings.find(el => clientY < el.getBoundingClientRect().top + el.offsetHeight / 2);
+  const target = after || null;
+
+  if (target === row.nextElementSibling) return;
+  if (!target && row === listEl.lastElementChild) return;
+
+  // Capture initial positions of all siblings for smooth animated swap
+  const rects = new Map();
+  siblings.forEach(el => rects.set(el, el.getBoundingClientRect().top));
+
+  if (target) {
+    listEl.insertBefore(row, target);
+  } else {
+    listEl.appendChild(row);
+  }
+
+  // Animate displaced siblings smoothly into their new positions
+  siblings.forEach(el => {
+    const oldTop = rects.get(el);
+    if (oldTop !== undefined) {
+      const newTop = el.getBoundingClientRect().top;
+      const delta = oldTop - newTop;
+      if (delta !== 0) {
+        el.style.transition = 'none';
+        el.style.transform = `translateY(${delta}px)`;
+        requestAnimationFrame(() => {
+          el.style.transition = 'transform 220ms cubic-bezier(.2,0,0,1)';
+          el.style.transform = '';
+        });
+      }
+    }
+  });
+}
+
+/* ── Carrying a row with a finger ──
+   The browser's drag API needs a mouse: on a phone there is no dragstart, so
+   the row could not be moved at all — and below 480px the grip that says so was
+   hidden as well. This is the same reorder written on pointer events, lifted
+   from the grip only. Which row is aimed at never depends on how far the finger
+   has travelled: it is the row whose middle the finger has crossed, so passing
+   one row moves the held row one place.
+
+   The held row stays in the flow, faded and dashed, because it is the place the
+   row will land; a small card with its title follows the finger instead, since a
+   thumb covers whatever is directly underneath it. */
+const DRAG_SLOP = 8;     // how far a press may wander before it counts as a drag
+const DRAG_EDGE = 88;    // how close to the edge the page starts scrolling itself
+let fingerDrag = null;   // { row, pointerId, sx, sy, x, y, on, ghost, raf }
+
+function pressGrip(e) {
+  if (!e.isPrimary || e.pointerType === 'mouse') return; // a mouse keeps the browser's drag
+  const grip = e.target.closest('.grip');
+  const row = grip && grip.closest('.task');
+  if (!row || row.classList.contains('removing')) return;
+  fingerDrag = {
+    row, pointerId: e.pointerId,
+    sx: e.clientX, sy: e.clientY, x: e.clientX, y: e.clientY,
+    on: false, ghost: null, raf: 0,
+  };
+}
+
+function liftFingerDrag(d) {
+  d.on = true;
+  d.row.classList.add('finger-dragging');
+  document.documentElement.classList.add('task-dragging');
+  d.ghost = ghostFor(d.row);
+  d.raf = requestAnimationFrame(() => autoScroll(d));
+}
+
+function moveFingerDrag(e) {
+  const d = fingerDrag;
+  if (!d || e.pointerId !== d.pointerId) return;
+  d.x = e.clientX; d.y = e.clientY;
+  if (!d.on) {
+    if (Math.hypot(d.x - d.sx, d.y - d.sy) < DRAG_SLOP) return;
+    liftFingerDrag(d);
+  }
+  if (e.cancelable) e.preventDefault();
+  placeRow(d.row, d.y);
+  moveGhost(d, d.x, d.y);
+}
+
+function releaseFingerDrag(e) {
+  const d = fingerDrag;
+  if (!d || e.pointerId !== d.pointerId) return;
+  fingerDrag = null;
+  if (!d.on) return;               // never travelled: a press, not a drag
+  endFingerDrag(d);
+  syncOrder();
+}
+
+function cancelFingerDrag(e) {
+  const d = fingerDrag;
+  if (!d || (e && e.pointerId !== undefined && e.pointerId !== d.pointerId)) return;
+  fingerDrag = null;
+  if (!d.on) return;
+  endFingerDrag(d);
+  /* The list was rearranged live while the row was held; a gesture nobody
+     finished puts it back rather than leaving a reorder nobody asked for. */
+  renderList();
+}
+
+function endFingerDrag(d) {
+  cancelAnimationFrame(d.raf);
+  d.row.classList.remove('finger-dragging');
+  document.documentElement.classList.remove('task-dragging');
+  if (d.ghost) d.ghost.remove();
+}
+
+/* A list longer than the screen cannot be reordered by a thumb alone: the row at
+   the top is unreachable from the bottom. While a row is held, the page follows
+   the finger to the edge of the screen, and the row follows the page. */
+function autoScroll(d) {
+  if (fingerDrag !== d || !d.on) return;
+  const h = innerHeight;
+  const dy = d.y < DRAG_EDGE ? -Math.ceil((DRAG_EDGE - d.y) / 6)
+    : d.y > h - DRAG_EDGE ? Math.ceil((d.y - (h - DRAG_EDGE)) / 6)
+    : 0;
+  if (dy) {
+    const before = scrollY;
+    scrollBy(0, dy);
+    if (scrollY !== before) placeRow(d.row, d.y);
+  }
+  d.raf = requestAnimationFrame(() => autoScroll(d));
+}
+
+/* What the reader is holding: the task and its deadline, in one line. Built for
+   a thumb resting beside it, because the row itself is under that thumb. */
+function ghostFor(row) {
+  const el = document.createElement('div');
+  el.className = 'task-ghost';
+  el.setAttribute('aria-hidden', 'true');
+  const title = document.createElement('span');
+  title.className = 'task-ghost-t';
+  title.textContent = row.querySelector('.title')?.textContent || '';
+  el.append(title);
+  const due = row.querySelector('.due-chip');
+  if (due && due.textContent.trim()) {
+    const chip = document.createElement('span');
+    chip.className = 'task-ghost-chip';
+    chip.textContent = due.textContent.trim();
+    el.append(chip);
+  }
+  document.body.append(el);
+  return el;
+}
+
+/* Centred over the finger, above it where there is room and under it where there
+   is not, and never half off the glass. Where the card starts from is read off
+   the element (`offsetWidth`/`offsetLeft` ignore transforms) rather than
+   remembered: the page is right-to-left, so the card hangs off the right edge,
+   and a wider card hangs further left. */
+function moveGhost(d, x, y) {
+  const el = d.ghost;
+  const w = el.offsetWidth;
+  const room = document.documentElement.clientWidth;
+  const left = Math.min(Math.max(x - w / 2, 8), Math.max(room - w - 8, 8));
+  const top = y < 96 ? y + 26 : y - 62;
+  el.style.transform = `translate(${Math.round(left - el.offsetLeft)}px, ${top}px)`;
+}
+
+/* ── Moving a row with the keyboard ──
+   Alt + ↑ / ↓ on the row that holds focus. Hanging it off the row rather than a
+   new control keeps the tab order as it was; the tick already carries
+   aria-keyshortcuts so the keys are not a secret. The move happens in the order
+   the reader sees, not in DOM order: completed rows are painted below the rest
+   by CSS, so "one up" has to mean one row up on screen or the row would jump
+   somewhere the eye was not. */
+function moveRowByKey(e) {
+  if (!e.altKey || (e.key !== 'ArrowUp' && e.key !== 'ArrowDown')) return;
+  /* A title or duration being edited is a text field first: the arrows belong
+     to the cursor there, and moving the row out from under them would end the
+     edit. */
+  const tag = e.target.tagName;
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || e.target.isContentEditable) return;
+  const row = e.target.closest('.task');
+  if (!row || row.classList.contains('removing')) return;
+  const rows = [...listEl.querySelectorAll('.task:not(.removing)')]
+    .sort((a, b) => a.getBoundingClientRect().top - b.getBoundingClientRect().top);
+  const at = rows.indexOf(row);
+  const to = at + (e.key === 'ArrowUp' ? -1 : 1);
+  if (at < 0 || to < 0 || to >= rows.length) return;
+  e.preventDefault();
+
+  const target = rows[to];
+  const active = document.activeElement;
+  if (e.key === 'ArrowUp') listEl.insertBefore(row, target);
+  else listEl.insertBefore(row, target.nextSibling);
+  syncOrder();
+  /* Taking a node out of the document and putting it back drops the focus in
+     Chrome, and a key that silently loses its place after one press is a key
+     nobody presses twice. The row is still the one the reader is on. */
+  if (active && active.isConnected && row.contains(active)) active.focus();
+  announceMove(row, to, rows.length);
+}
+
+function announceMove(row, at, total) {
+  const live = $('#taskLive');
+  if (!live) return;
+  const title = (row.querySelector('.title')?.textContent || '').trim();
+  live.textContent = getLang() === 'en'
+    ? `“${title}” moved to position ${at + 1} of ${total}`
+    : `«${title}» به جای ${faNum(at + 1)} از ${faNum(total)} رفت`;
 }
 
 /* ── Events ── */
@@ -518,6 +758,12 @@ export function initTasks() {
     else if (e.target.closest('.item-edit')) {
       const menu = li.querySelector('.task-menu');
       if (menu) menu.hidden = true;
+      const titleEl = li.querySelector('.title');
+      if (titleEl) startEditTitle(titleEl, task);
+    }
+    /* The pencil on the row itself: the same editor double-click opens, reachable
+       with one tap. It replaces the title span, so it is looked up now. */
+    else if (e.target.closest('.task-edit-btn')) {
       const titleEl = li.querySelector('.title');
       if (titleEl) startEditTitle(titleEl, task);
     }
@@ -671,39 +917,7 @@ export function initTasks() {
     e.preventDefault();
     const dragging = listEl.querySelector('.task.dragging') || (activeDragId ? listEl.querySelector(`[data-id="${activeDragId}"]`) : null);
     if (!dragging) return;
-    const siblings = [...listEl.querySelectorAll('.task')].filter(el => el !== dragging);
-    const after = siblings.find(el => e.clientY < el.getBoundingClientRect().top + el.offsetHeight / 2);
-    const target = after || null;
-
-    if (target === dragging.nextElementSibling) return;
-    if (!target && dragging === listEl.lastElementChild) return;
-
-    // Capture initial positions of all siblings for smooth animated swap
-    const rects = new Map();
-    siblings.forEach(el => rects.set(el, el.getBoundingClientRect().top));
-
-    if (target) {
-      listEl.insertBefore(dragging, target);
-    } else {
-      listEl.appendChild(dragging);
-    }
-
-    // Animate displaced siblings smoothly into their new positions
-    siblings.forEach(el => {
-      const oldTop = rects.get(el);
-      if (oldTop !== undefined) {
-        const newTop = el.getBoundingClientRect().top;
-        const delta = oldTop - newTop;
-        if (delta !== 0) {
-          el.style.transition = 'none';
-          el.style.transform = `translateY(${delta}px)`;
-          requestAnimationFrame(() => {
-            el.style.transition = 'transform 220ms cubic-bezier(.2,0,0,1)';
-            el.style.transform = '';
-          });
-        }
-      }
-    });
+    placeRow(dragging, e.clientY);
   });
 
   /* Cross-section drag: Category chips (#cats) */
@@ -823,6 +1037,17 @@ export function initTasks() {
   });
 
   window.addEventListener('dragend', clearDragVisuals);
+
+  /* Reordering by hand, on the devices that have no mouse to do it with. The
+     press is on the list (the grip is inside it); the rest of the gesture is on
+     the window, because a finger that leaves the list — over the filter bar, off
+     the bottom of the screen — must still be able to put the row down. */
+  listEl.addEventListener('pointerdown', pressGrip);
+  listEl.addEventListener('keydown', moveRowByKey);
+  addEventListener('pointermove', moveFingerDrag);
+  addEventListener('pointerup', releaseFingerDrag);
+  addEventListener('pointercancel', cancelFingerDrag);
+  addEventListener('keydown', e => { if (e.key === 'Escape' && fingerDrag) cancelFingerDrag(); });
 
   /* Clear-search button */
   const searchInput = $('#searchInput'), searchClear = $('#searchClear');

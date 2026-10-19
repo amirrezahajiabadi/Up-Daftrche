@@ -37,9 +37,31 @@
 .task[data-p="mid"]{--pr:var(--color-warning)}
 .task[data-p="low"]{--pr:var(--color-success)}
 
-.grip{color:var(--muted);opacity:.5;cursor:grab;display:grid;place-items:center;flex-shrink:0;transition:opacity var(--duration-fast),transform var(--duration-fast),color var(--duration-fast)}
+/* The grip is the one thing on a row that drags. `touch-action:none` sits on it
+   alone, so the row itself scrolls exactly as it did: a hand reading further
+   down the list is never ambushed by a lift. */
+.grip{position:relative;color:var(--muted);opacity:.5;cursor:grab;display:grid;place-items:center;flex-shrink:0;touch-action:none;-webkit-touch-callout:none;user-select:none;transition:opacity var(--duration-fast),transform var(--duration-fast),color var(--duration-fast)}
+/* A handle the eye barely sees and the finger still finds. */
+.grip::after{content:'';position:absolute;inset:-6px -7px;border-radius:var(--radius-xs)}
 .grip:hover{opacity:1;transform:scale(1.18);color:var(--color-accent)}
 .task:hover .grip{opacity:.85}
+/* Held by a finger: the row in the list is the slot it will land in, so it
+   recedes to a dashed outline while the card under the thumb carries the words. */
+.task.finger-dragging{opacity:.4!important;box-shadow:none;border-style:dashed;border-color:color-mix(in srgb,var(--accent) 42%,var(--border))}
+.task.finger-dragging::before{opacity:.3}
+html.task-dragging{user-select:none;-webkit-user-select:none;cursor:grabbing}
+html.task-dragging .grip{cursor:grabbing}
+/* The card that follows the finger. Same recipe as the planner's ghost — an
+   accent-bordered slip of paper — because it is the same gesture. */
+.task-ghost{position:fixed;inset-block-start:0;inset-inline-start:0;z-index:99;pointer-events:none;
+  display:flex;align-items:center;gap:8px;max-width:min(20rem,80vw);
+  background:var(--surface);border:1.5px solid var(--accent);border-radius:var(--radius-sm);
+  padding:9px 12px;box-shadow:var(--shadow-lg);will-change:transform}
+.task-ghost-t{font-family:var(--font-ui);font-size:13.5px;font-weight:500;color:var(--text);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:min(14rem,60vw)}
+.task-ghost-chip{flex-shrink:0;font-family:var(--font-ui);font-size:11px;font-weight:600;
+  padding:2px 8px;border-radius:var(--radius-pill);
+  background:var(--accent-soft);color:var(--color-accent-text)}
 .task.dragging{opacity:1!important;box-shadow:var(--shadow-md);z-index:50;cursor:grabbing;background:var(--surface)}
 .task.removing{transition:opacity 260ms cubic-bezier(.2,0,0,1),transform 260ms cubic-bezier(.2,0,0,1),height 280ms cubic-bezier(.2,0,0,1),padding 280ms cubic-bezier(.2,0,0,1),margin 280ms cubic-bezier(.2,0,0,1),border-color 200ms!important;opacity:0!important;transform:scale(.94) translateY(-4px)!important;height:0!important;min-height:0!important;padding-block:0!important;margin-block:0!important;border-color:transparent!important;pointer-events:none!important;overflow:hidden!important}
 
@@ -147,6 +169,20 @@
 .bell-btn:focus-visible{outline:2px solid var(--color-focus,var(--accent));outline-offset:2px}
 @media (prefers-reduced-motion:reduce){.bell-btn{transition:none}.bell-btn:hover{transform:none}}
 
+/* ── Editing a title from the row itself ──
+   Double-click is the desktop way to change a title and it is undiscoverable on
+   a phone: there is no second click there, only a long press the browser keeps
+   for its own selection menu. The pencil is that second door — always on the row
+   where there is no hover, revealed on hover/focus where there is, the same
+   contract .del already follows. */
+.task-edit-btn{border:none;background:transparent;color:var(--muted);width:32px;height:32px;border-radius:var(--radius-xs);cursor:pointer;display:grid;place-items:center;flex-shrink:0;opacity:0;transform:scale(.85);position:relative;transition:all var(--duration-fast);order:1}
+.task-edit-btn::after{content:'';position:absolute;inset:-6px;border-radius:var(--radius-sm)}
+.task:hover .task-edit-btn,.task:focus-within .task-edit-btn{opacity:.7;transform:none}
+.task-edit-btn:hover{color:var(--accent);background:var(--accent-soft);opacity:1;transform:scale(1.1)}
+.task-edit-btn:active{transform:scale(.9)}
+.task-edit-btn:focus-visible{opacity:1;transform:none;outline:2px solid var(--color-focus,var(--accent));outline-offset:2px}
+@media (hover:none){.task-edit-btn{opacity:.7;transform:none}}
+
 .del{border:none;background:transparent;color:var(--muted);width:32px;height:32px;border-radius:var(--radius-xs);cursor:pointer;display:grid;place-items:center;flex-shrink:0;opacity:0;transform:scale(.8);position:relative;transition:all var(--duration-fast)}
 .del::after{content:'';position:absolute;inset:-6px;border-radius:var(--radius-sm)}
 .task:hover .del{opacity:1;transform:none}
@@ -225,7 +261,14 @@
    around a title that has no room left. */
 @media (max-width:480px){
   .task{padding:12px 14px;margin-bottom:8px;border-radius:var(--radius-md)}
-  .grip{display:none}
+  /* A 44px target without a 44px row: the handle is 36px tall and the hit area
+     reaches 4px past it top and bottom, so the row grows by four pixels, not
+     twelve. */
+  .grip{display:grid;width:44px;height:36px;margin-inline-start:-8px;opacity:.45}
+  .grip::after{inset:-4px 0}
+  .grip:active{opacity:1;color:var(--accent)}
+  .task-edit-btn{width:28px;height:28px}
+  .task-edit-btn::after{inset:-8px}
   .check{width:24px;height:24px}
   .check::after{inset:-10px}
   .title{font-size:14px}
@@ -258,6 +301,8 @@
   .title{font-size:13px}
   .del,.focus-btn{width:26px;height:26px}
   .del::after,.focus-btn::after{inset:-9px}
+  .task-edit-btn{width:26px;height:26px}
+  .task-edit-btn::after{inset:-9px}
   .pri-dot{margin-inline-start:24px}
   .cat-tag,.due-chip,.dur-chip{font-size:11px;padding:3px 8px}
   .empty .art svg{width:72px}

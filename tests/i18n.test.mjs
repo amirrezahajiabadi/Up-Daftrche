@@ -1,5 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import './_env.mjs';
 
 if (typeof document === 'undefined') {
@@ -140,6 +141,25 @@ test('i18n: formatRelativeDay supports English and Persian', () => {
   assert.deepEqual(formatRelativeDay(0, '2026-10-18', 'fa'), { cls: 'today', text: 'امروز' });
   assert.deepEqual(formatRelativeDay(1, '2026-10-19', 'fa'), { cls: 'soon', text: 'فردا' });
   assert.deepEqual(formatRelativeDay(2, '2026-10-20', 'fa'), { cls: 'soon', text: 'پس‌فردا' });
+});
+
+/* Every key the markup asks for has to be in both dictionaries. The parity
+   test above only compares the two dictionaries with each other, so a key that
+   was never written into either — a new row in a dialog, say — passed it
+   silently and surfaced as the raw key path on screen. */
+test('i18n: every data-i18n key in index.html exists in both dictionaries', () => {
+  const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+  const keys = new Set();
+  for (const m of html.matchAll(/data-i18n(?:-[a-z-]+)?="([^"]+)"/g)) keys.add(m[1]);
+
+  const at = (dict, key) => key.split('.').reduce(
+    (node, part) => (node && typeof node === 'object' ? node[part] : undefined), dict);
+
+  for (const key of keys) {
+    assert.ok(at(TRANSLATIONS.fa, key) !== undefined, `missing Persian key used in markup: ${key}`);
+    assert.ok(at(TRANSLATIONS.en, key) !== undefined, `missing English key used in markup: ${key}`);
+  }
+  assert.ok(keys.size > 50, `expected the markup to carry many keys, found ${keys.size}`);
 });
 
 test('i18n: character details and quotes in fa and en', async () => {

@@ -247,6 +247,18 @@ export const CHANGELOG = [
       { icon: '🧭', text: 'چیدمان طبیعی چپ‌به‌راست (LTR) و هماهنگی کامل تمام صفحات و انیمیشن‌ها', textEn: 'Native LTR interface layout with polished micro-interactions and dialogs' },
     ],
   },
+  {
+    version: '3.3.0',
+    date: 'مهر ۱۴۰۵',
+    dateEn: 'October 2026',
+    title: 'کارها زیر انگشت',
+    titleEn: 'Tasks under your thumb',
+    highlights: [
+      { icon: '👆', text: 'کارها را روی گوشی با انگشت جابه‌جا کن؛ دستگیرهٔ هر ردیف دوباره پیداست', textEn: 'Reorder tasks with a finger on your phone — every row shows its handle again' },
+      { icon: '⌨️', text: 'با Alt و کلیدهای بالا/پایین هم می‌شود یک کار را بالا یا پایین برد', textEn: 'Hold Alt with ↑ / ↓ to move a task up or down from the keyboard' },
+      { icon: '✏️', text: 'یک مداد کنار عنوان، ویرایش را با یک لمس باز می‌کند', textEn: 'A pencil beside the title opens editing with a single tap' },
+    ],
+  },
 ];
 
 const SEEN_KEY = 'daftarche-seen-version';

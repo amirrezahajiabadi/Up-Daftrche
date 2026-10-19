@@ -334,6 +334,8 @@
     </div>
 
     <ul class="tasks" id="taskList"></ul>
+    <!-- Where a row says it moved, for a reader who cannot see the row move. -->
+    <p class="sr-only" id="taskLive" role="status" aria-live="polite"></p>
 
     <div class="empty" id="empty" hidden>
       <span class="art" id="artEmpty">
@@ -1170,7 +1172,7 @@ rather than a form describing itself. -->
           <span class="settings-label" data-i18n="settings.shortcutsLabel">کلیدهای میانبر صفحه‌کلید</span>
           <button class="settings-btn" id="openShortcutsBtn" type="button" data-i18n="settings.shortcutsBtn">راهنما (؟)</button>
         </div>
-        <p class="settings-hint" data-i18n="settings.shortcutsHint">میانبرهای سریع برای ایجاد کار (N)، جستجو (/) و حرکت بین ردیف‌ها (J/K) با کیبورد.</p>
+        <p class="settings-hint" data-i18n="settings.shortcutsHint">میانبرهای سریع برای ایجاد کار (N)، جستجو (/) و حرکت بین ردیف‌ها (J/K) با کیبورد؛ برای جابه‌جایی ردیف Alt را نگه دار و ↑/↓ را بزن.</p>
       </div>
     </div>
 
@@ -1477,6 +1479,7 @@ rather than a form describing itself. -->
       <div class="shortcut-row"><kbd>/</kbd><span data-i18n="shortcuts.search">جستجو بین کارها</span></div>
       <div class="shortcut-row"><kbd>J</kbd><span data-i18n="shortcuts.nextRow">انتخاب ردیف بعدی</span></div>
       <div class="shortcut-row"><kbd>K</kbd><span data-i18n="shortcuts.prevRow">انتخاب ردیف قبلی</span></div>
+      <div class="shortcut-row"><kbd>Alt + ↑↓</kbd><span data-i18n="shortcuts.moveRow">جابه‌جایی ردیف</span></div>
       <div class="shortcut-row"><kbd id="shortcutHelpKey">؟</kbd><span data-i18n="shortcuts.help">نمایش این راهنما</span></div>
       <div class="shortcut-row"><kbd>Esc</kbd><span data-i18n="shortcuts.close">بستن پنجره‌ها و منوها</span></div>
     </div>

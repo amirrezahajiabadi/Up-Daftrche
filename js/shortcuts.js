@@ -4,6 +4,7 @@
      · / : Search tasks
      · J / ت: Move selection down to next task
      · K / ن: Move selection up to previous task
+     · Alt + ↑ / ↓: Move the focused task one row up or down (js/tasks.js)
      · ?: Open shortcuts cheat-sheet modal
 */
 
