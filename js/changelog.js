@@ -256,7 +256,7 @@ export const CHANGELOG = [
     highlights: [
       { icon: '👆', text: 'کارها را روی گوشی با انگشت جابه‌جا کن؛ دستگیرهٔ هر ردیف دوباره پیداست', textEn: 'Reorder tasks with a finger on your phone — every row shows its handle again' },
       { icon: '⌨️', text: 'با Alt و کلیدهای بالا/پایین هم می‌شود یک کار را بالا یا پایین برد', textEn: 'Hold Alt with ↑ / ↓ to move a task up or down from the keyboard' },
-      { icon: '✏️', text: 'یک مداد کنار عنوان، ویرایش را با یک لمس باز می‌کند', textEn: 'A pencil beside the title opens editing with a single tap' },
+      { icon: '✏️', text: 'یک مداد کنار عنوان، ویرایش را با یک لمس باز می‌کند — و گزینهٔ «ویرایش» از منوی سه‌نقطه برداشته شد', textEn: 'A pencil beside the title opens editing with a single tap — the menu item is gone' },
     ],
   },
 ];

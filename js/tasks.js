@@ -207,10 +207,6 @@ function createTaskEl(task, delay = 0) {
         <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg>
       </button>
       <div class="task-menu" role="menu" hidden>
-        <button type="button" class="task-menu-item item-edit" role="menuitem">
-          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg>
-          <span>${isEn ? 'Edit' : 'ویرایش'}</span>
-        </button>
         <button type="button" class="task-menu-item item-focus" role="menuitem">
           ${ICONS.clock}
           <span>${isEn ? 'Start Focus' : 'شروع تمرکز'}</span>
@@ -755,14 +751,9 @@ export function initTasks() {
         openMenuAboveNav(menu);
       }
     }
-    else if (e.target.closest('.item-edit')) {
-      const menu = li.querySelector('.task-menu');
-      if (menu) menu.hidden = true;
-      const titleEl = li.querySelector('.title');
-      if (titleEl) startEditTitle(titleEl, task);
-    }
-    /* The pencil on the row itself: the same editor double-click opens, reachable
-       with one tap. It replaces the title span, so it is looked up now. */
+    /* Editing has one door: the pencil on the row. It opens the same editor a
+       double-click does, with one tap, so the menu's copy of it was a second
+       name for the same thing. */
     else if (e.target.closest('.task-edit-btn')) {
       const titleEl = li.querySelector('.title');
       if (titleEl) startEditTitle(titleEl, task);
