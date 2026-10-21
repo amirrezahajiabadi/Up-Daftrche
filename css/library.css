@@ -4,7 +4,6 @@
 .import-btn::after{content:'';position:absolute;inset:-4px}
 
 @media (hover:hover){
-  .import-btn:hover{transform:translateY(-2px)}
   .lastread:hover{transform:translateY(-1px);box-shadow:var(--shadow-lg)}
   .b-icon-btn:hover{opacity:1;color:var(--accent);border-color:color-mix(in srgb,var(--accent) 35%,var(--border));background:var(--accent-soft)}
   .r-tool-btn:hover{background:color-mix(in srgb,var(--accent-soft) 60%,transparent);color:var(--accent)}

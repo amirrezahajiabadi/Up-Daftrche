@@ -41,7 +41,7 @@
 .grip:hover{opacity:1;transform:scale(1.18);color:var(--color-accent)}
 .task:hover .grip{opacity:.85}
 .task.dragging{opacity:1!important;box-shadow:var(--shadow-md);z-index:50;cursor:grabbing;background:var(--surface)}
-.task.removing{transition:opacity 260ms cubic-bezier(.2,0,0,1),transform 260ms cubic-bezier(.2,0,0,1),height 280ms cubic-bezier(.2,0,0,1),padding 280ms cubic-bezier(.2,0,0,1),margin 280ms cubic-bezier(.2,0,0,1),border-color 200ms!important;opacity:0!important;transform:scale(.94) translateY(-4px)!important;height:0!important;min-height:0!important;padding-block:0!important;margin-block:0!important;border-color:transparent!important;pointer-events:none!important;overflow:hidden!important}
+.task.removing{transition:opacity var(--duration-move) cubic-bezier(.2,0,0,1),transform var(--duration-move) cubic-bezier(.2,0,0,1),height var(--duration-move) cubic-bezier(.2,0,0,1),padding var(--duration-move) cubic-bezier(.2,0,0,1),margin var(--duration-move) cubic-bezier(.2,0,0,1),border-color var(--duration-fast)!important;opacity:0!important;transform:scale(.94) translateY(-4px)!important;height:0!important;min-height:0!important;padding-block:0!important;margin-block:0!important;border-color:transparent!important;pointer-events:none!important;overflow:hidden!important}
 
 .pri-dot{width:16px;height:16px;padding:0;border-radius:50%;background:transparent;color:var(--pr);border:none;cursor:pointer;flex-shrink:0;position:relative;display:grid;place-items:center;transition:transform var(--duration-fast),color var(--duration-base)}
 .pri-dot svg{width:15px;height:15px;display:block}

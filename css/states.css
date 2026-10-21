@@ -1,0 +1,36 @@
+/* ═══ Shared state layer for flat buttons ═══
+   Buttons carry no shadow or glow, so their states have to say everything on
+   their own. Loaded last on purpose: it is the one place that defines what
+   "hover" and "pressed" mean, and the per-component files only paint the
+   resting look.
+     filled   hover → a touch brighter · pressed → shrinks and darkens
+     outlined hover → soft accent wash · pressed → shrinks
+     text     pressed → shrinks (colour change on hover stays per component)
+   Hover only applies where a pointer can really hover, so touch never leaves
+   a stuck highlight; the pressed state is what touch users feel. */
+:where(.go,.btn-primary,.import-btn,.empty-cta,.lr-btn,.b-go,.frog-go,.frog-start,.share-go,.tour-btn.is-next,.stat-range-btn.sel,
+       .ghost,.b-ghost,.btn-secondary,.btn-ghost,.skip,.page-back,.stats-share,.achv-more,.tour-btn,.tour-skip):not(:disabled,[aria-disabled="true"]){
+  transition:transform var(--duration-press) var(--ease-out),filter var(--duration-fast),background-color var(--duration-fast),border-color var(--duration-fast),color var(--duration-fast)}
+
+@media (hover:hover){
+  :where(.go,.btn-primary,.import-btn,.empty-cta,.lr-btn,.b-go,.frog-go,.frog-start,.share-go,.tour-btn.is-next,.stat-range-btn.sel):not(:disabled,[aria-disabled="true"]):hover{
+    filter:brightness(1.07)}
+  :where(.ghost,.b-ghost,.btn-secondary,.btn-ghost,.page-back,.stats-share,.achv-more,.tour-btn:not(.is-next)):not(:disabled,[aria-disabled="true"]):hover{
+    background-color:var(--color-accent-soft)}
+}
+
+:where(.go,.btn-primary,.import-btn,.empty-cta,.lr-btn,.b-go,.frog-go,.frog-start,.share-go,.tour-btn.is-next,.stat-range-btn.sel):not(:disabled,[aria-disabled="true"]):active{
+  transform:scale(var(--press-scale));filter:brightness(.93)}
+:where(.ghost,.b-ghost,.btn-secondary,.btn-ghost,.skip,.page-back,.stats-share,.achv-more,.tour-btn:not(.is-next),.tour-skip):not(:disabled,[aria-disabled="true"]):active{
+  transform:scale(var(--press-scale))}
+
+/* Choice chips and rating buttons share the same pressed feel */
+:where(.focus-rating button,.pri-row button,.moods button,.scene-chips button,.due-row button,.dur-row button,.cat-scroll button,.seg-btn,.pick-chip):not(:disabled):active{
+  transform:scale(var(--press-scale))}
+
+@media (prefers-reduced-motion:reduce){
+  :where(.go,.btn-primary,.import-btn,.empty-cta,.lr-btn,.b-go,.frog-go,.frog-start,.share-go,.tour-btn,.stat-range-btn,
+         .ghost,.b-ghost,.btn-secondary,.btn-ghost,.skip,.page-back,.stats-share,.achv-more,.tour-skip,
+         .focus-rating button,.pri-row button,.moods button,.scene-chips button,.due-row button,.dur-row button,.cat-scroll button,.seg-btn,.pick-chip):active{
+    transform:none}
+}

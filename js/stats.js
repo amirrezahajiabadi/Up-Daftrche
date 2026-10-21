@@ -771,7 +771,7 @@ function paintHistory(model) {
     const title = s.taskTitle ? esc(s.taskTitle) : 'بدون کار مشخص';
     const label = RATING_LABEL[s.rating] || '';
     return `<div class="stat-session">
-      <span class="stat-session-face" role="img" title="${esc(label)}" aria-label="${esc(label)}">${face}</span>
+      <span class="stat-session-face" data-rating="${esc(s.rating)}" role="img" title="${esc(label)}" aria-label="${esc(label)}">${face}</span>
       <span class="stat-session-title">${title}</span>
       ${s.taskCompleted ? `<span class="stat-session-done" role="img" aria-label="به کار واقعی رسید" title="به کار واقعی رسید">${LIB_ICONS.check}</span>` : ''}
       <span class="stat-session-when">${historyDayLabel(s.startedAt)}</span>

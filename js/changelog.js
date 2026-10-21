@@ -77,7 +77,16 @@ const ICON_BY_EMOJI = {
   '🎧': 'music',
   '⌨️': 'keyboard',
 };
-const changelogIcon = (e) => LIB_ICONS[ICON_BY_EMOJI[e] || ICON_BY_EMOJI[String(e).replace(/\uFE0F/g, '')] || 'spark'];
+const changelogKey = (e) => ICON_BY_EMOJI[e] || ICON_BY_EMOJI[String(e).replace(/\uFE0F/g, '')] || 'spark';
+/* Four quiet tones keep a long list scannable now that the glyphs share one
+   line style: looks → accent · content → green · time and progress → amber ·
+   device and safety → neutral. */
+const TONE = { spark: 'look', image: 'look', layout: 'look', moon: 'look', compass: 'look',
+  book: 'content', folder: 'content', search: 'content', edit: 'content', tag: 'content', music: 'content',
+  clock: 'time', calendar: 'time', chart: 'time', target: 'time', medal: 'time',
+  phone: 'device', keyboard: 'device', shield: 'device', undo: 'device', eye: 'device' };
+const changelogIcon = (e) => LIB_ICONS[changelogKey(e)];
+const changelogTone = (e) => TONE[changelogKey(e)] || 'look';
 
 
 export const APP_VERSION = self.DAFTARCHE_RELEASE || '';
@@ -315,7 +324,7 @@ const SEEN_KEY = 'daftarche-seen-version';
 
 function entryHtml(entry) {
   const items = entry.highlights.map(h =>
-    `<li class="changelog-item"><span class="changelog-icon" aria-hidden="true">${changelogIcon(h.icon)}</span><span>${esc(h.text)}</span></li>`
+    `<li class="changelog-item"><span class="changelog-icon" data-tone="${changelogTone(h.icon)}" aria-hidden="true">${changelogIcon(h.icon)}</span><span>${esc(h.text)}</span></li>`
   ).join('');
   return `
     <div class="changelog-entry">

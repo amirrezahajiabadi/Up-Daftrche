@@ -32,7 +32,7 @@ html[data-mode="dark"] .tour-overlay{
   border:1.5px solid var(--color-accent);
   box-shadow:0 0 0 200vmax color-mix(in srgb,var(--color-text-primary) 50%,transparent);
   animation:fadeIn var(--duration-base) ease;
-  transition:inset-block-start .25s ease,inset-inline-start .25s ease,width .25s ease,height .25s ease}
+  transition:inset-block-start var(--duration-move) ease,inset-inline-start var(--duration-move) ease,width var(--duration-move) ease,height var(--duration-move) ease}
 html[data-mode="dark"] .tour-spot{box-shadow:0 0 0 200vmax color-mix(in srgb,var(--color-bg) 68%,transparent)}
 
 /* The arrow: one diamond, half of it tucked under the card's edge, always
@@ -44,7 +44,7 @@ html[data-mode="dark"] .tour-spot{box-shadow:0 0 0 200vmax color-mix(in srgb,var
   border:1px solid var(--color-border);
   transform:rotate(45deg);
   animation:fadeIn var(--duration-base) ease;
-  transition:inset-block-start .25s ease,inset-inline-start .25s ease}
+  transition:inset-block-start var(--duration-move) ease,inset-inline-start var(--duration-move) ease}
 
 /* The card: a page of the notebook, small enough to sit beside what it talks
    about. Width is fixed rather than content-driven so the station texts all

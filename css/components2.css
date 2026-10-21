@@ -20,11 +20,10 @@
 .btn:disabled:active{transform:none}
 
 /* Hover: a barely-there lift — enhancement only, never essential feedback */
-.btn-primary:hover{transform:translateY(-1px)}
 .btn-primary:active{transform:scale(.97)}
 
 .btn-secondary{background:transparent;color:var(--color-accent);border:1.5px solid var(--color-border-strong)}
-.btn-secondary:hover{border-color:var(--color-accent);transform:translateY(-1px)}
+.btn-secondary:hover{border-color:var(--color-accent)}
 
 .btn-ghost{background:transparent;color:var(--color-text-secondary);border:none}
 .btn-ghost:hover{color:var(--color-accent);background:var(--color-accent-soft)}

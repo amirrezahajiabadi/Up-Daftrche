@@ -297,3 +297,8 @@
   .share-panel{animation:none}
   .share-spinner{animation-duration:1.6s}
 }
+
+/* Session mood faces: colour carries the difference at a glance; the label stays on the element for assistive tech */
+.stat-session-face[data-rating="good"]{color:var(--color-success)}
+.stat-session-face[data-rating="okay"]{color:var(--muted)}
+.stat-session-face[data-rating="hard"]{color:var(--color-warning)}

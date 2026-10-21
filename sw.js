@@ -64,6 +64,7 @@ const SHELL = [
   'css/qorqori.css',
   'css/rizolo.css',
   'css/settings.css',
+  'css/states.css',
   'css/stats.css',
   'css/tasks.css',
   'css/today.css',

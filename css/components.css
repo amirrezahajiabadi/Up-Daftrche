@@ -82,8 +82,8 @@ html[data-mode="dark"] .streak.hot{color:#ff8f8f}
   75%{transform:rotate(95deg) scale(1.08)}
   100%{transform:rotate(90deg) scale(1)}
 }
-.add-pop{animation:addBtnCraft 320ms cubic-bezier(.16,1,.3,1)!important}
-.add-pop svg{animation:addIconCraft 320ms cubic-bezier(.16,1,.3,1)!important}
+.add-pop{animation:addBtnCraft var(--duration-base) cubic-bezier(.16,1,.3,1)!important}
+.add-pop svg{animation:addIconCraft var(--duration-base) cubic-bezier(.16,1,.3,1)!important}
 @media (prefers-reduced-motion:reduce){
   .add-pop,.add-pop svg{animation:none!important}
 }
@@ -316,7 +316,7 @@ html[data-mode="dark"] .pri-row button.sel.high{color:#ff8f8f}
    destructive, so the hit area is grown without touching what is drawn: 41px of
    finger around the glyph, overlapping the chip's own padding rather than the
    neighbouring chip. */
-.quickadd-chip-del::after{content:'';position:absolute;inset:-13px;border-radius:var(--radius-pill)}
+.quickadd-chip-del::after{content:'';position:absolute;inset:-15px;border-radius:var(--radius-pill)}
 .quickadd-chip-del:hover{opacity:1}
 @media (max-width:360px){
   .progress-card{padding:14px 12px;gap:10px}
