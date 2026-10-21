@@ -21,17 +21,14 @@
 .stat-range-btn{position:relative;border:none;background:transparent;font-family:var(--font-ui);font-size:12.5px;
   font-weight:600;color:var(--muted);padding:9px 2px;border-radius:var(--radius-xs);cursor:pointer;min-width:0;
   transition:color var(--duration-base),background var(--duration-base)}
-.stat-range-btn.sel{color:#fff;background:var(--accent);box-shadow:var(--shadow-accent)}
+.stat-range-btn.sel{color:#fff;background:var(--accent)}
 .stat-range-btn:focus-visible{outline:2px solid var(--color-focus);outline-offset:2px}
 
 /* ── The card the reader can take away ──
    A labelled door rather than a bare icon: nobody looks for a share button on a
    page they have never seen. */
-.stats-share{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:46px;
-  border:1.5px dashed var(--color-border-strong);background:var(--surface);color:var(--accent);
-  border-radius:var(--radius-md);font-family:var(--font-ui);font-size:13.5px;font-weight:600;cursor:pointer;
-  box-shadow:var(--shadow-sm);transition:transform var(--duration-fast) var(--ease-out),border-color var(--duration-fast),box-shadow var(--duration-fast)}
-@media (hover:hover){.stats-share:hover{transform:translateY(-1px);border-color:var(--accent);box-shadow:var(--shadow-1)}}
+.stats-share{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:46px;  border:1.5px dashed var(--color-border-strong);background:var(--surface);color:var(--accent);  border-radius:var(--radius-md);font-family:var(--font-ui);font-size:13.5px;font-weight:600;cursor:pointer;transition:transform var(--duration-fast) var(--ease-out),border-color var(--duration-fast),box-shadow var(--duration-fast)}
+@media (hover:hover){.stats-share:hover{transform:translateY(-1px);border-color:var(--accent)}}
 .stats-share:active{transform:translateY(1px)}
 .stats-share:focus-visible{outline:2px solid var(--color-focus);outline-offset:2px}
 .stats-share svg{width:17px;height:17px;flex:0 0 auto}
@@ -206,7 +203,7 @@
 .share-actions button{flex:1;min-height:46px;border-radius:var(--radius-sm);font-family:var(--font-ui);
   font-size:13.5px;font-weight:600;cursor:pointer;transition:transform var(--duration-fast)}
 .share-actions button:active{transform:translateY(1px)}
-.share-go{border:none;background:var(--accent);color:#fff;box-shadow:var(--shadow-accent)}
+.share-go{border:none;background:var(--accent);color:#fff}
 .share-go[hidden]{display:none}
 .share-ghost{border:1.5px solid var(--border);background:transparent;color:var(--text)}
 .share-go:focus-visible,.share-ghost:focus-visible{outline:2px solid var(--color-focus);outline-offset:2px}

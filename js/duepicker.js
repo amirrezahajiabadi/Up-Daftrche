@@ -14,13 +14,11 @@
 import { $, dayKey, dueKeyFromOffset, faDigits } from './utils.js';
 import { dateToJalali, jalaliToDate, JALALI_MONTHS } from './jalali.js';
 import { renderMonthGrid, renderMonthHead, stepMonth, walkGridKeys } from './jalalical.js';
-import { getLang, t, renderGregorianMonthGrid, renderGregorianMonthHead, stepGregorianMonth, GREGORIAN_MONTHS_EN } from './i18n.js';
 
 let onPick = null;
 let onClose = null;
 let cleanup = null;
 let viewJY = 0, viewJM = 1; // Jalali month currently shown
-let viewGY = 2026, viewGM = 1; // Gregorian month currently shown
 let selKey = null;          // currently selected Gregorian day key (or null)
 
 /* The day the arrow keys are standing on, and where a repaint should put focus
@@ -44,10 +42,6 @@ function parseKey(key) {
    nothing has a deadline yet, which is a key that cannot be split. */
 const inView = k => {
   if (!k) return false;
-  if (getLang() === 'en') {
-    const d = parseKey(k);
-    return d.getFullYear() === viewGY && (d.getMonth() + 1) === viewGM;
-  }
   const j = dateToJalali(parseKey(k));
   return j.jy === viewJY && j.jm === viewJM;
 };
@@ -61,77 +55,48 @@ const labelOf = (jy, jm, jd) =>
 function render() {
   const cal = $('#dueCal');
   if (!cal) return;
-  const isEn = getLang() === 'en';
+  const today = dateToJalali(new Date());
 
-  if (isEn) {
-    renderGregorianMonthHead(cal, {
-      year: viewGY,
-      month: viewGM,
-      showYear: true,
-      onPrev: () => {
-        const n = stepGregorianMonth(viewGY, viewGM, -1);
-        restoreFocus = 'prev';
-        viewGY = n.year;
-        viewGM = n.month;
-        render();
-      },
-      onNext: () => {
-        const n = stepGregorianMonth(viewGY, viewGM, 1);
-        restoreFocus = 'next';
-        viewGY = n.year;
-        viewGM = n.month;
-        render();
-      },
-    });
+  renderMonthHead(cal, {
+    jy: viewJY,
+    jm: viewJM,
+    showYear: true,
+    /* Each arrow remembers that it was the thing pressed: renderMonthHead
+       rewrites this markup wholesale, so the button being held ceases to exist
+       on click, and a keyboard needs to land on the same arrow in the new month
+       or every arrow key afterwards does nothing. */
+    onPrev: () => { const n = stepMonth(viewJY, viewJM, -1); restoreFocus = 'prev'; viewJY = n.jy; viewJM = n.jm; render(); },
+    onNext: () => { const n = stepMonth(viewJY, viewJM, 1); restoreFocus = 'next'; viewJY = n.jy; viewJM = n.jm; render(); },
+  });
 
-    const grid = document.createElement('div');
-    renderGregorianMonthGrid(grid, {
-      year: viewGY,
-      month: viewGM,
-      keyOf: (y, m, d) => `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`,
-      labelOf: (y, m, d) => `${GREGORIAN_MONTHS_EN[m - 1]} ${d}, ${y}`,
-      selectedKey: selKey,
-      todayKey: dayKey(new Date()),
-      activeKey: activeDayKey(),
-      onPick: closeWith,
-    });
-    cal.appendChild(grid);
-  } else {
-    renderMonthHead(cal, {
-      jy: viewJY,
-      jm: viewJM,
-      showYear: true,
-      onPrev: () => { const n = stepMonth(viewJY, viewJM, -1); restoreFocus = 'prev'; viewJY = n.jy; viewJM = n.jm; render(); },
-      onNext: () => { const n = stepMonth(viewJY, viewJM, 1); restoreFocus = 'next'; viewJY = n.jy; viewJM = n.jm; render(); },
-    });
-
-    const grid = document.createElement('div');
-    renderMonthGrid(grid, {
-      jy: viewJY,
-      jm: viewJM,
-      keyOf,
-      labelOf,
-      selectedKey: selKey,
-      todayKey: dayKey(new Date()),
-      activeKey: activeDayKey(),
-      onPick: closeWith,
-    });
-    cal.appendChild(grid);
-  }
-
-  const todayLabel = isEn ? t('due.today') : 'امروز';
-  const tomorrowLabel = isEn ? t('due.tomorrow') : 'فردا';
-  const dayAfterLabel = isEn ? t('due.afterTomorrow') : 'پس‌فردا';
-  const clearLabel = isEn ? t('due.none') : 'بدون مهلت';
+  /* The quick row sits between the arrows and the grid, so the grid is written
+     into a fresh element underneath rather than replacing the head. */
+  const grid = document.createElement('div');
+  renderMonthGrid(grid, {
+    jy: viewJY,
+    jm: viewJM,
+    keyOf,
+    labelOf,
+    selectedKey: selKey,
+    todayKey: dayKey(new Date()),
+    /* One Tab stop for the month, so Tab crosses the grid in one press rather
+       than thirty. Only safe because the walker below exists to move within it
+       — with every day at -1 and no arrow handler the grid would be unreachable
+       by Tab at all. `activeKey` is the same rule the birthday picker uses:
+       the remembered day, but only if it is in the month being drawn. */
+    activeKey: activeDayKey(),
+    onPick: closeWith,
+  });
+  cal.appendChild(grid);
 
   cal.insertAdjacentHTML('beforeend', `
     <div class="cal-quick">
-      <button type="button" class="cal-q" data-off="0">${todayLabel}</button>
-      <button type="button" class="cal-q" data-off="1">${tomorrowLabel}</button>
-      <button type="button" class="cal-q" data-off="2">${dayAfterLabel}</button>
+      <button type="button" class="cal-q" data-off="0">امروز</button>
+      <button type="button" class="cal-q" data-off="1">فردا</button>
+      <button type="button" class="cal-q" data-off="2">پس‌فردا</button>
     </div>`);
   cal.appendChild(Object.assign(document.createElement('button'), {
-    type: 'button', className: 'cal-clear', textContent: clearLabel, id: 'calClear',
+    type: 'button', className: 'cal-clear', textContent: 'بدون مهلت', id: 'calClear',
   }));
 
   cal.querySelectorAll('.cal-q').forEach(b => {
@@ -228,15 +193,11 @@ export function openDuePicker({ current = null, onPick: pick, onClose: close } =
   onClose = close || null;
   selKey = current;
   if (current && /^\d{4}-\d{2}-\d{2}$/.test(current)) {
-    const d = parseKey(current);
-    const j = dateToJalali(d);
+    const j = dateToJalali(parseKey(current));
     viewJY = j.jy; viewJM = j.jm;
-    viewGY = d.getFullYear(); viewGM = d.getMonth() + 1;
   } else {
-    const now = new Date();
-    const j = dateToJalali(now);
+    const j = dateToJalali(new Date());
     viewJY = j.jy; viewJM = j.jm;
-    viewGY = now.getFullYear(); viewGM = now.getMonth() + 1;
   }
   /* Focus starts on the chosen date, else today, else the first of the month.
 

@@ -3,12 +3,17 @@
 import { state } from './state.js';
 import { $ } from './utils.js';
 import { flashTask } from './tasks.js';
-import { t } from './i18n.js';
 
 let rollFinal = null;
 
-function openRoll() {
-  const pool = state.tasks.filter(t => !t.done);
+/* `scope` narrows the draw (the Today page passes its own pending tasks); with none
+   it is every unfinished task, as it always was. */
+let rollOnToday = false, scopeFn = null;
+const lastScope = () => (scopeFn ? scopeFn() : []);
+export const setRollScope = fn => { scopeFn = fn; };
+export function openRoll(scopePool) {
+  rollOnToday = Array.isArray(scopePool);
+  const pool = rollOnToday ? scopePool : state.tasks.filter(t => !t.done);
   $('#rollOverlay').hidden = false;
   $('#rollActions').hidden = true;
   const box = $('#rollBox');
@@ -16,7 +21,7 @@ function openRoll() {
   box.classList.remove('landed', 'tick');
   rollFinal = null;
   if (!pool.length) {
-    txt.textContent = t('tasks.diceEmpty');
+    txt.textContent = 'همه کارا انجام شده، دمت گرم!';
     box.classList.add('landed');
     return;
   }
@@ -36,12 +41,18 @@ function openRoll() {
 }
 
 export function initRoll() {
-  $('#diceBtn').onclick = openRoll;
+  $('#diceBtn').onclick = () => openRoll();
   $('#rollGo').onclick = () => {
     $('#rollOverlay').hidden = true;
-    if (rollFinal) flashTask(rollFinal.id);
+    if (!rollFinal) return;
+    /* From Today the row to flash is the one on this page, not the Tasks list. */
+    const row = rollOnToday && document.querySelector(`#todayList [data-id="${rollFinal.id}"]`);
+    if (row) {
+      row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      row.classList.add('flash'); setTimeout(() => row.classList.remove('flash'), 1600);
+    } else flashTask(rollFinal.id);
   };
-  $('#rollAgain').onclick = openRoll;
+  $('#rollAgain').onclick = () => openRoll(rollOnToday ? lastScope() : undefined);
   $('#rollClose').onclick = () => { $('#rollOverlay').hidden = true; };
   $('#rollOverlay').addEventListener('click', e => { if (e.target === e.currentTarget) e.currentTarget.hidden = true; });
 }

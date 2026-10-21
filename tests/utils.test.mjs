@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   dayKey, shiftKey, parseDurationMin, formatDuration, parseTimeMin, parseTimeRange,
-  formatClock, weekStartOf, weekKeyOf, faDigits, DUR_MIN, DUR_MAX,
+  formatClock, weekStartOf, weekKeyOf, faDigits, DUR_MIN, DUR_MAX, reorderSubset, isOverdueTask, stepOrder,
 } from '../js/utils.js';
 
 test('dayKey is local, zero-padded', () => {
@@ -80,4 +80,42 @@ test('esc: already-escaped text is escaped again (it is not idempotent on purpos
 test('esc: null/undefined become empty, other values are stringified', () => {
   assert.equal(esc(null), ''); assert.equal(esc(undefined), '');
   assert.equal(esc(0), '0'); assert.equal(esc(12), '12');
+});
+
+test('reorderSubset reorders the named items in the slots they already held', () => {
+  const t = ids => ids.map(id => ({ id }));
+  const out = reorderSubset(t(['a', 'b', 'c', 'd', 'e']), ['d', 'b']);
+  assert.deepEqual(out.map(x => x.id), ['a', 'd', 'c', 'b', 'e']);
+});
+
+test('reorderSubset leaves hidden items in place when a filtered view is reordered', () => {
+  const t = ids => ids.map(id => ({ id }));
+  // a, c, e are visible; b, d are filtered out. Dragging e to the front must not move b or d.
+  const out = reorderSubset(t(['a', 'b', 'c', 'd', 'e']), ['e', 'a', 'c']);
+  assert.deepEqual(out.map(x => x.id), ['e', 'b', 'a', 'd', 'c']);
+});
+
+test('reorderSubset ignores unknown and repeated ids and never loses an item', () => {
+  const items = [{ id: 1 }, { id: 2 }, { id: 3 }];
+  const out = reorderSubset(items, [3, 'ghost', 3, 1]);
+  assert.deepEqual(out.map(x => x.id), [3, 2, 1]);
+  assert.equal(out.length, items.length);
+  assert.deepEqual(reorderSubset(items, []).map(x => x.id), [1, 2, 3]);
+});
+
+test('isOverdueTask: only an unfinished task with a past deadline', () => {
+  assert.equal(isOverdueTask({ dueDate: '2026-01-01', done: false }, '2026-01-02'), true);
+  assert.equal(isOverdueTask({ dueDate: '2026-01-02', done: false }, '2026-01-02'), false);
+  assert.equal(isOverdueTask({ dueDate: '2026-01-01', done: true }, '2026-01-02'), false);
+  assert.equal(isOverdueTask({ dueDate: null, done: false }, '2026-01-02'), false);
+  assert.equal(isOverdueTask(null, '2026-01-02'), false);
+});
+
+test('stepOrder moves one place and stops at the edges', () => {
+  assert.deepEqual(stepOrder(['a', 'b', 'c'], 'b', -1), ['b', 'a', 'c']);
+  assert.deepEqual(stepOrder(['a', 'b', 'c'], 'b', 1), ['a', 'c', 'b']);
+  const ids = ['a', 'b'];
+  assert.equal(stepOrder(ids, 'a', -1), ids);
+  assert.equal(stepOrder(ids, 'b', 1), ids);
+  assert.equal(stepOrder(ids, 'zz', 1), ids);
 });

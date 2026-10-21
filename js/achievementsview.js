@@ -29,88 +29,14 @@ import { getBooks } from './library.js';
 import { getHistory } from './focushistory.js';
 import { formatJalaliDate, dateToJalali, JALALI_MONTHS } from './jalali.js';
 import { qorqoriMarkup } from './qorqori.js';
+import { LIB_ICONS } from './constants.js';
 import { confetti, beep } from './confetti.js';
 import { isBusy } from './calm.js';
 import { markThemePicker } from './theme.js';
 import {
   FAMILIES, TIER_NAMES, KIND_LABEL, iconOf, emptyState, normalizeState,
-  evaluate, nearest, weekBoard, rewardsOf, RANKS,
+  evaluate, nearest, weekBoard, rewardsOf,
 } from './achievements.js';
-import { getLang, formatNumber, t } from './i18n.js';
-
-const num = n => formatNumber(n, getLang());
-
-const ACHV_I18N = {
-  'first-step': { title: 'First Step', unit: 'tasks', how: 'Check off your first tasks' },
-  'first-focus': { title: 'Light On', unit: 'sessions', how: 'Complete a focus session' },
-  'first-note': { title: 'Memento', unit: 'notes', how: 'Create a note or highlight' },
-  'first-book': { title: 'Finished Book', unit: 'books', how: 'Finish a book' },
-  'tour-intro': { title: 'Welcome Tour', unit: 'times', how: 'Complete the welcome tour' },
-  'chain': { title: 'Streak', unit: 'days', how: 'Build consecutive active days' },
-  'active-days': { title: 'Workdays', unit: 'days', how: 'Days you opened Daftarche' },
-  'clean-weeks': { title: 'Consistent Week', unit: 'weeks', how: 'Weeks with 5+ active days' },
-  'returned': { title: 'Welcome Back', unit: 'times', how: 'Return after a two-week pause' },
-  'done': { title: 'Tasks Completed', unit: 'tasks', how: 'Check off your tasks' },
-  'big-day': { title: 'Busy Day', unit: 'days', how: 'Days with 5+ tasks completed' },
-  'clear-day': { title: 'Zero Inbox', unit: 'days', how: 'Days ending with no pending tasks' },
-  'on-time': { title: 'Punctual', unit: '%', how: 'Finish dated tasks on time (min 20)' },
-  'categorized': { title: 'Categorized', unit: 'categories', how: 'Complete 5 tasks in each category' },
-  'focus-minutes': { title: 'Deep Focus', unit: 'min', how: 'Accumulate focus minutes' },
-  'long-session': { title: 'Deep Session', unit: 'min', how: 'Complete a longer session' },
-  'focus-weeks': { title: 'Focus Week', unit: 'weeks', how: 'Weeks with 5 focus days' },
-  'hard-worker': { title: 'True Grit', unit: 'sessions', how: 'Complete challenging focus sessions' },
-  'read-minutes': { title: 'Reading Time', unit: 'min', how: 'Spend time reading' },
-  'pages': { title: 'Page Turner', unit: 'pages', how: 'Turn pages in your books' },
-  'shelf': { title: 'Curator', unit: 'books', how: 'Add books to your library' },
-  'finished': { title: 'Closed Cover', unit: 'books', how: 'Read books to the final page' },
-  'mood-days': { title: 'Mindful Days', unit: 'days', how: 'Log your daily mood' },
-  'mood-good-days': { title: 'Bright Days', unit: 'days', how: 'Days with positive mood' },
-  'mood-run': { title: 'Good Spirits', unit: 'days', how: 'Consecutive days with good mood' },
-  'early-bird': { title: 'Early Bird', unit: 'times', how: 'Complete tasks before 7 AM' },
-  'night-owl': { title: 'Night Owl', unit: 'times', how: 'Focus session past midnight' },
-  'dragon': { title: 'Dragon', unit: 'days', how: 'Log 300 minutes of focus in a day' },
-  'record-breaker': { title: 'Record Breaker', unit: 'times', how: 'Surpass your all-time daily bests' },
-  'perfect-month': { title: 'Master of Days', unit: 'months', how: 'Complete an active month with zero missed days' },
-};
-
-const FAMILY_NAMES_EN = {
-  start: 'Getting Started',
-  streak: 'Streaks',
-  work: 'Tasks',
-  focus: 'Focus',
-  read: 'Reading',
-  mood: 'Mood',
-  legend: 'Legendary',
-};
-
-const RANK_NAMES_EN = ['Novice', 'Explorer', 'Diligent', 'Consistent', 'Adept', 'Master', 'Legendary'];
-
-const RECORD_I18N = {
-  'day': { label: 'Best Day', unit: 'tasks' },
-  'week': { label: 'Best Week', unit: 'points' },
-  'streak': { label: 'Longest Streak', unit: 'days' },
-  'focus-day': { label: 'Best Focus Day', unit: 'min' },
-  'session': { label: 'Longest Session', unit: 'min' },
-  'month': { label: 'Best Month', unit: 'tasks' },
-};
-
-const FAMILY_LINE_EN = {
-  start: 'A great beginning.',
-  streak: 'Your consistency is taking shape.',
-  work: 'Checking tasks off one by one.',
-  focus: 'Focus is the rarest craft today.',
-  read: 'Pages turn into quiet knowledge.',
-  mood: 'Checking in with yourself is half the journey.',
-  legend: 'This is purely legendary.',
-};
-
-const achvTitle = (a, lang = getLang()) => lang === 'en' ? (ACHV_I18N[a.id]?.title || a.title) : a.title;
-const achvHow = (a, lang = getLang()) => lang === 'en' ? (ACHV_I18N[a.id]?.how || a.how) : a.how;
-const achvUnit = (a, lang = getLang()) => lang === 'en' ? (ACHV_I18N[a.id]?.unit || a.unit) : a.unit;
-const familyLabel = (key, lang = getLang()) => lang === 'en' ? (FAMILY_NAMES_EN[key] || key) : (FAMILIES.find(f => f.key === key)?.label || key);
-const tierName = (i, lang = getLang()) => lang === 'en' ? (['Bronze', 'Silver', 'Gold', 'Diamond'][i] || 'Tier') : (TIER_NAMES[i] || '');
-const kindLabel = (kind, lang = getLang()) => lang === 'en' ? ({ base: 'Standard', skilled: 'Skilled', legend: 'Legendary' }[kind] || kind) : KIND_LABEL[kind];
-const rankName = (index, lang = getLang()) => lang === 'en' ? (RANK_NAMES_EN[index] || 'Novice') : (RANKS[index]?.name || 'تازه‌کار');
 
 /* ── Kept between ticks ── */
 let book = null;      // the day book, from js/ledger.js
@@ -144,7 +70,6 @@ function fingerprint() {
   const led = Object.keys(readLedger().days).length;
   const moods = state.moods && typeof state.moods === 'object' ? Object.keys(state.moods).length : 0;
   return [
-    getLang(),
     tasks.length, done, lastDone,
     Array.isArray(state.history) ? state.history.length : 0,
     moods, getHistory().length, books, led, loadFreeze() ? 1 : 0, loadTourAwarded() ? 1 : 0, dayKey(new Date()),
@@ -222,76 +147,54 @@ export function refreshAchievements() { tick(); }
 
 /* ═══ Summary card (Profile) ═══ */
 function pips(tier, max) {
-  const curLang = getLang();
   let out = '';
   for (let i = 0; i < max; i++) {
     out += `<i class="achv-pip${i < tier ? ' on' : ''}"></i>`;
   }
-  const aria = tier ? tierName(tier - 1, curLang) : (curLang === 'en' ? 'Locked' : 'باز نشده');
-  return `<span class="achv-pips" role="img" aria-label="${aria}">${out}</span>`;
+  return `<span class="achv-pips" role="img" aria-label="${tier ? TIER_NAMES[tier - 1] : 'باز نشده'}">${out}</span>`;
 }
 
 function rowProgress(r) {
   const pct = Math.round(r.pct * 100);
-  const curLang = getLang();
   return `<span class="achv-track" role="progressbar" aria-valuemin="0" aria-valuemax="100"` +
-    ` aria-valuenow="${pct}" aria-label="${esc(achvTitle(r.a, curLang))}">` +
+    ` aria-valuenow="${pct}" aria-label="${esc(r.a.title)}">` +
     `<i class="achv-fill" style="width:${pct}%"></i></span>`;
 }
 
-const leftText = r => {
-  const curLang = getLang();
-  const unit = achvUnit(r.a, curLang);
-  if (r.nextGoal === null) return curLang === 'en' ? 'Complete' : 'کامل';
-  return curLang === 'en'
-    ? `${num(r.value)} of ${num(r.nextGoal)} ${unit}`
-    : `${faNum(r.value)} از ${faNum(r.nextGoal)} ${r.a.unit}`;
-};
+const leftText = r => r.nextGoal === null ? 'کامل' : `${faNum(r.value)} از ${faNum(r.nextGoal)} ${r.a.unit}`;
 
 function renderSummary() {
   const host = $('#achvSummary');
   if (!host || !res) return;
-  const curLang = getLang();
-  const isEn = curLang === 'en';
   const near = nearest(res.rows, 3);
   /* The arc counts badges, because the number in the middle of it is the badge
      count. Showing a rung percentage around a badge count would be two answers
      to one question — the rungs keep their own line right below. */
   const pct = res.total ? Math.round((res.earned / res.total) * 100) : 0;
-  const sig = [curLang, res.earned, res.total, res.steps, res.rank.index, res.rank.pct.toFixed(2), pct,
+  const sig = [res.earned, res.total, res.steps, res.rank.index, res.rank.pct.toFixed(2), pct,
     near.map(n => `${n.a.id}${n.tier}${Math.round(n.pct * 100)}`).join(',')].join('|');
   if (host.dataset.sig === sig) return;
   host.dataset.sig = sig;
 
   const head = $('#achvHeadHint');
-  if (head) {
-    head.textContent = isEn
-      ? `${num(res.earned)} of ${num(res.total)} badges`
-      : `${faNum(res.earned)} از ${faNum(res.total)} نشان`;
-  }
+  if (head) head.textContent = `${faNum(res.earned)} از ${faNum(res.total)} نشان`;
 
   const minis = near.map(r => `
     <li class="achv-mini">
-      <span class="achv-mini-top"><b>${esc(achvTitle(r.a, curLang))}</b><small>${esc(leftText(r))}</small></span>
+      <span class="achv-mini-top"><b>${esc(r.a.title)}</b><small>${esc(leftText(r))}</small></span>
       ${rowProgress(r)}
     </li>`).join('');
 
-  const ringAria = isEn ? `${pct}% of badge progress` : `${pct}٪ از پله‌های نشان‌ها`;
-  const rankStr = isEn ? `Rank: ${esc(rankName(res.rank.index, curLang))}` : `رتبهٔ ${esc(res.rank.name)}`;
-  const badgeStr = isEn ? `${num(res.earned)} of ${num(res.total)} badges` : `${faNum(res.earned)} از ${faNum(res.total)} نشان`;
-  const stepStr = isEn ? `${num(res.steps)} of ${num(res.totalSteps)} rungs` : `${faNum(res.steps)} پله از ${faNum(res.totalSteps)} پله`;
-  const scoreStr = isEn ? `<b>${num(res.score)}</b> points` : `<b>${faNum(res.score)}</b> امتیاز`;
-
   host.innerHTML = `
     <div class="achv-sum-head">
-      <div class="ring-wrap achv-ring" style="--pct:${pct}" role="img" aria-label="${ringAria}">
-        <div class="ring-inner"><div class="ring-text"><span>${num(res.earned)}</span></div></div>
+      <div class="ring-wrap achv-ring" style="--pct:${pct}" role="img" aria-label="${pct}٪ از پله‌های نشان‌ها">
+        <div class="ring-inner"><div class="ring-text"><span>${faNum(res.earned)}</span></div></div>
       </div>
       <div class="achv-sum-text">
-        <strong>${rankStr}</strong>
-        <span>${badgeStr}</span>
-        <span>${stepStr}</span>
-        <span class="achv-sum-score">${scoreStr}</span>
+        <strong>رتبهٔ ${esc(res.rank.name)}</strong>
+        <span>${faNum(res.earned)} از ${faNum(res.total)} نشان</span>
+        <span>${faNum(res.steps)} پله از ${faNum(res.totalSteps)} پله</span>
+        <span class="achv-sum-score"><b>${faNum(res.score)}</b> امتیاز</span>
       </div>
     </div>
     ${near.length ? `<ul class="achv-minis">${minis}</ul>` : ''}`;
@@ -302,130 +205,66 @@ function renderSummary() {
 
 /* ═══ Page ═══ */
 function tabButtons() {
-  const curLang = getLang();
-  const isEn = curLang === 'en';
-  const allLabel = isEn ? 'All' : 'همه';
-  const items = [{ key: 'all', label: allLabel }, ...FAMILIES.map(f => ({ key: f.key, label: familyLabel(f.key, curLang) }))];
+  const items = [{ key: 'all', label: 'همه' }, ...FAMILIES];
   return items.map(f => {
     const on = f.key === tab;
     const count = f.key === 'all' ? res.rows.length : res.rows.filter(r => r.a.family === f.key).length;
     return `<button type="button" class="achv-tab${on ? ' sel' : ''}" role="tab" aria-selected="${on}" data-key="${f.key}">` +
-      `${f.label}<small>${num(count)}</small></button>`;
+      `${f.label}<small>${faNum(count)}</small></button>`;
   }).join('');
 }
 
 function itemHtml(r) {
   const a = r.a;
   const locked = !r.open;
-  const curLang = getLang();
-  const isEn = curLang === 'en';
-  const title = achvTitle(a, curLang);
-  const how = achvHow(a, curLang);
-  const kind = kindLabel(a.kind, curLang);
-
-  const rewardsMarkup = rewardsOf(a).map(reward => {
-    const rewardType = reward.kind === 'theme' ? (isEn ? 'Theme' : 'تم') : (isEn ? 'Feature' : 'ویژگی');
-    const rewardPrefix = isEn ? `Reward: ${rewardType} “${esc(reward.label)}”` : `پاداش: ${rewardType} «${esc(reward.label)}»`;
-    return `<span class="achv-how">${rewardPrefix}</span>`;
-  }).join('');
-
-  const progressLabel = locked
-    ? (isEn ? `${num(r.value)} of ${num(r.nextGoal)}` : `${faNum(r.value)} از ${faNum(r.nextGoal)}`)
-    : esc(leftText(r));
-
+  /* The medal is decoration: the badge's name is right there in text, so the
+     icon is hidden from the accessibility tree instead of being announced as a
+     second, emptier name. */
   return `<button type="button" class="achv-item${locked ? ' locked' : ''}${r.complete ? ' complete' : ''}" data-id="${a.id}" aria-haspopup="dialog">` +
     `<span class="achv-medal" aria-hidden="true">${iconOf(a.icon)}</span>` +
     `<span class="achv-item-main">` +
-      `<span class="achv-item-top"><b>${esc(title)}</b>` +
-      `<span class="achv-kind k-${a.kind}">${kind}</span></span>` +
-      (locked ? `<span class="achv-how">${esc(how)}</span>` : '') +
-      rewardsMarkup +
+      `<span class="achv-item-top"><b>${esc(a.title)}</b>` +
+      `<span class="achv-kind k-${a.kind}">${KIND_LABEL[a.kind]}</span></span>` +
+      (locked ? `<span class="achv-how">${esc(a.how)}</span>` : '') +
+      rewardsOf(a).map(reward => `<span class="achv-how">پاداش: ${esc(reward.kind === 'theme' ? 'تم' : 'ویژگی')} «${esc(reward.label)}»</span>`).join('') +
       `<span class="achv-item-foot">${pips(r.tier, a.tiers.length)}${rowProgress(r)}` +
-      `<small>${progressLabel}</small></span>` +
+      `<small>${locked ? `${faNum(r.value)} از ${faNum(r.nextGoal)}` : esc(leftText(r))}</small></span>` +
     `</span></button>`;
 }
 
 function recordsHtml() {
-  const curLang = getLang();
-  const isEn = curLang === 'en';
-  const headTitle = isEn ? 'Records' : 'رکوردها';
-  const headSub = isEn ? 'Your personal bests' : 'بهترین‌های خودت';
-  return `<div class="stat-sec-head"><strong>${headTitle}</strong><span>${headSub}</span></div>` +
-    `<div class="achv-records">` + res.records.map(r => {
-      const recMeta = RECORD_I18N[r.key] || {};
-      const label = isEn ? (recMeta.label || r.label) : r.label;
-      const unit = isEn ? (recMeta.unit || r.unit) : r.unit;
-      const prevText = r.prev > 0
-        ? (isEn ? `Previous: ${num(r.prev)}` : `رکورد قبلی: ${faNum(r.prev)}`)
-        : (isEn ? 'First record' : 'اولین رکورد');
-      const dateText = r.at ? (r.key === 'month' ? esc(monthLabel(r.at, curLang)) : esc(dayLabel(r.at, curLang))) : '—';
-      return `
+  return `<div class="stat-sec-head"><strong>رکوردها</strong><span>بهترین‌های خودت</span></div>` +
+    `<div class="achv-records">` + res.records.map(r => `
       <div class="achv-record${r.fresh ? ' fresh' : ''}">
         <span class="achv-medal sm" aria-hidden="true">${iconOf(r.icon)}</span>
         <span class="achv-record-main">
-          <b>${esc(label)}</b>
-          <small>${dateText}</small>
+          <b>${esc(r.label)}</b>
+          <small>${r.at ? (r.key === 'month' ? esc(monthLabel(r.at)) : esc(dayLabel(r.at))) : '—'}</small>
         </span>
-        <span class="achv-record-val"><b>${num(r.value)}</b><small>${esc(unit)}</small></span>
-        <span class="achv-record-prev">${prevText}</span>
-      </div>`;
-    }).join('') + `</div>`;
+        <span class="achv-record-val"><b>${faNum(r.value)}</b><small>${esc(r.unit)}</small></span>
+        <span class="achv-record-prev">${r.prev > 0 ? `رکورد قبلی: ${faNum(r.prev)}` : 'اولین رکورد'}</span>
+      </div>`).join('') + `</div>`;
 }
 
 function weekHtml() {
-  const curLang = getLang();
-  const isEn = curLang === 'en';
   const w = weekBoard(book);
-  const arrow = d => d > 0 ? '<i class="achv-dir up">▲</i>' : d < 0 ? '<i class="achv-dir down">▼</i>' : '<i class="achv-dir same">—</i>';
-  const verdict = isEn
-    ? (w.outcome > 0 ? 'Won this week' : w.outcome < 0 ? 'Last week was ahead' : 'Tied')
-    : (w.outcome > 0 ? 'این هفته بردی' : w.outcome < 0 ? 'هفتهٔ پیش جلوتر بود' : 'مساوی');
-
-  const lineLabels = isEn
-    ? { done: 'Tasks completed', focus: 'Focus minutes', read: 'Reading minutes', active: 'Active days' }
-    : { done: 'کار انجام‌شده', focus: 'دقیقهٔ تمرکز', read: 'دقیقهٔ مطالعه', active: 'روز فعال' };
-
-  const lines = w.lines.map(l => {
-    const lbl = lineLabels[l.key] || l.label;
-    return `<li><span>${esc(lbl)}</span><b>${num(l.a)}</b>${arrow(l.dir)}<b class="past">${num(l.b)}</b></li>`;
-  }).join('');
-
-  const headTitle = isEn ? 'This Week vs Last Week' : 'این هفته در برابر هفتهٔ پیش';
-  const thisWeekLabel = isEn ? 'This week score' : 'امتیاز این هفته';
-  const lastWeekLabel = isEn ? 'Last week' : 'هفتهٔ پیش';
-  const seasonSummary = isEn
-    ? `Record: <b>${num(w.season.wins)}</b>W · <b>${num(w.season.losses)}</b>L · <b>${num(w.season.draws)}</b>T`
-    : `کارنامه: <b>${faNum(w.season.wins)}</b> برد · <b>${faNum(w.season.losses)}</b> باخت · <b>${faNum(w.season.draws)}</b> مساوی`;
-  const streakText = w.season.run > 0
-    ? (isEn ? ` · ${num(w.season.run)} weeks streak won` : ` · ${faNum(w.season.run)} هفتهٔ پیاپی بردی`)
-    : '';
-  const bestRunText = w.season.bestRun > 1
-    ? (isEn ? ` · Best run: ${num(w.season.bestRun)} weeks` : ` · بهترین رشته: ${faNum(w.season.bestRun)} هفته`)
-    : '';
-
-  return `<div class="stat-sec-head"><strong>${headTitle}</strong><span>${esc(verdict)}</span></div>` +
+  const arrow = d => d > 0 ? `<i class="achv-dir up" role="img" aria-label="بالاتر">${LIB_ICONS.chevUp}</i>` : d < 0 ? `<i class="achv-dir down" role="img" aria-label="پایین‌تر">${LIB_ICONS.chevDown}</i>` : '<i class="achv-dir same">—</i>';
+  const verdict = w.outcome > 0 ? 'این هفته بردی' : w.outcome < 0 ? 'هفتهٔ پیش جلوتر بود' : 'مساوی';
+  const lines = w.lines.map(l => `<li><span>${esc(l.label)}</span><b>${faNum(l.a)}</b>${arrow(l.dir)}<b class="past">${faNum(l.b)}</b></li>`).join('');
+  return `<div class="stat-sec-head"><strong>این هفته در برابر هفتهٔ پیش</strong><span>${esc(verdict)}</span></div>` +
     `<div class="achv-vs">` +
-      `<div class="achv-vs-score"><b>${num(w.scoreA)}</b><span>${thisWeekLabel}</span>` +
-      `<b class="past">${num(w.scoreB)}</b><span>${lastWeekLabel}</span></div>` +
+      `<div class="achv-vs-score"><b>${faNum(w.scoreA)}</b><span>امتیاز این هفته</span>` +
+      `<b class="past">${faNum(w.scoreB)}</b><span>هفتهٔ پیش</span></div>` +
       `<ul class="achv-vs-lines">${lines}</ul>` +
-      `<p class="achv-season">${seasonSummary}${streakText}${bestRunText}</p>` +
+      `<p class="achv-season">کارنامه: <b>${faNum(w.season.wins)}</b> برد · <b>${faNum(w.season.losses)}</b> باخت · <b>${faNum(w.season.draws)}</b> مساوی` +
+      (w.season.run > 0 ? ` · ${faNum(w.season.run)} هفتهٔ پیاپی بردی` : '') +
+      (w.season.bestRun > 1 ? ` · بهترین رشته: ${faNum(w.season.bestRun)} هفته` : '') + `</p>` +
     `</div>`;
 }
 
-const dayLabel = (key, lang = getLang()) => {
-  const d = new Date(key + 'T00:00:00');
-  if (lang === 'en') {
-    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-  }
-  return formatJalaliDate(d);
-};
-
-const monthLabel = (key, lang = getLang()) => {
-  const d = new Date(key + '-01T00:00:00');
-  if (lang === 'en') {
-    return d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
-  }
-  const j = dateToJalali(d);
+const dayLabel = key => formatJalaliDate(new Date(key + 'T00:00:00'));
+const monthLabel = key => {
+  const j = dateToJalali(new Date(key + '-01T00:00:00'));
   return `${JALALI_MONTHS[j.jm - 1]} ${faNum(j.jy)}`;
 };
 
@@ -434,45 +273,23 @@ export function renderAchievements() {
   if (!res) return;
   const page = $('#page-achv');
 
-  const curLang = getLang();
-  const isEn = curLang === 'en';
   const sub = $('#achvSub');
-  if (sub) {
-    sub.textContent = isEn
-      ? `${num(res.earned)} of ${num(res.total)} badges · ${num(res.steps)} rungs`
-      : `${faNum(res.earned)} از ${faNum(res.total)} نشان · ${faNum(res.steps)} پله`;
-  }
+  if (sub) sub.textContent = `${faNum(res.earned)} از ${faNum(res.total)} نشان · ${faNum(res.steps)} پله`;
 
   /* Rank: the number, the bar, and where the points come from — said out loud,
      because a score nobody can account for is a score nobody trusts. */
   const rank = $('#achvRank');
-  const rankSig = `${curLang}|${res.score}|${res.rank.index}`;
+  const rankSig = `${res.score}|${res.rank.index}`;
   if (rank && rank.dataset.sig !== rankSig) {
     rank.dataset.sig = rankSig;
-    const rName = rankName(res.rank.index, curLang);
-    const topStr = isEn ? `Rank: ${esc(rName)}` : `رتبهٔ ${esc(res.rank.name)}`;
-    const ptsStr = isEn ? `<b>${num(res.score)}</b> points` : `<b>${faNum(res.score)}</b> امتیاز`;
-    const nextRankName = res.rank.next ? rankName(res.rank.index + 1, curLang) : '';
-    const nextStr = res.rank.next
-      ? (isEn ? `${num(res.rank.left)} points to “${esc(nextRankName)}”` : `${faNum(res.rank.left)} امتیاز تا «${esc(res.rank.next.name)}»`)
-      : (isEn ? 'Highest rank achieved' : 'بالاترین رتبه را داری');
-    const summaryTitle = isEn ? 'Where do points come from?' : 'امتیاز از کجا می‌آید؟';
-
-    const partLabels = isEn
-      ? { done: 'Tasks completed', focus: 'Focus minutes', read: 'Reading minutes', notes: 'Notes & highlights', days: 'Active days', streak: 'Longest streak' }
-      : {};
-
     rank.innerHTML = `
-      <div class="achv-rank-top"><strong>${topStr}</strong><span>${ptsStr}</span></div>
-      <span class="achv-track tall" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(res.rank.pct * 100)}" aria-label="${isEn ? 'Progress to next rank' : 'امتیاز تا رتبهٔ بعد'}">
+      <div class="achv-rank-top"><strong>رتبهٔ ${esc(res.rank.name)}</strong><span><b>${faNum(res.score)}</b> امتیاز</span></div>
+      <span class="achv-track tall" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(res.rank.pct * 100)}" aria-label="امتیاز تا رتبهٔ بعد">
         <i class="achv-fill" style="width:${Math.round(res.rank.pct * 100)}%"></i>
       </span>
-      <p class="achv-rank-next">${nextStr}</p>
-      ${res.rank.next ? `<details class="achv-how-score"><summary>${summaryTitle}</summary><ul>` +
-        res.parts.map(p => {
-          const pLabel = isEn ? (partLabels[p.key] || p.label) : p.label;
-          return `<li><span>${esc(pLabel)}</span><b>${num(p.value)}</b><i>×${num(p.weight)}</i><em>${num(p.points)}</em></li>`;
-        }).join('') +
+      <p class="achv-rank-next">${res.rank.next ? `${faNum(res.rank.left)} امتیاز تا «${esc(res.rank.next.name)}»` : 'بالاترین رتبه را داری'}</p>
+      ${res.rank.next ? `<details class="achv-how-score"><summary>امتیاز از کجا می‌آید؟</summary><ul>` +
+        res.parts.map(p => `<li><span>${esc(p.label)}</span><b>${faNum(p.value)}</b><i>×${faNum(p.weight)}</i><em>${faNum(p.points)}</em></li>`).join('') +
         `</ul></details>` : ''}`;
   }
 
@@ -482,14 +299,12 @@ export function renderAchievements() {
   const near = nearest(res.rows, 3);
   const nearHost = $('#achvNear');
   if (nearHost) {
-    const nearTitle = isEn ? 'Closest Badges' : 'نزدیک‌ترین‌ها';
-    const nearSub = isEn ? 'Almost there' : 'چیزی نمانده';
     nearHost.innerHTML = near.length
-      ? `<div class="stat-sec-head"><strong>${nearTitle}</strong><span>${nearSub}</span></div>` +
+      ? `<div class="stat-sec-head"><strong>نزدیک‌ترین‌ها</strong><span>چیزی نمانده</span></div>` +
         `<div class="achv-near">` + near.map(r => `
           <button type="button" class="achv-near-card" data-id="${r.a.id}" aria-haspopup="dialog">
             <span class="achv-medal" aria-hidden="true">${iconOf(r.a.icon)}</span>
-            <b>${esc(achvTitle(r.a, curLang))}</b>
+            <b>${esc(r.a.title)}</b>
             ${rowProgress(r)}
             <small>${esc(leftText(r))}</small>
           </button>`).join('') + `</div>`
@@ -510,20 +325,11 @@ export function renderAchievements() {
 /* The reward surface is shared by the badge details and celebration. A future
    theme or feature uses the same title, condition and locked/unlocked states. */
 function rewardHtml(reward, unlocked) {
-  const curLang = getLang();
-  const isEn = curLang === 'en';
-  const rewardType = reward.kind === 'theme' ? (isEn ? 'Theme' : 'تم') : (isEn ? 'Feature' : 'ویژگی');
-  const rewardTitle = `${rewardType} ${isEn ? `“${esc(reward.label)}”` : `«${esc(reward.label)}»`}`;
-  const defaultUnlockedText = isEn ? 'Reward unlocked!' : 'پاداشت باز شد!';
-  const defaultLockedText = isEn ? 'Unlocked by earning this badge' : 'با گرفتن این نشان باز می‌شود';
-  const subText = unlocked ? (reward.unlockText || defaultUnlockedText) : defaultLockedText;
-  const statusText = unlocked ? (isEn ? 'Unlocked' : 'باز شد') : (isEn ? 'Locked' : 'قفل');
-
   return `<div class="reward-card" data-reward-state="${unlocked ? 'unlocked' : 'locked'}">` +
     `<span class="reward-card-icon" aria-hidden="true">${iconOf(unlocked ? 'check' : 'layers')}</span>` +
-    `<span class="reward-card-copy"><b>${rewardTitle}</b>` +
-    `<small>${esc(subText)}</small></span>` +
-    `<span class="reward-card-status">${statusText}</span></div>`;
+    `<span class="reward-card-copy"><b>${esc(reward.kind === 'theme' ? 'تم' : 'ویژگی')} «${esc(reward.label)}»</b>` +
+    `<small>${esc(unlocked ? (reward.unlockText || 'پاداشت باز شد!') : 'با گرفتن این نشان باز می‌شود')}</small></span>` +
+    `<span class="reward-card-status">${unlocked ? 'باز شد' : 'قفل'}</span></div>`;
 }
 
 function openDetail(id) {
@@ -532,43 +338,24 @@ function openDetail(id) {
   const body = $('#achvDetailBody');
   if (!r || !overlay || !body) return;
   const a = r.a;
-  const curLang = getLang();
-  const isEn = curLang === 'en';
-  const fam = familyLabel(a.family, curLang);
-  const kind = kindLabel(a.kind, curLang);
-  const title = achvTitle(a, curLang);
-  const how = achvHow(a, curLang);
-  const unit = achvUnit(a, curLang);
-
+  const family = FAMILIES.find(f => f.key === a.family);
   const rungs = a.tiers.map((goal, i) => {
     const reached = r.tier > i;
-    const tName = tierName(i, curLang);
     return `<li class="achv-rung${reached ? ' on' : ''}"><i class="achv-pip${reached ? ' on' : ''}"></i>` +
-      `<span>${tName}</span><b>${num(goal)} ${esc(unit)}</b></li>`;
+      `<span>${TIER_NAMES[i]}</span><b>${faNum(goal)} ${esc(a.unit)}</b></li>`;
   }).join('');
-
-  const when = r.at
-    ? (isEn ? `Unlocked on ${dayLabel(r.at, curLang)}` : `باز شد در ${formatJalaliDate(new Date(r.at + 'T00:00:00'))}`)
-    : r.open
-      ? (isEn ? 'Unlocked before this shelf was created' : 'قبل از اینکه این صفحه ساخته شود بازش کرده بودی')
-      : '';
-
-  const doneMsg = r.nextGoal === null
-    ? (isEn ? '<p class="achv-detail-done">All rungs of this badge completed.</p>' : '<p class="achv-detail-done">همهٔ پله‌های این نشان بالا رفته.</p>')
-    : `<p class="achv-detail-how">${esc(how)} — ${esc(leftText(r))}</p>`;
-
-  const closeBtnText = isEn ? 'Close' : 'بستن';
-
+  const when = r.at ? `باز شد در ${formatJalaliDate(new Date(r.at + 'T00:00:00'))}`
+    : r.open ? 'قبل از اینکه این صفحه ساخته شود بازش کرده بودی' : '';
   body.innerHTML = `
     <span class="achv-detail-medal" aria-hidden="true">${iconOf(a.icon)}</span>
-    <h2>${esc(title)}</h2>
-    <p class="achv-detail-kind">${esc(fam)} · ${kind}</p>
+    <h2>${esc(a.title)}</h2>
+    <p class="achv-detail-kind">${esc(family ? family.label : '')} · ${KIND_LABEL[a.kind]}</p>
     <ul class="achv-ladder">${rungs}</ul>
-    ${doneMsg}
+    ${r.nextGoal === null ? '<p class="achv-detail-done">همهٔ پله‌های این نشان بالا رفته.</p>' : `<p class="achv-detail-how">${esc(a.how)} — ${esc(leftText(r))}</p>`}
     ${when ? `<p class="achv-detail-at">${esc(when)}</p>` : ''}
     ${rewardsOf(a).map(reward => rewardHtml(reward, rewardsOf(a, r.tier).includes(reward))).join('')}
     <span class="achv-detail-char" aria-hidden="true">${qorqoriMarkup(r.tier ? 'proud' : 'thinking')}</span>
-    <button class="ghost" type="button" id="achvDetailClose">${closeBtnText}</button>`;
+    <button class="ghost" type="button" id="achvDetailClose">بستن</button>`;
   overlay.hidden = false;
   $('#achvDetailClose')?.addEventListener('click', () => { overlay.hidden = true; });
 }
@@ -592,37 +379,7 @@ const FAMILY_LINE = {
 };
 
 function sentence(item) {
-  const curLang = getLang();
-  const isEn = curLang === 'en';
   const name = (state.userName || '').trim();
-
-  if (isEn) {
-    const who = name ? `${name}, ` : '';
-    if (item.kind === 'record') {
-      const r = item.rec;
-      const recMeta = RECORD_I18N[r.key] || {};
-      const recLabel = recMeta.label || r.label;
-      const recUnit = recMeta.unit || r.unit;
-      return `${who}you broke your record for “${recLabel}” — ${num(r.value)} ${recUnit} vs previous ${num(r.prev)}!`;
-    }
-    const a = item.row.a;
-    const title = achvTitle(a, curLang);
-    const rewardLine = (item.rewards || []).map(reward => reward.unlockText || `Feature “${reward.label}” unlocked!`).join(' ');
-    let message;
-    if (a.id === 'tour-intro') {
-      message = name ? `Congratulations ${name}, Welcome Tour badge unlocked!` : 'Congratulations, Welcome Tour badge unlocked!';
-    } else if (item.kind === 'tier') {
-      message = `“${title}” reached ${tierName(item.row.tier - 1, curLang)}.`;
-    } else if (a.kind === 'legend') {
-      message = `${who}Purely legendary! “${title}” unlocked.`;
-    } else if (a.kind === 'skilled') {
-      message = `${who}Masterful craft! “${title}” unlocked.`;
-    } else {
-      message = `${who}“${title}” unlocked — ${FAMILY_LINE_EN[a.family] || 'Keep going!'}`;
-    }
-    return `${message}${rewardLine ? ` ${rewardLine}` : ''}`;
-  }
-
   const who = name ? `${name} جان، ` : '';
   if (item.kind === 'record') {
     const r = item.rec;
@@ -650,23 +407,18 @@ function showSheet(item) {
   const overlay = $('#achvOverlay');
   const body = $('#achvUnlockBody');
   if (!overlay || !body) return;
-  const curLang = getLang();
-  const isEn = curLang === 'en';
   const isRecord = item.kind === 'record';
-  const title = isRecord ? (isEn ? 'Record Broken!' : 'رکورد شکست!') : achvTitle(item.row.a, curLang);
+  const title = isRecord ? 'رکورد شکست!' : item.row.a.title;
   const icon = isRecord ? 'crown' : item.row.a.icon;
-  const tierLine = !isRecord && item.row.tier > 1 ? `<em class="achv-unlock-tier">${tierName(item.row.tier - 1, curLang)}</em>` : '';
-  const okBtnText = isEn ? 'Awesome!' : 'دمت گرم!';
-  const moreBtnText = isEn ? 'View Badges' : 'دیدن نشان‌ها';
-
+  const tierLine = !isRecord && item.row.tier > 1 ? `<em class="achv-unlock-tier">${TIER_NAMES[item.row.tier - 1]}</em>` : '';
   body.innerHTML = `
     <span class="achv-unlock-char" aria-hidden="true">${qorqoriMarkup('celebrating')}</span>
     <span class="achv-unlock-medal" aria-hidden="true">${iconOf(icon)}</span>
     <h2>${esc(title)}${tierLine}</h2>
     <p>${esc(sentence(item))}</p>
     ${(item.rewards || []).map(reward => rewardHtml(reward, true)).join('')}
-    <button class="go" type="button" id="achvUnlockOk">${okBtnText}</button>
-    <button class="ghost sm" type="button" id="achvUnlockMore">${moreBtnText}</button>`;
+    <button class="go" type="button" id="achvUnlockOk">دمت گرم!</button>
+    <button class="ghost sm" type="button" id="achvUnlockMore">دیدن نشان‌ها</button>`;
   overlay.hidden = false;
   confetti();
   beep();
@@ -753,10 +505,7 @@ export function initAchievements() {
       btn.classList.toggle('on', on);
     }
     const txt = $('#profFreezeText');
-    if (txt) {
-      const isEn = getLang() === 'en';
-      txt.textContent = on ? (isEn ? 'On' : 'روشن') : (isEn ? 'Off' : 'خاموش');
-    }
+    if (txt) txt.textContent = on ? 'روشن' : 'خاموش';
   };
   btn?.addEventListener('click', () => {
     saveFreeze(!loadFreeze());
@@ -776,13 +525,4 @@ export function initAchievements() {
 
   subscribe(() => tick());
   tick(true);
-
-  if (typeof window !== 'undefined') {
-    window.addEventListener('daftarche:lang-changed', () => {
-      lastSig = '';
-      paint();
-      tick(true);
-      if ($('#page-achv')?.classList.contains('active')) renderAchievements();
-    });
-  }
 }

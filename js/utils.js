@@ -13,6 +13,22 @@ export const faDigits = s => String(s).replace(/\d/g, d => '۰۱۲۳۴۵۶۷۸۹
 const HTML_ESC = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
 export const esc = s => String(s ?? '').replace(/[&<>"']/g, c => HTML_ESC[c]);
 
+/* Is a task past its deadline? Keys are YYYY-MM-DD, so plain string comparison is
+   calendar order. A finished task is never overdue, and one with no deadline
+   cannot be. `todayKey` is passed in so the rule is testable without a clock. */
+export const isOverdueTask = (task, todayKey) =>
+  !!task && !task.done && !!task.dueDate && task.dueDate < todayKey;
+
+/* Move one id a step up or down among the ids shown, returning the new order, or
+   the same array when it is already at that edge. */
+export const stepOrder = (ids, id, step) => {
+  const i = ids.indexOf(id), j = i + step;
+  if (i === -1 || j < 0 || j >= ids.length) return ids;
+  const out = ids.slice();
+  [out[i], out[j]] = [out[j], out[i]];
+  return out;
+};
+
 export const dayKey = d =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
@@ -129,4 +145,20 @@ export function urlBase64ToUint8Array(base64String) {
   const output = new Uint8Array(raw.length);
   for (let i = 0; i < raw.length; i++) output[i] = raw.charCodeAt(i);
   return output;
+}
+
+/* Puts the items named in `ids` into the order given, and leaves every item that
+   is not named exactly where it was. A list reordered while a filter hides part
+   of it is the case this exists for: the rows on screen are a subset, and the
+   hidden ones must not be flung to the end just because they were not drawn.
+   Unknown ids and repeats are ignored. */
+export function reorderSubset(items, ids, getId = x => x.id) {
+  const byId = new Map(items.map(x => [getId(x), x]));
+  const seen = new Set();
+  const queue = [];
+  for (const id of ids) {
+    const item = byId.get(id);
+    if (item && !seen.has(item)) { seen.add(item); queue.push(item); }
+  }
+  return items.map(x => (seen.has(x) ? queue.shift() : x));
 }

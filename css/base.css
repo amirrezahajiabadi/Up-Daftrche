@@ -1,3 +1,4 @@
+/* ═══ Font Definitions (Font Loading) ═══ */
 @font-face {
   font-family: 'Estedad';
   src: url('../assets/fonts/Estedad[wght].woff2') format('woff2');
@@ -10,22 +11,6 @@
   font-family: 'Estedad Mad';
   src: url('../assets/fonts/Estedad-Mad.woff2') format('woff2');
   font-weight: 700;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Manrope';
-  src: url('../assets/fonts/Manrope/Manrope[wght].woff2') format('woff2');
-  font-weight: 200 800;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Bricolage Grotesque';
-  src: url('../assets/fonts/Bricolage_Grotesque/BricolageGrotesque[opsz,wght].woff2') format('woff2');
-  font-weight: 200 800;
   font-style: normal;
   font-display: swap;
 }
@@ -128,7 +113,7 @@
   --shadow-0:none;
   --shadow-1:0 4px 14px -6px rgba(122,80,35,.18);
   --shadow-2:0 24px 50px -24px rgba(122,80,35,.35);
-  --shadow-accent:0 4px 0 0 rgba(120,55,20,.35);
+  --shadow-accent:none;
 
   /* ── Borders ── */
   --border-width:1px;
@@ -137,27 +122,6 @@
   /* ── Typography ── */
   --font-ui: 'Estedad', system-ui, sans-serif;
   --font-personality: 'Estedad Mad', 'Estedad', system-ui, sans-serif;
-}
-
-html[lang="en"],
-[data-lang="en"] {
-  --font-ui: 'Manrope', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-personality: 'Bricolage Grotesque', 'Manrope', system-ui, sans-serif;
-}
-
-html[dir="ltr"] .page-back svg {
-  transform: scaleX(-1);
-}
-
-html[lang="en"] h1 {
-  letter-spacing: -0.025em;
-}
-
-html[lang="en"] .subtitle {
-  letter-spacing: -0.01em;
-}
-
-:root {
 
   /* ── Motion ── */
   --duration-fast:.18s;
@@ -587,7 +551,7 @@ html[data-mode="light"]{
   --state-glass-hover:rgba(37,36,34,.05);
   --shadow-1:0 4px 14px -6px rgba(122,80,35,.18);
   --shadow-2:0 24px 50px -24px rgba(122,80,35,.35);
-  --shadow-accent:0 4px 0 0 rgba(120,55,20,.35);
+  --shadow-accent:none;
 }
 html[data-mode="dark"]{
   color-scheme:dark;
@@ -599,7 +563,7 @@ html[data-mode="dark"]{
   --state-glass-hover:rgba(255,255,255,.07);
   --shadow-1:0 4px 14px -6px rgba(0,0,0,.5);
   --shadow-2:0 24px 50px -24px rgba(0,0,0,.7);
-  --shadow-accent:0 4px 0 0 rgba(0,0,0,.45);
+  --shadow-accent:none;
 }
 
 /* ═══ Themes ═══
@@ -931,10 +895,7 @@ body.focus-immersive::before{display:none}
 /* The way back — one step of the trail, shown only while there is one. It sits
    above the header so it never fights the title for the top corner, and hugs
    the start edge (the right, in this app's reading direction). */
-.page-back{display:inline-flex;align-items:center;gap:6px;align-self:flex-start;padding:8px 14px;
-  border:1px solid var(--border);background:var(--surface);color:var(--text);border-radius:var(--radius-pill);
-  font-family:var(--font-ui);font-size:13px;font-weight:600;line-height:1;cursor:pointer;box-shadow:var(--shadow-sm);
-  transition:transform var(--duration-fast),border-color var(--duration-fast),color var(--duration-fast)}
+.page-back{display:inline-flex;align-items:center;gap:6px;align-self:flex-start;padding:8px 14px;  border:1px solid var(--border);background:var(--surface);color:var(--text);border-radius:var(--radius-pill);  font-family:var(--font-ui);font-size:13px;font-weight:600;line-height:1;cursor:pointer;  transition:transform var(--duration-fast),border-color var(--duration-fast),color var(--duration-fast)}
 .page-back[hidden]{display:none}
 .page-back svg{width:16px;height:16px;flex:0 0 auto}
 @media (hover:hover){.page-back:hover{transform:translateY(-1px);border-color:var(--accent);color:var(--accent)}}
@@ -960,7 +921,7 @@ h1 .underline path{stroke-dasharray:140;stroke-dashoffset:140;animation:draw var
    smaller box hangs off the top of the row rather than sitting level with it. */
 .header-actions{display:flex;gap:8px;align-items:center}
 .header-actions>*{flex-shrink:0}
-.theme-btn{width:44px;height:44px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;display:grid;place-items:center;box-shadow:var(--shadow-1);position:relative;overflow:hidden;transition:transform var(--duration-base),background var(--duration-slow);flex-shrink:0}
+.theme-btn{width:44px;height:44px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--surface);color:var(--text);cursor:pointer;display:grid;place-items:center;position:relative;overflow:hidden;transition:transform var(--duration-base),background var(--duration-slow);flex-shrink:0}
 /* hover state lives in the @media(hover:hover) block above */
 .theme-btn svg{position:absolute;transition:transform var(--duration-slow) var(--ease-out),opacity var(--duration-base)}
 .theme-btn .sun{transform:translateY(-150%) rotate(-90deg);opacity:0}
@@ -1025,24 +986,12 @@ html[data-mode="dark"] .bottom-nav{
     inset -1px 0 0 rgba(255,255,255,.04);
 }
 
-.nav-glider{
-  position:absolute;top:6px;bottom:6px;left:0;
-  /* The capsule glides on transform/width inside the blurred dock. Keeping it
+.nav-glider{  position:absolute;top:6px;bottom:6px;left:0;  /* The capsule glides on transform/width inside the blurred dock. Keeping it
      on its own layer means a glide never drags the dock's backdrop through a
      re-blur, so the movement stays on the compositor end to end. */
-  will-change:transform,width;
-  border-radius:var(--radius-lg);
-  background:linear-gradient(135deg,
+  will-change:transform,width;  border-radius:var(--radius-lg);  background:linear-gradient(135deg,
     color-mix(in srgb,var(--accent) 24%,transparent),
-    color-mix(in srgb,var(--accent) 12%,transparent));
-  border:1px solid color-mix(in srgb,var(--accent) 32%,transparent);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 2px 10px -2px color-mix(in srgb,var(--accent) 45%,transparent);
-  transition:transform var(--duration-base) var(--ease-out),width var(--duration-base) var(--ease-out),opacity var(--duration-fast) ease;
-  pointer-events:none;
-}
-html[data-mode="dark"] .nav-glider{
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 2px 10px -2px color-mix(in srgb,var(--accent) 30%,transparent);
-}
+    color-mix(in srgb,var(--accent) 12%,transparent));  border:1px solid color-mix(in srgb,var(--accent) 32%,transparent);  transition:transform var(--duration-base) var(--ease-out),width var(--duration-base) var(--ease-out),opacity var(--duration-fast) ease;  pointer-events:none}
 
 /* While a page-follow drag is live, js/app.js stages both pages fixed to the
    viewport with their own scrollbars. These rules keep that staging quiet:
@@ -1368,8 +1317,8 @@ body.has-focus-pill .page{padding-bottom:calc(var(--nav-height) + env(safe-area-
 .focus-page-card .focus-task{font-size:14px;color:var(--muted);font-weight:400;line-height:1.7}
 .focus-page-actions{display:flex;flex-wrap:wrap;gap:8px;width:100%}
 .focus-start-hint{width:100%;font-size:12px;color:var(--color-muted);text-align:center;line-height:1.5}
-.focus-page-actions .go{flex:1;border:none;background:var(--accent);color:var(--color-text-on-accent);font-family:var(--font-ui);font-weight:600;font-size:15px;padding:12px;border-radius:var(--radius-sm);cursor:pointer;box-shadow:var(--shadow-accent);transition:transform var(--duration-fast),box-shadow var(--duration-fast)}
-.focus-page-actions .go:active{transform:translateY(3px);box-shadow:0 1px 0 0 rgba(120,55,20,.35)}
+.focus-page-actions .go{flex:1;border:none;background:var(--accent);color:var(--color-text-on-accent);font-family:var(--font-ui);font-weight:600;font-size:15px;padding:12px;border-radius:var(--radius-sm);cursor:pointer;transition:transform var(--duration-fast),box-shadow var(--duration-fast)}
+.focus-page-actions .go:active{transform:scale(.97)}
 .focus-page-actions .go:disabled{opacity:.5;box-shadow:none;cursor:not-allowed}
 .focus-page-actions .go:disabled:active{transform:none}
 .focus-page-actions .ghost{flex:1;border:1.5px solid var(--border);background:transparent;color:var(--muted);font-family:var(--font-ui);font-weight:500;font-size:14px;padding:12px;border-radius:var(--radius-sm);cursor:pointer;transition:all var(--duration-fast)}
@@ -1400,7 +1349,7 @@ body.has-focus-pill .page{padding-bottom:calc(var(--nav-height) + env(safe-area-
   .pickbook-chev{transition:none}
 }
 .pickbook-search{padding:8px 0 2px}
-.pickbook-search input{width:100%;font-family:var(--font-ui);font-size:13px;border:none;border-bottom:1.5px dashed var(--border);background:transparent;color:var(--text);padding:6px 2px;outline:none;direction:inherit}
+.pickbook-search input{width:100%;font-family:var(--font-ui);font-size:13px;border:none;border-bottom:1.5px dashed var(--border);background:transparent;color:var(--text);padding:6px 2px;outline:none;direction:rtl}
 .pickbook-search input:focus{border-bottom-color:var(--accent)}
 .pickbook-search input::placeholder{color:var(--muted);opacity:.8}
 .pickbook-list{display:flex;flex-direction:column;max-height:196px;max-height:min(196px,34dvh);overflow-y:auto;overscroll-behavior-y:contain;scrollbar-width:thin;scrollbar-color:var(--color-border-strong) transparent}
@@ -1492,7 +1441,6 @@ html.tab-hidden .empty .art,
 html.tab-hidden .spark,
 html.tab-hidden .streak.hot svg,
 html.tab-hidden .ring-wrap.complete::after,
-html.tab-hidden .task[data-p="high"] .pri-dot::before,
 html.tab-hidden .rain-drops i,
 html.tab-hidden .waves svg,
 html.tab-hidden .flies i,
@@ -1527,7 +1475,7 @@ button:disabled,.switch:disabled{opacity:.45;cursor:not-allowed}
   /* Decorative elements and ambient loops are frozen, not just accelerated */
   .doodle,.frog-emoji,.frog-ico svg,.empty .art,.spark,.frog-hero::before,.frog-hero::after,
   .rain-drops i,.flies i,.waves svg,.ring-wrap.complete,.ring-wrap.complete::after,.streak.hot svg,
-  .task[data-p="high"] .pri-dot,.task[data-p="high"] .pri-dot::before,
+  .task[data-p="high"] .pri-dot,
   .focus-pill.running::after,.reader-timer.on{animation:none!important}
   /* Decorative transforms off; state/feedback transforms still apply instantly */
   .task:hover,.frog:hover,.lastread:hover,.book-card:hover,.progress-card:hover,.header-avatar:hover,

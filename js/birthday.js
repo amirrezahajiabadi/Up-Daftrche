@@ -37,7 +37,6 @@ import { renderMonthGrid, renderMonthHead, stepMonth, walkGridKeys } from "./jal
 import { loadName } from "./store.js";
 import { loadBirthday, saveBirthday, loadBirthdaySeen, saveBirthdaySeen } from "./store.js";
 import { qorqoriMarkup } from "./qorqori.js";
-import { isEn, t } from "./i18n.js";
 
 const DAY = "birthday";
 
@@ -453,26 +452,34 @@ const bdLabelOf = (jy, jm, jd) => faDigits(jd) + ' ' + JALALI_MONTHS[jm - 1];
 function yearRow() {
   const thisYear = dateToJalali(new Date()).jy;
   const shown = viewJY;
-  const en = isEn();
 
   const row = document.createElement('div');
   row.className = 'bd-year';
   row.setAttribute('role', 'group');
-  row.setAttribute('aria-label', t('birthday.birthYearAria'));
+  row.setAttribute('aria-label', 'سال تولد');
 
-  const back = yearBtn('‹', t('birthday.prevYear'), 'bd-year-step');
+  const back = yearBtn('‹', 'یک سال قبل', 'bd-year-step');
   back.disabled = shown <= MIN_BIRTH_YEAR;
   back.onclick = () => { stepYear(-1); };
 
-  const yearDisp = pickYear === null ? 'سال؟' : (en ? String(pickYear) : faDigits(pickYear));
-  const yearDispText = (en && pickYear === null) ? 'Year?' : yearDisp;
-  const yearAria = pickYear === null
-    ? t('birthday.pickYearPrompt')
-    : t('birthday.pickYearLabel', { year: yearDispText });
-  const now = yearBtn(yearDispText, yearAria, 'bd-year-now');
+  /* It reads the year that is STORED, not the one the month grid is drawn in.
+     The two can differ on purpose — the month grid follows viewJY so its
+     weekdays are true, while a yearless record leaves pickYear at null — and a
+     button showing viewJY would be claiming a birth year the reader never
+     chose. «سال؟» says what the removed fourth button said, without being a
+     control that has to be pressed in order to mean it.
+
+     No data-autofocus here, on purpose: the grid's chosen day claims that
+     attribute in render(), and modal.js takes the first one it finds. Giving it
+     to both would silently move the keyboard's landing point from the day the
+     reader came to change to the year above it. */
+  const now = yearBtn(pickYear === null ? 'سال؟' : faDigits(pickYear),
+    pickYear === null ? 'سال تولدت را انتخاب کن'
+                      : 'سال تولد: ' + faDigits(pickYear) + ' — انتخاب سال دیگر',
+    'bd-year-now');
   now.onclick = openYearGrid;
 
-  const fwd = yearBtn('›', t('birthday.nextYear'), 'bd-year-step');
+  const fwd = yearBtn('›', 'یک سال بعد', 'bd-year-step');
   fwd.disabled = shown >= thisYear;
   fwd.onclick = () => { stepYear(1); };
 
@@ -576,28 +583,34 @@ const YEAR_COLS = 5;
 function renderYearGrid(cal) {
   const thisYear = thisJalaliYear();
   const active = activeYear();
-  const en = isEn();
-  const decadeText = en ? String(decadeStart) : faDigits(decadeStart);
 
+  /* The same head the month grid uses, with the same two arrows and the same
+     live region — a decade is the thing that changed, so it is what the title
+     announces. Reusing the classes rather than writing a second head is what
+     makes this look like the same calendar instead of a second dialog that
+     happens to be nearby. */
   cal.innerHTML = `
     <div class="cal-head">
-      <button type="button" class="cal-nav" aria-label="${t('birthday.prevDecade')}"${decadeStart <= MIN_BIRTH_YEAR ? ' disabled' : ''}>‹</button>
-      <strong class="cal-title" aria-live="polite">${t('birthday.decadeTitle', { decade: decadeText })}</strong>
-      <button type="button" class="cal-nav" aria-label="${t('birthday.nextDecade')}"${decadeStart + YEARS_PER_PAGE > thisYear ? ' disabled' : ''}>›</button>
+      <button type="button" class="cal-nav" aria-label="دههٔ قبل"${decadeStart <= MIN_BIRTH_YEAR ? ' disabled' : ''}>‹</button>
+      <strong class="cal-title" aria-live="polite">دههٔ ${faDigits(decadeStart)}</strong>
+      <button type="button" class="cal-nav" aria-label="دههٔ بعد"${decadeStart + YEARS_PER_PAGE > thisYear ? ' disabled' : ''}>›</button>
     </div>
-    <div class="bd-years" role="group" aria-label="${t('birthday.decadeYearsAria', { decade: decadeText })}"></div>`;
+    <div class="bd-years" role="group" aria-label="سال‌های دههٔ ${faDigits(decadeStart)}"></div>`;
 
   const grid = cal.querySelector('.bd-years');
   for (let i = 0; i < YEARS_PER_PAGE; i++) {
     const y = decadeStart + i;
+    /* Past years are not drawn at all rather than drawn disabled: a decade that
+       runs into the future would show six years nobody can pick, and a reader
+       counting cells to work out which ones are real would be doing arithmetic
+       the picker should have done. */
     if (y > thisYear) break;
     const cls = ['bd-year-cell',
       y === thisYear ? 'now' : '',
       y === pickYear ? 'sel' : ''].filter(Boolean).join(' ');
     const tab = y === active ? ' tabindex="0"' : ' tabindex="-1"';
-    const yText = en ? String(y) : faDigits(y);
     grid.insertAdjacentHTML('beforeend',
-      `<button type="button" class="${cls}" data-year="${y}" aria-label="${t('birthday.yearAria', { year: yText })}"${tab}>${yText}</button>`);
+      `<button type="button" class="${cls}" data-year="${y}" aria-label="سال ${faDigits(y)}"${tab}>${faDigits(y)}</button>`);
   }
 
   const [prev, next] = cal.querySelectorAll('.cal-head .cal-nav');
@@ -608,20 +621,25 @@ function renderYearGrid(cal) {
     b.onclick = () => chooseYear(Number(b.dataset.year));
   });
 
+  /* Two ways out, because there are two things a reader might want next and only
+     one of them is cancelling. «سال جاری» is the shortcut the middle button used
+     to be — reaching this year from 1250 is thirteen presses of the arrow — and
+     it stays hidden when this decade already holds it, for the same reason the
+     month grid hides its quick buttons when they would be redundant. */
   const quick = document.createElement('div');
   quick.className = 'cal-quick';
   if (decadeStart !== decadeOf(thisYear)) {
     const now = document.createElement('button');
     now.type = 'button';
     now.className = 'cal-q';
-    now.textContent = t('birthday.currentYear');
+    now.textContent = 'سال جاری';
     now.onclick = () => chooseYear(thisYear);
     quick.appendChild(now);
   }
   const back = document.createElement('button');
   back.type = 'button';
   back.className = 'cal-q';
-  back.textContent = t('birthday.backToMonth');
+  back.textContent = 'برگشت به ماه';
   back.onclick = closeYearGrid;
   quick.appendChild(back);
   cal.appendChild(quick);
@@ -789,7 +807,7 @@ function render() {
   foot.type = 'button';
   foot.className = 'cal-clear';
   foot.id = 'bdCalClear';
-  foot.textContent = t('birthday.clearBtn');
+  foot.textContent = 'پاک کردن تاریخ تولد';
   foot.hidden = !stored;
   cal.appendChild(foot);
   foot.onclick = () => { clearBirthday(); closeBirthdayPicker(); };
@@ -926,8 +944,8 @@ export function renderBirthdayRow() {
        what kind. */
     const btn = $('#bdPick');
     if (btn) btn.setAttribute('aria-label', stored
-      ? t('birthday.ariaRegistered', { date: label.textContent })
-      : t('birthday.ariaEmpty'));
+      ? 'تاریخ تولد: ' + label.textContent + ' — برای تعویض کن'
+      : 'تاریخ تولدت را ثبت کن');
   }
 }
 
@@ -937,11 +955,8 @@ export function renderBirthdayRow() {
 function birthdayLabel(stored) {
   const b = normalizeBirthday(stored);
   if (!b) return '';
-  const en = isEn();
-  const dStr = en ? String(b.d) : faDigits(pad2(b.d));
-  const mStr = JALALI_MONTHS[b.m - 1];
-  const md = `${dStr} ${mStr}`;
-  return b.y === null ? md : (en ? `${md} ${b.y}` : `${md} ${faDigits(b.y)}`);
+  const md = faDigits(pad2(b.d)) + ' ' + JALALI_MONTHS[b.m - 1];
+  return b.y === null ? md : md + ' ' + faDigits(b.y);
 }
 
 function clearBirthday() {
@@ -998,8 +1013,4 @@ export function initBirthday() {
   };
   overlay?.addEventListener('click', onBackdrop);
   document.addEventListener('keydown', onKey);
-
-  if (typeof window !== 'undefined') {
-    window.addEventListener('daftarche:lang-changed', renderBirthdayRow);
-  }
 }

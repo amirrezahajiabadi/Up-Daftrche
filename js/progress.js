@@ -2,10 +2,9 @@
 
 import { state } from './state.js';
 import { $, faNum, startOfToday } from './utils.js';
-import { CATS } from './constants.js';
+import { CATS, LIB_ICONS } from './constants.js';
 import { subscribe } from './bus.js';
 import { renderList, collapse } from './tasks.js';
-import { getLang, t, formatNumber } from './i18n.js';
 
 /* ── Footer counter ──
    The progress ring and the sentence under it moved to the stats page
@@ -15,41 +14,67 @@ import { getLang, t, formatNumber } from './i18n.js';
 function updateProgress() {
   const total = state.tasks.length;
   const done = state.tasks.filter(t => t.done).length;
-  const remaining = total - done;
 
-  if (getLang() === 'en') {
-    $('#counter').textContent = total ? `${formatNumber(remaining)} ${remaining === 1 ? 'task remaining' : 'tasks remaining'}` : '';
-  } else {
-    $('#counter').textContent = total ? `${faNum(remaining)} کار باقی‌مانده` : '';
-  }
+  /* «امروز N کار»: what today has already given, next to what is left. Counted from
+     the moment each task was ticked, so it is an honest tally and not a goal. */
+  const t0 = startOfToday().getTime();
+  const today = state.tasks.filter(t => t.done && t.doneAt >= t0).length;
+  $('#counter').textContent = total
+    ? `${faNum(total - done)} کار باقی‌مانده` + (today ? ` · امروز ${faNum(today)} کار انجام دادی` : '')
+    : '';
   $('#clearBtn').style.visibility = done ? 'visible' : 'hidden';
 }
 
 /* ── Category bar ── */
 function buildCatBar() {
   const wrap = $('#cats');
-  if (!wrap) return;
-  wrap.innerHTML = '';
-  const isEn = getLang() === 'en';
   const mk = (key, label, color) => {
     const b = document.createElement('button');
-    b.className = 'cat-chip' + (key === state.catFilter ? ' active' : '');
+    b.className = 'cat-chip' + (key === 'all' ? ' active' : '');
     b.dataset.cat = key;
     b.style.setProperty('--cc', color);
     b.innerHTML = `<span class="dot"></span>${label}<span class="cnt"></span>`;
     return b;
   };
-  wrap.appendChild(mk('all', isEn ? t('categories.all') : 'همه', 'var(--accent)'));
-  CATS.forEach(c => wrap.appendChild(mk(c.key, isEn ? t(`categories.${c.key}`) : c.label, c.color)));
+  wrap.appendChild(mk('all', 'همه', 'var(--accent)'));
+  CATS.forEach(c => wrap.appendChild(mk(c.key, c.label, c.color)));
+  /* «بدون مهلت» is a property, not a status or a category, so it is a toggle that
+     narrows whatever is chosen — it can sit next to a category or a status. */
+  const flag = document.createElement('button');
+  flag.type = 'button'; flag.className = 'cat-chip is-flag'; flag.dataset.flag = 'nodue';
+  flag.setAttribute('aria-pressed', 'false');
+  flag.innerHTML = '<span class="flag-ico" aria-hidden="true"><svg class="ico" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" stroke-dasharray="3 3.2"/></svg></span>بدون مهلت<span class="cnt"></span>';
+  wrap.appendChild(flag);
+  wrap.addEventListener('click', e => {
+    const b = e.target.closest('.cat-chip');
+    if (!b) return;
+    if (b.dataset.flag === 'nodue') {
+      state.noDue = !state.noDue;
+      b.classList.toggle('on', state.noDue);
+      b.setAttribute('aria-pressed', String(state.noDue));
+      renderList();
+      return;
+    }
+    if (b.classList.contains('active')) return;
+    wrap.querySelector('.cat-chip.active').classList.remove('active');
+    b.classList.add('active');
+    state.catFilter = b.dataset.cat;
+    renderList();
+  });
 }
 
 function updateCatCounts() {
   document.querySelectorAll('.cats .cat-chip').forEach(ch => {
     const k = ch.dataset.cat;
+    if (ch.dataset.flag === 'nodue') {
+      const n = state.tasks.filter(t => !t.done && !t.dueDate).length;
+      ch.querySelector('.cnt').textContent = n ? faNum(n) : '';
+      return;
+    }
     const n = k === 'all'
       ? state.tasks.filter(t => !t.done).length
       : state.tasks.filter(t => !t.done && (t.cat || 'misc') === k).length;
-    ch.querySelector('.cnt').textContent = n ? formatNumber(n) : '';
+    ch.querySelector('.cnt').textContent = n ? faNum(n) : '';
   });
 }
 
@@ -59,14 +84,6 @@ function movePill() {
   if (!act || !pill) return;
   pill.style.width = act.offsetWidth + 'px';
   pill.style.transform = `translateX(${act.offsetLeft}px)`;
-  /* On a phone the bar scrolls sideways, so the chip the highlight is under can
-     sit half outside it — a highlight that cannot be seen says nothing. Only a
-     bar that really scrolls is asked to move, so a resize (which also lands
-     here) can never scroll the page to reach the filters. */
-  const bar = act.closest('.filters');
-  if (bar && bar.scrollWidth > bar.clientWidth + 1) {
-    act.scrollIntoView({ block: 'nearest', inline: 'nearest' });
-  }
 }
 
 /* Measuring the active filter forces layout; a resize fires many events per
@@ -133,22 +150,6 @@ export function initProgress() {
   $('#clearBtn').onclick = () => {
     [...$('#taskList').querySelectorAll('.task.done')].forEach((el, i) => setTimeout(() => collapse(el, el.dataset.id), i * 80));
   };
-
-  $('#cats')?.addEventListener('click', e => {
-    const b = e.target.closest('.cat-chip');
-    if (!b || b.classList.contains('active')) return;
-    $('#cats .active')?.classList.remove('active');
-    b.classList.add('active');
-    state.catFilter = b.dataset.cat;
-    renderList();
-  });
-
-  window.addEventListener('daftarche:lang-changed', () => {
-    buildCatBar();
-    updateCatCounts();
-    updateProgress();
-    movePill();
-  });
 
   subscribe(() => { updateProgress(); updateCatCounts(); updateFrog(); });
 }

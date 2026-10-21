@@ -4,11 +4,12 @@
      · / : Search tasks
      · J / ت: Move selection down to next task
      · K / ن: Move selection up to previous task
-     · Alt + ↑ / ↓: Move the focused task one row up or down (js/tasks.js)
+     · Alt + ↑ / ↓: Move the focused task one place up / down
      · ?: Open shortcuts cheat-sheet modal
 */
 
 import { $ } from './utils.js';
+import { moveTask } from './tasks.js';
 
 export function openShortcuts() {
   const overlay = $('#shortcutsOverlay');
@@ -93,6 +94,13 @@ export function initShortcuts() {
     if (e.key === '?' || (e.shiftKey && e.key === '/')) {
       e.preventDefault();
       openShortcuts();
+      return;
+    }
+
+    /* Alt+↑/↓ on a task row (or anything inside it) moves that task one place. */
+    if (e.altKey && !e.ctrlKey && !e.metaKey && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
+      const row = document.activeElement && document.activeElement.closest && document.activeElement.closest('#taskList .task');
+      if (row) { e.preventDefault(); moveTask(row.dataset.id, e.key === 'ArrowUp' ? -1 : 1); }
       return;
     }
 

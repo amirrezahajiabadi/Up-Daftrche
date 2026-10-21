@@ -12,7 +12,6 @@ import { KHABALO_AVATAR, khabaloMarkup } from './khabalo.js';
 import { FEKRBAZ_AVATAR, fekrbazMarkup } from './fekrbaz.js';
 import { JINGOOL_AVATAR, jingoolMarkup } from './jingool.js';
 import { refreshAchievements } from './achievementsview.js';
-import { getLang, t, getCharInfo, CHAR_QUOTES_I18N } from './i18n.js';
 
 const AV_KEY = 'daftarche-avatar';
 const PHOTO_KEY = 'daftarche-photo';
@@ -198,9 +197,8 @@ export const CHAR_QUOTES = {
   ],
 };
 
-export function randomCharQuote(charId, lang = getLang()) {
-  const q = CHAR_QUOTES_I18N[charId] || CHAR_QUOTES_I18N.qorqori;
-  const list = q[lang] || q.fa;
+export function randomCharQuote(charId) {
+  const list = CHAR_QUOTES[charId] || CHAR_QUOTES.qorqori;
   return list[Math.floor(Math.random() * list.length)];
 }
 
@@ -209,9 +207,7 @@ let lastIdentity = null;
 function renderIdentity() {
   const photo = getPhoto();
   const av = charOf(getAvatar());
-  const curLang = getLang();
-  const isEn = curLang === 'en';
-  const sig = (photo ? 'photo' : 'char') + ':' + av.id + ':' + curLang;
+  const sig = (photo ? 'photo' : 'char') + ':' + av.id;
   if (sig === lastIdentity) return;
   lastIdentity = sig;
 
@@ -234,33 +230,22 @@ function renderIdentity() {
 
   const big = $('#avatarBig');
   if (big) {
-    if (photo) {
-      paintFace(big);
-    } else {
-      const phText = isEn ? 'Profile Photo' : 'عکس پروفایل';
-      big.innerHTML = `<svg class="ph-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8.5A2.5 2.5 0 016.5 6h1.1l1-1.6h6.8l1 1.6h1.1A2.5 2.5 0 0120 8.5v8A2.5 2.5 0 0117.5 19h-11A2.5 2.5 0 014 16.5z"/><circle cx="12" cy="12.6" r="3.2"/></svg><span class="ph-txt">${phText}</span>`;
-    }
+    if (photo) paintFace(big); else big.innerHTML = PHOTO_PLACEHOLDER;
     big.classList.toggle('has-photo', !!photo);
     big.classList.toggle('empty', !photo);
-    big.setAttribute('aria-label', photo
-      ? (isEn ? 'Change profile photo' : 'تغییر عکس پروفایل')
-      : (isEn ? 'Add profile photo' : 'افزودن عکس پروفایل'));
+    big.setAttribute('aria-label', photo ? 'تغییر عکس پروفایل' : 'افزودن عکس پروفایل');
   }
   const rm = $('#photoRemove');
   if (rm) rm.hidden = !photo;
 
   /* The character card answers to the character alone. */
   const info = CHAR_INFO[av.id] || CHAR_INFO.qorqori;
-  const loc = getCharInfo(av.id, curLang);
   const ct = $('#charThumb');
   if (ct) ct.innerHTML = info.mark;
-  const idName = $('#charName'); if (idName) idName.textContent = loc.name;
-  const idSub = $('#charSub'); if (idSub) idSub.textContent = loc.sub;
+  const idName = $('#charName'); if (idName) idName.textContent = info.name;
+  const idSub = $('#charSub'); if (idSub) idSub.textContent = info.sub;
   const idQuote = $('#charQuote');
-  if (idQuote) {
-    const q = randomCharQuote(av.id, curLang);
-    idQuote.textContent = isEn ? `“${q}”` : `«${q}»`;
-  }
+  if (idQuote) idQuote.textContent = `«${randomCharQuote(av.id)}»`;
 }
 
 export function renderProfile() {
@@ -269,19 +254,14 @@ export function renderProfile() {
      grid is built once, so it never redraws itself — without this line the new
      character would reach the card but not the tile it was chosen on. */
   syncGridSelection();
-  const isEn = getLang() === 'en';
-  const name = $('#profileName'); if (name) name.textContent = state.userName || (isEn ? 'Unnamed' : 'بدون اسم');
+  const name = $('#profileName'); if (name) name.textContent = state.userName || 'بدون اسم';
 
   let firstSeen = readString(SEEN_KEY, '');
   if (!firstSeen) { firstSeen = dayKey(new Date()); safeSet(SEEN_KEY, firstSeen); }
   const sub = $('#profileSub');
   if (sub) {
     const d = new Date(firstSeen + 'T00:00:00');
-    if (isEn) {
-      sub.textContent = 'Daftarche member since ' + d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-    } else {
-      sub.textContent = 'عضو دفترچه از ' + d.toLocaleDateString('fa-IR', { month: 'long', year: 'numeric' });
-    }
+    sub.textContent = 'عضو دفترچه از ' + d.toLocaleDateString('fa-IR', { month: 'long', year: 'numeric' });
   }
 
   /* The shelf. The six badges this page used to paint itself are gone: they now
@@ -336,10 +316,8 @@ function syncApply() {
 
 function buildGrid() {
   const g = $('#avatarGrid'); if (!g) return;
-  const curLang = getLang();
 
-  if (g.dataset.built !== curLang) {
-    const isEn = curLang === 'en';
+  if (!g.dataset.built) {
     const frag = document.createDocumentFragment();
     AVATARS.forEach(av => {
       const b = document.createElement('button');
@@ -347,43 +325,38 @@ function buildGrid() {
       b.className = 'avatar-opt';
       b.dataset.id = av.id;
       b.setAttribute('role', 'radio');
-      const loc = getCharInfo(av.id, curLang);
-      const charName = loc.name || av.name;
       /* The name is part of the choice, so the button announces it instead of
          relying on the visible label alone. */
-      b.setAttribute('aria-label', isEn ? `Character ${charName}` : `کاراکتر ${charName}`);
-      b.innerHTML = av.svg + `<span>${charName}</span>`;
+      b.setAttribute('aria-label', `کاراکتر ${av.name}`);
+      b.innerHTML = av.svg + `<span>${av.name}</span>`;
       frag.appendChild(b);
     });
     g.replaceChildren(frag);
-    g.dataset.built = curLang;
+    g.dataset.built = '1';
 
-    if (!g.dataset.bound) {
-      g.dataset.bound = '1';
-      g.addEventListener('click', e => {
-        const b = e.target.closest('.avatar-opt');
-        if (b) stageChar(b.dataset.id);
-      });
+    g.addEventListener('click', e => {
+      const b = e.target.closest('.avatar-opt');
+      if (b) stageChar(b.dataset.id);
+    });
 
-      /* Choosing is moving: the arrow that reaches a tile also stages it, the
-         way a radio group behaves. The horizontal pair follows the writing
-         direction, so "next" is the same side of the list in RTL and LTR. */
-      g.addEventListener('keydown', e => {
-        const rtl = getComputedStyle(g).direction === 'rtl';
-        let step = 0;
-        if (e.key === 'ArrowDown') step = 1;
-        else if (e.key === 'ArrowUp') step = -1;
-        else if (e.key === 'ArrowRight') step = rtl ? -1 : 1;
-        else if (e.key === 'ArrowLeft') step = rtl ? 1 : -1;
-        else return;
-        e.preventDefault();
-        const tiles = [...g.querySelectorAll('.avatar-opt')];
-        const i = tiles.findIndex(t => t.getAttribute('aria-checked') === 'true');
-        const next = tiles[((i < 0 ? 0 : i) + step + tiles.length) % tiles.length];
-        next.focus();
-        stageChar(next.dataset.id);
-      });
-    }
+    /* Choosing is moving: the arrow that reaches a tile also stages it, the
+       way a radio group behaves. The horizontal pair follows the writing
+       direction, so "next" is the same side of the list in RTL and LTR. */
+    g.addEventListener('keydown', e => {
+      const rtl = getComputedStyle(g).direction === 'rtl';
+      let step = 0;
+      if (e.key === 'ArrowDown') step = 1;
+      else if (e.key === 'ArrowUp') step = -1;
+      else if (e.key === 'ArrowRight') step = rtl ? -1 : 1;
+      else if (e.key === 'ArrowLeft') step = rtl ? 1 : -1;
+      else return;
+      e.preventDefault();
+      const tiles = [...g.querySelectorAll('.avatar-opt')];
+      const i = tiles.findIndex(t => t.getAttribute('aria-checked') === 'true');
+      const next = tiles[((i < 0 ? 0 : i) + step + tiles.length) % tiles.length];
+      next.focus();
+      stageChar(next.dataset.id);
+    });
   }
 
   syncGridSelection();
@@ -467,14 +440,13 @@ export function initProfile() {
     // Reset so picking the same file twice still fires a change
     photoInput.value = '';
     if (!file) return;
-    const isEn = getLang() === 'en';
-    if (!/^image\//.test(file.type)) { say(isEn ? 'This file is not an image.' : 'این فایل عکسی نیست.'); return; }
-    if (file.size > PHOTO_MAX_BYTES) { say(isEn ? 'This image is too large; choose a smaller one.' : 'این عکس خیلی حجیمه؛ یه عکس کوچیک‌تر انتخاب کن.'); return; }
+    if (!/^image\//.test(file.type)) { say('این فایل عکسی نیست.'); return; }
+    if (file.size > PHOTO_MAX_BYTES) { say('این عکس خیلی حجیمه؛ یه عکس کوچیک‌تر انتخاب کن.'); return; }
     try {
       const saved = setPhoto(await photoFromFile(file));
-      say(saved ? '' : (isEn ? 'Photo not saved — browser storage is full.' : 'عکس ذخیره نشد — حافظهٔ مرورگر پر است.'));
+      say(saved ? '' : 'عکس ذخیره نشد — حافظهٔ مرورگر پر است.');
     } catch {
-      say(isEn ? 'Failed to read image; try another file.' : 'این عکس خونده نشد؛ یه عکس دیگه امتحان کن.');
+      say('این عکس خونده نشد؛ یه عکس دیگه امتحان کن.');
     }
   });
   $('#photoRemove')?.addEventListener('click', () => { setPhoto(''); say(''); });
@@ -495,11 +467,4 @@ export function initProfile() {
      returns focus to the identity card once the list is gone. */
   ao?.addEventListener('keydown', e => { if (e.key === 'Escape') closeCharPicker(); });
   $('#profileEditName')?.addEventListener('click', () => window.dispatchEvent(new CustomEvent('edit-name')));
-
-  if (typeof window !== 'undefined') {
-    window.addEventListener('daftarche:lang-changed', () => {
-      lastIdentity = null;
-      renderProfile();
-    });
-  }
 }

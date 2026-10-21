@@ -14,7 +14,7 @@
    the app's module graph: a CDN that is slow, blocked or down must not keep the
    notebook from opening. */
 import { $, faNum, faDigits, dayKey, esc, nextId } from './utils.js';
-import { STORAGE_KEYS } from './constants.js';
+import { STORAGE_KEYS, LIB_ICONS } from './constants.js';
 import { getBook, updateBook, getBookBlob, renderShelf, bookDone, bookComplete, syncGoalPageCap } from './library.js';
 import { recordDay } from './week.js';
 import { jingoolMarkup } from './jingool.js';
@@ -251,7 +251,9 @@ export function initReader() {
     if (inp) inp.value = p;
     gotoPage(p);
   });
-  $('#markReadBtn').onclick = togglePageRead;
+  /* An arrow, not the bare function: onclick would hand the click event to
+     togglePageRead's `auto` flag, and a manual tap would read as the clock. */
+  $('#markReadBtn').onclick = () => togglePageRead();
   $('#readerEngine').onclick = () => switchEngine();
 
   /* Scene lighting mode cycle */
@@ -564,6 +566,14 @@ function syncSettingsUI() {
 }
 
 /* ── Dual Annotation Engine: Draw (fine pen) vs. Highlight (broad marker) ── */
+/* The eraser and the undo only matter once there is something to erase or a tool in
+   hand, so an idle toolbar shows two fewer buttons (they come back the moment a
+   tool is picked or the page has a mark on it). */
+function syncDrawExtras() {
+  const hasMarks = (curBook?.highlights || []).some(h => h.page === curPage);
+  $('#drawGroup')?.classList.toggle('show-extras', Boolean(penActive || eraseActive || hasMarks));
+}
+
 function setToolMode(mode) {
   if (mode === toolMode) {
     mode = null;
@@ -609,6 +619,7 @@ function setToolMode(mode) {
     $('#readerHint').hidden = true;
   }
   syncPenUI();
+  syncDrawExtras();
 }
 
 function togglePen(force) {
@@ -650,6 +661,7 @@ function toggleEraser(force) {
   } else if (erasing) {
     endErase();
   }
+  syncDrawExtras();
 }
 
 /* Direct Undo of the last drawn or highlighted mark on the current page */
@@ -1214,6 +1226,7 @@ async function openReader(id, opts = {}) {
      after the assignment (as teardown does for everything else) credited the
      reading time to whichever book was opened next. */
   if (timer.running) stopTimerSession();
+  cancelAutoRead();
   curBook = book;
   /* Bind the page before the first draw: renderPage() reads curPage, so
      without this a freshly opened book would first paint the previous book's
@@ -1370,6 +1383,7 @@ async function openReader(id, opts = {}) {
   updatePageUI();
   updateGoalBar();
   $('#readerLoading').hidden = true;
+  startAutoRead();
 }
 
 /* Switch the visible stage to the browser-viewer iframe */
@@ -1393,6 +1407,7 @@ function engageFallbackUI(reason) {
 function closeReader() {
   openSeq++;
   teardownEngine();
+  cancelAutoRead();
   if (timer.running) stopTimerSession();
   $('#readerView').hidden = true;
   document.body.classList.remove('reader-immersive');
@@ -1709,6 +1724,7 @@ function updatePageUI() {
   const hasMarks = (curBook?.highlights || []).some(h => h.page === curPage);
   const undoBtn = $('#strokeUndoBtn');
   if (undoBtn) undoBtn.disabled = !hasMarks;
+  syncDrawExtras();
 
   const isFallback = engine === 'browser';
   if ($('#dockPen')) $('#dockPen').disabled = isFallback;
@@ -1761,6 +1777,7 @@ function gotoPage(n) {
   }
   updatePageUI();
   updateGoalBar();
+  startAutoRead();
 }
 
 /* ── Page completion ── */
@@ -1769,18 +1786,68 @@ function updateMarkBtn() {
   if (!btn || !curBook) return;
   const read = bookDone(curBook).has(curPage);
   btn.classList.toggle('is-read', read);
-  /* The tick does two things at once — it marks the page and turns it — so the
-     label says both. Nothing changes in the button's footprint: the wording
-     lives in the tooltip and in the screen-reader text. */
-  const markLabel = 'علامت‌زدن و رفتن به صفحهٔ بعد';
-  btn.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg><span id="markReadText" class="sr-only">${read ? 'خوانده شد' : markLabel}</span>`;
-  btn.title = read ? 'خوانده شد — کلیک برای تغییر به خوانده‌نشده' : markLabel;
+  btn.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg><span id="markReadText" class="mark-read-label">${read ? 'خوانده شد' : 'خواندم'}</span>`;
+  btn.title = read ? 'خوانده شد — کلیک برای تغییر به خوانده‌نشده' : 'علامت‌گذاری صفحه به عنوان خوانده شده (خودکار هم پس از یک دقیقه ماندن)';
   btn.setAttribute('aria-pressed', String(read));
-  btn.setAttribute('aria-label', read ? 'صفحه خوانده شد' : markLabel);
+  btn.setAttribute('aria-label', read ? 'صفحه خوانده شد' : 'علامت‌گذاری صفحه به عنوان خوانده شده');
   $('#pageWrap')?.classList.toggle('is-read', read);
 }
 
-function togglePageRead() {
+/* ── Auto-read: a page that stays open for a minute counts as read ──
+   Progress used to come only from the «خواندم» button, so a book could sit on
+   page 7 of 13 and still say 0%. A page now also counts once it has been the
+   open page, with the tab in front, for AUTO_READ_MS of *visible* time: the
+   clock pauses while the tab is hidden and restarts from zero on every page
+   change. It only ever marks — a page is never un-read by it — and a manual
+   tap on the button (either way) ends the clock for that visit, so un-marking a
+   page the clock was about to claim sticks. Only the internal renderer has a
+   page the app knows about; the browser-viewer iframe scrolls on its own. */
+const AUTO_READ_MS = 60000;
+const autoRead = { t: null, left: 0, since: 0, bookId: null, page: 0 };
+
+function cancelAutoRead() {
+  clearTimeout(autoRead.t);
+  autoRead.t = null;
+  autoRead.left = 0;
+}
+function pauseAutoRead() {
+  if (autoRead.t === null) return;
+  clearTimeout(autoRead.t);
+  autoRead.t = null;
+  autoRead.left = Math.max(0, autoRead.left - (Date.now() - autoRead.since));
+}
+/* (Re)starts the clock for whatever time is left on the current page. */
+function runAutoRead() {
+  clearTimeout(autoRead.t);
+  autoRead.t = null;
+  if (!curBook || engine !== 'internal' || autoRead.left <= 0) return;
+  if (document.hidden || $('#readerView').hidden) return;
+  if (bookDone(curBook).has(curPage)) return;
+  autoRead.since = Date.now();
+  autoRead.t = setTimeout(autoMarkRead, autoRead.left);
+}
+/* A new page (or a newly opened book) is on screen: a fresh minute begins. */
+function startAutoRead() {
+  autoRead.bookId = curBook ? curBook.id : null;
+  autoRead.page = curPage;
+  autoRead.left = AUTO_READ_MS;
+  runAutoRead();
+}
+function autoMarkRead() {
+  autoRead.t = null;
+  autoRead.left = 0;
+  if (!curBook || curBook.id !== autoRead.bookId || curPage !== autoRead.page) return;
+  if (engine !== 'internal' || document.hidden || $('#readerView').hidden) return;
+  if (bookDone(curBook).has(curPage)) return;
+  togglePageRead(true);
+}
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) pauseAutoRead();
+  else if (curBook && autoRead.bookId === curBook.id && autoRead.page === curPage) runAutoRead();
+});
+
+function togglePageRead(auto = false) {
+  if (!auto) cancelAutoRead();
   const done = new Set(curBook.completedPages || []);
   const marked = !done.has(curPage);
   if (marked) done.add(curPage);
@@ -1794,13 +1861,7 @@ function togglePageRead() {
   updateBook(curBook.id, { completedPages: curBook.completedPages, stats: curBook.stats, lastReadAt: Date.now() });
   updatePageUI();
   updateGoalBar();
-  /* Marking the last unread page finishes the book: the celebration is the
-     answer to that tap, and there is no next page to turn to. */
   if (bookComplete(curBook)) celebrateCompletion();
-  /* Otherwise the tick carries the reader forward, so finishing a page and
-     moving on is one action instead of two. Unmarking stays put — nothing was
-     completed, so there is nothing to advance past. */
-  else if (marked && curPage < (curBook.numPages || Infinity)) gotoPage(curPage + 1);
 }
 
 /* ── Goal bar ── */
@@ -1813,15 +1874,15 @@ function updateGoalBar() {
   const rawG = Number(curBook.goal?.pagesPerDay);
   const g = Number.isFinite(rawG) && rawG > 0 ? rawG : null;
   const pct = g ? Math.min(100, Math.round((st.pages / g) * 100)) : 0;
-  const goalName = curBook.goal?.text ? `<span class="goal-name">🎯 ${esc(curBook.goal.text)}</span>` : '';
+  const goalName = curBook.goal?.text ? `<span class="goal-name">${LIB_ICONS.target} ${esc(curBook.goal.text)}</span>` : '';
 
   if (chipText) {
     if (g) {
-      chipText.textContent = `🎯 ${faNum(st.pages)}/${faNum(g)}`;
+      chipText.innerHTML = `${LIB_ICONS.target} ${faNum(st.pages)}/${faNum(g)}`;
     } else if (curBook.goal?.text) {
-      chipText.textContent = `🎯 ${curBook.goal.text}`;
+      chipText.innerHTML = `${LIB_ICONS.target} ${esc(curBook.goal.text)}`;
     } else {
-      chipText.textContent = '🎯 هدف';
+      chipText.innerHTML = `${LIB_ICONS.target} هدف`;
     }
   }
   if (chip) {
@@ -2036,10 +2097,10 @@ function buildNotes() {
       ${it.color ? `<i class="dot" style="background:${resolveColor(it.color)}"></i>` : ''}
       <div class="note-body">
         <span class="note-text">${it.free ? '<b class="free-tag">نشان قلمی</b>' : esc(it.text)}</span>
-        ${it.note ? `<span class="note-note">📝 ${esc(it.note)}</span>` : ''}
+        ${it.note ? `<span class="note-note">${LIB_ICONS.note} ${esc(it.note)}</span>` : ''}
       </div>
       <span class="note-page">ص ${faNum(it.page)}</span>
-      <button class="note-del" aria-label="حذف">✕</button>`;
+      <button class="note-del" aria-label="حذف">${LIB_ICONS.close}</button>`;
     el.addEventListener('click', e => {
       if (e.target.closest('.note-del')) {
         if (it.source === 'highlights') curBook.highlights = (curBook.highlights || []).filter(x => x.id !== it.id);
@@ -2109,10 +2170,11 @@ function stopTimerSession() {
      minute made every accidental tap — the double-tap that starts and stops the
      timer by mistake — add a minute to the day's total, so the totals drifted
      upwards until they described nothing. Below the floor the session records
-     zero minutes and only the streak day is kept. */
+     zero minutes — and, now, no streak day either: a mis-tap used to keep the
+     streak alive without any reading having happened. */
   const m = ms >= 30000 ? Math.round(ms / 60000) : 0;
   if (m > 0 && curBook) addToday('minutes', m);
-  recordDay();
+  if (ms >= 30000) recordDay();
   updateGoalBar();
 }
 

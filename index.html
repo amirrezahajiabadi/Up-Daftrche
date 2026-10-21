@@ -13,7 +13,7 @@
      · blob: is for what the person made on this device: PDF files for the
        browser viewer, uploaded music, the share-card image.
      · Not expressible in a <meta>: frame-ancestors / report-uri. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-5bdq/c0e6nuEuHpJp4SA47RZ2EnvdNmIjtTzmJ9k1bk=' https://cdn.jsdelivr.net; worker-src 'self' blob: https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' https://cdn.jsdelivr.net; media-src 'self' blob: data:; connect-src 'self' https://cdn.jsdelivr.net; frame-src blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-aQ5I4yJcQwtrp7t3FO1C3mDdaYVKbtLTctIwEiv3jhc=' https://cdn.jsdelivr.net; worker-src 'self' blob: https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' https://cdn.jsdelivr.net; media-src 'self' blob: data:; connect-src 'self' https://cdn.jsdelivr.net; frame-src blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
 <meta name="theme-color" content="#f6efe3"/>
 <!-- The browser paints its own chrome (page canvas, scrollbars, form controls)
@@ -60,16 +60,6 @@
     if (!saved) saved = matchMedia('(prefers-color-scheme:dark)').matches ? 'night' : 'paper';
     document.documentElement.dataset.theme = saved;
     document.documentElement.dataset.mode = DARK.indexOf(saved) < 0 ? 'light' : 'dark';
-    var lang = localStorage.getItem('daftarche-lang') || 'fa';
-    if (lang === 'en') {
-      document.documentElement.setAttribute('lang', 'en');
-      document.documentElement.setAttribute('dir', 'ltr');
-      document.documentElement.dataset.lang = 'en';
-    } else {
-      document.documentElement.setAttribute('lang', 'fa');
-      document.documentElement.setAttribute('dir', 'rtl');
-      document.documentElement.dataset.lang = 'fa';
-    }
   } catch (e) { /* private mode / storage disabled: the light default stands */ }
 })();
 </script>
@@ -122,9 +112,9 @@
 <body>
 
 <div class="ios-install-banner" id="iosInstallBanner" hidden role="region" aria-label="راهنمای نصب دفتَرچه روی iOS">
-  <span class="ios-guide-icon">📲</span>
+  <span class="ios-guide-icon"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="6.5" y="2.5" width="11" height="19" rx="2.5"/><path d="M11 18.5h2"/></svg></span>
   <span class="ios-guide-text">برای جلوگیری از پاک شدن داده‌ها در iOS: دکمهٔ اشتراک‌گذاری <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13"/></svg> را در سافاری بزنید و «Add to Home Screen» را انتخاب کنید.</span>
-  <button type="button" class="ios-guide-close" aria-label="بستن راهنمای نصب">✕</button>
+  <button type="button" class="ios-guide-close" aria-label="بستن راهنمای نصب"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
 </div>
 
 <svg class="doodle d-sun" width="70" height="70" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="12" cy="12" r="4.5"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg>
@@ -177,21 +167,21 @@
      starts. The month title carries no year, because the stored date has none. -->
 <div class="overlay" id="bdPickOverlay" hidden>
   <div class="name-card cal-card bd-pick-card sheet-paper" role="dialog" aria-modal="true" aria-labelledby="bdPickTitle">
-    <h2 id="bdPickTitle" data-i18n="birthday.dialogTitle">تاریخ تولدت</h2>
+    <h2 id="bdPickTitle">تاریخ تولدت</h2>
     <div id="bdCal"></div>
-    <button class="skip" id="bdPickClose" data-i18n="common.close">بستن</button>
+    <button class="skip" id="bdPickClose">بستن</button>
   </div>
 </div>
 
 <div class="overlay" id="rollOverlay" hidden>
   <div class="roll-card" role="dialog" aria-modal="true" aria-labelledby="rollTitle">
-    <p class="roll-title" id="rollTitle" data-i18n="tasks.diceTitle">کار بعدیت چیه؟</p>
+    <p class="roll-title" id="rollTitle">کار بعدیت چیه؟</p>
     <div class="roll-box" id="rollBox"><span id="rollText"></span></div>
     <div class="roll-actions" id="rollActions" hidden>
-      <button class="go" id="rollGo" data-i18n="tasks.diceGo">بریم سراغش</button>
-      <button class="ghost" id="rollAgain" data-i18n="tasks.diceAgain">یکی دیگه</button>
+      <button class="go" id="rollGo">بریم سراغش</button>
+      <button class="ghost" id="rollAgain">یکی دیگه</button>
     </div>
-    <button class="skip" id="rollClose" data-i18n="common.cancel">بی‌خیال</button>
+    <button class="skip" id="rollClose">بی‌خیال</button>
   </div>
 </div>
 
@@ -200,7 +190,7 @@
   <main class="app">
     <header>
       <div>
-        <h1 id="todayGreet">سلام 👋</h1>
+        <h1 id="todayGreet">سلام</h1>
         <p class="subtitle" id="todayDate"></p>
         <p class="today-summary" id="todaySummary"></p>
       </div>
@@ -224,12 +214,22 @@
 
     <section class="today-sec frog-sec" id="todayFrog"></section>
 
+    <section class="today-sec" id="todayReading" hidden>
+      <div class="sec-head">
+        <h2>خواندن امروز</h2>
+      </div>
+      <ul class="today-reading" id="todayReadingList"></ul>
+    </section>
+
     <section class="today-sec">
       <div class="sec-head">
         <h2>کارهای امروز</h2>
+        <button type="button" class="dice today-dice" id="todayDiceBtn" hidden title="کدوم رو اول انجام بدم؟" aria-label="انتخاب شانسی از کارهای امروز">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="4.5"/><circle cx="8.5" cy="8.5" r="1.3" fill="currentColor" stroke="none"/><circle cx="15.5" cy="15.5" r="1.3" fill="currentColor" stroke="none"/></svg><span class="dice-label">کدوم اول؟</span>
+        </button>
       </div>
       <ul class="today-list" id="todayList"></ul>
-      <button class="today-all" id="todayAllBtn" type="button">مشاهده همه کارها ←</button>
+      <button class="today-all" id="todayAllBtn" type="button">مشاهده همه کارها <svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"/><path d="M11 6l-6 6 6 6"/></svg></button>
     </section>
 
     <section class="today-sec">
@@ -261,7 +261,7 @@
         <h1>دفتَرچه
           <svg class="underline" viewBox="0 0 120 12" fill="none"><path d="M2 8 Q 20 2 40 7 T 80 7 T 118 5" stroke="currentColor" stroke-width="4" stroke-linecap="round"/></svg>
         </h1>
-        <p class="subtitle">لیست کارهای خودم و رفقا — <span id="dateLine"></span></p>
+        <p class="subtitle">کارهای من — <span id="dateLine"></span></p>
       </div>
       <div class="header-actions">
         <button class="header-avatar" aria-label="پروفایل"></button>
@@ -274,52 +274,55 @@
 
     <form class="add-form" id="addForm" autocomplete="off">
       <div class="add-line">
-        <input id="taskInput" type="text" maxlength="120" placeholder="مثلاً «فردا ساعت ۳ جلسه با علی» یا فقط عنوان کار" data-i18n-placeholder="tasks.addPlaceholder"/>
+        <input id="taskInput" type="text" maxlength="120" placeholder="یه کار جدید بنویس…"/>
         <button class="add-btn" type="submit" aria-label="افزودن">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
         </button>
       </div>
-      <div class="pri-row" id="priRow">
-        <span data-i18n="tasks.priorityColon">اولویت:</span>
-        <button type="button" data-p="low"><svg class="ic" viewBox="0 0 24 24"><path d="M12 20v-7"/><path d="M12 13c0-3.4 2.4-5.6 6.4-5.6 0 3.4-2.4 5.6-6.4 5.6z"/><path d="M12 13c0-3.4-2.4-5.6-6.4-5.6 0 3.4 2.4 5.6 6.4 5.6z"/></svg><span data-i18n="tasks.priorityLow">کم</span></button>
-        <button type="button" data-p="mid" class="sel"><svg class="ic" viewBox="0 0 24 24"><path d="M13 2 5 13.5h5.5L9 22l8-11.5h-5.5L13 2z"/></svg><span data-i18n="tasks.priorityMid">متوسط</span></button>
-        <button type="button" data-p="high"><svg class="ic" viewBox="0 0 24 24"><path d="M12 3c1 2.4-.2 3.9-1.4 5.3C9.4 9.7 8 11.2 8 13.4a4.2 4.2 0 0 0 8.4 0c0-2.2-1.4-3.7-2.6-5.1C12.6 7 11.4 5.4 12 3z"/></svg><span data-i18n="tasks.priorityHigh">زیاد</span></button>
+      <div class="add-meta">
+        <p class="add-tip" id="addTip">مثلاً بنویس «خرید شیر فردا ۳۰ دقیقه #خرید» تا مهلت، زمان و دسته خودشون پر بشن.</p>
+        <button type="button" class="add-more-toggle" id="addMoreToggle" aria-expanded="false" aria-controls="addMore">جزئیات<span class="add-more-dot" aria-hidden="true"></span><svg class="add-more-chev" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
       </div>
-      <div class="cat-row" id="catRow">
-        <span data-i18n="tasks.categoryColon">دسته:</span>
-        <div class="cat-scroll" id="catScroll"></div>
+      <p class="add-error" id="addError" role="alert" hidden>اول یه چیزی بنویس، بعد اضافه‌ش کن.</p>
+      <div class="add-more" id="addMore" hidden>
+      <div class="pri-row" id="priRow">
+        <span>اولویت:</span>
+        <button type="button" data-p="low"><svg class="ic" viewBox="0 0 24 24"><path d="M12 20v-7"/><path d="M12 13c0-3.4 2.4-5.6 6.4-5.6 0 3.4-2.4 5.6-6.4 5.6z"/><path d="M12 13c0-3.4-2.4-5.6-6.4-5.6 0 3.4 2.4 5.6 6.4 5.6z"/></svg>کم</button>
+        <button type="button" data-p="mid" class="sel"><svg class="ic" viewBox="0 0 24 24"><path d="M13 2 5 13.5h5.5L9 22l8-11.5h-5.5L13 2z"/></svg>متوسط</button>
+        <button type="button" data-p="high"><svg class="ic" viewBox="0 0 24 24"><path d="M12 3c1 2.4-.2 3.9-1.4 5.3C9.4 9.7 8 11.2 8 13.4a4.2 4.2 0 0 0 8.4 0c0-2.2-1.4-3.7-2.6-5.1C12.6 7 11.4 5.4 12 3z"/></svg>زیاد</button>
       </div>
       <div class="due-row" id="dueRow">
-        <span data-i18n="tasks.dueColon">مهلت:</span>
-        <button type="button" data-due="none" class="sel" data-i18n="tasks.noDeadline">بدون مهلت</button>
-        <button type="button" data-due="0" data-i18n="tasks.today">امروز</button>
-        <button type="button" data-due="1" data-i18n="tasks.tomorrow">فردا</button>
-        <button type="button" data-due="2" data-i18n="tasks.dayAfter">پس‌فردا</button>
-        <button type="button" id="dueCustom" data-due="custom" data-i18n="tasks.customDate">تاریخ…</button>
+        <span>مهلت:</span>
+        <button type="button" data-due="none" class="sel">بدون مهلت</button>
+        <button type="button" data-due="0">امروز</button>
+        <button type="button" data-due="1">فردا</button>
+        <button type="button" data-due="2">پس‌فردا</button>
+        <button type="button" id="dueCustom" data-due="custom">تاریخ…</button>
       </div>
       <div class="dur-row" id="durRow">
-        <span data-i18n="tasks.durationColon">زمان:</span>
-        <button type="button" data-dur="none" class="sel" data-i18n="tasks.durNone">ندارد</button>
-        <button type="button" data-dur="5" data-i18n="tasks.dur5">۵ دقیقه</button>
-        <button type="button" data-dur="15" data-i18n="tasks.dur15">۱۵ دقیقه</button>
-        <button type="button" data-dur="30" data-i18n="tasks.dur30">۳۰ دقیقه</button>
-        <button type="button" data-dur="60" data-i18n="tasks.dur60">۶۰ دقیقه</button>
-        <button type="button" data-dur="90" data-i18n="tasks.dur90">۹۰ دقیقه</button>
-        <button type="button" data-dur="custom" data-i18n="tasks.durCustom">زمان دلخواه</button>
-        <input id="durCustom" type="number" min="1" max="480" placeholder="دقیقه" aria-label="مدت زمان دلخواه به دقیقه" hidden data-i18n-placeholder="tasks.minutePlaceholder" data-i18n-aria-label="tasks.durCustomAria">
+        <span>زمان:</span>
+        <button type="button" data-dur="none" class="sel">ندارد</button>
+        <button type="button" data-dur="5">۵ دقیقه</button>
+        <button type="button" data-dur="15">۱۵ دقیقه</button>
+        <button type="button" data-dur="30">۳۰ دقیقه</button>
+        <button type="button" data-dur="60">۶۰ دقیقه</button>
+        <button type="button" data-dur="90">۹۰ دقیقه</button>
+        <button type="button" data-dur="custom">زمان دلخواه</button>
+        <input id="durCustom" type="number" min="1" max="480" placeholder="دقیقه" aria-label="مدت زمان دلخواه به دقیقه" hidden>
       </div>
       <span class="dur-hint" id="durHint" hidden></span>
+      </div>
       <div class="quickadd-preview" id="taskQuickAddPreview" hidden></div>
     </form>
 
     <div class="search">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
-      <input id="searchInput" placeholder="جستجو بین کارها…" data-i18n-placeholder="tasks.searchPlaceholder"/>
-      <button class="search-clear" id="searchClear" hidden aria-label="پاک کردن جستجو" data-i18n-aria-label="tasks.clearSearch">
+      <input id="searchInput" placeholder="جستجو بین کارها…"/>
+      <button class="search-clear" id="searchClear" hidden aria-label="پاک کردن جستجو">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
       </button>
-      <button class="dice" id="diceBtn" title="کار بعدی چیه؟" aria-label="انتخاب شانسی کار بعدی" data-i18n-title="tasks.diceTitle" data-i18n-aria-label="tasks.diceAria">
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="4.5"/><circle cx="8.5" cy="8.5" r="1.3" fill="currentColor" stroke="none"/><circle cx="15.5" cy="8.5" r="1.3" fill="currentColor" stroke="none"/><circle cx="8.5" cy="15.5" r="1.3" fill="currentColor" stroke="none"/><circle cx="15.5" cy="15.5" r="1.3" fill="currentColor" stroke="none"/></svg>
+      <button class="dice" id="diceBtn" title="کار بعدی چیه؟" aria-label="انتخاب شانسی کار بعدی">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="4.5"/><circle cx="8.5" cy="8.5" r="1.3" fill="currentColor" stroke="none"/><circle cx="15.5" cy="8.5" r="1.3" fill="currentColor" stroke="none"/><circle cx="8.5" cy="15.5" r="1.3" fill="currentColor" stroke="none"/><circle cx="15.5" cy="15.5" r="1.3" fill="currentColor" stroke="none"/></svg><span class="dice-label">کار بعدی؟</span>
       </button>
     </div>
 
@@ -327,15 +330,14 @@
 
     <div class="filters" id="filters">
       <div class="filter-pill" id="pill"></div>
-      <button class="active" data-filter="all" data-i18n="tasks.filterAll">همه</button>
-      <button data-filter="active" data-i18n="tasks.filterActive">در حال انجام</button>
-      <button data-filter="done" data-i18n="tasks.filterDone">انجام شده</button>
-      <button data-filter="overdue" data-i18n="tasks.filterOverdue">کار های عقب افتاده</button>
+      <button class="active" data-filter="all">همه</button>
+      <button data-filter="active">در حال انجام</button>
+      <button data-filter="overdue">عقب‌افتاده</button>
+      <button data-filter="done">انجام شده</button>
     </div>
 
     <ul class="tasks" id="taskList"></ul>
-    <!-- Where a row says it moved, for a reader who cannot see the row move. -->
-    <p class="sr-only" id="taskLive" role="status" aria-live="polite"></p>
+    <div class="sr-only" id="taskLive" role="status" aria-live="polite"></div>
 
     <div class="empty" id="empty" hidden>
       <span class="art" id="artEmpty">
@@ -360,7 +362,7 @@
 
     <div class="list-footer">
       <span id="counter"></span>
-      <button class="clear-btn" id="clearBtn" data-i18n="tasks.clearDone">پاک‌کردن انجام‌شده‌ها</button>
+      <button class="clear-btn" id="clearBtn">پاک‌کردن انجام‌شده‌ها</button>
     </div>
   </main>
 </div>
@@ -373,7 +375,7 @@
         <h1>آمار من
           <svg class="underline" viewBox="0 0 120 12" fill="none"><path d="M2 8 Q 20 2 40 7 T 80 7 T 118 5" stroke="currentColor" stroke-width="4" stroke-linecap="round"/></svg>
         </h1>
-        <p class="subtitle" id="statsSub" data-i18n="stats.subtitle">نگاهی به عملکردت</p>
+        <p class="subtitle" id="statsSub">نگاهی به عملکردت</p>
       </div>
     </header>
 
@@ -381,7 +383,7 @@
 
     <button class="stats-share" id="shareStatsBtn" type="button">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v11"/><path d="M8 7l4-4 4 4"/><path d="M5 13v6a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-6"/></svg>
-      <span data-i18n="stats.shareCard">کارت آمار</span>
+      <span>کارت آمار</span>
     </button>
 
     <div class="progress-card">
@@ -401,8 +403,8 @@
 
     <div class="week-card">
       <div class="week-head">
-        <strong data-i18n="stats.taskTrends">روند کارها</strong>
-        <span class="streak" id="streakChip" title="روزهای پیاپی که حداقل یک کار تمام شده" data-i18n-title="stats.streakTooltip">
+        <strong>روند کارها</strong>
+        <span class="streak" id="streakChip" title="روزهای پیاپی که حداقل یک کار تمام شده">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2c1.2 3-.3 4.9-1.7 6.6C8.9 10.3 8 11.9 8 13.8a4.5 4.5 0 0 0 9 0c0-1.9-.9-3.5-2.3-5.2C13.3 6.9 11.8 5 12 2z"/></svg>
           <span id="streakVal"></span>
         </span>
@@ -415,17 +417,17 @@
 
     <div class="insights-empty" id="statsEmpty" hidden>
       <span class="insights-empty-char" aria-hidden="true"></span>
-      <strong data-i18n="stats.emptyTitle">این بازه هنوز کاری نداشته.</strong>
-      <p data-i18n="stats.emptySub">یه کار تیک بزن یا یه تمرکز شروع کن تا این صفحه پر بشه.</p>
+      <strong>این بازه هنوز کاری نداشته.</strong>
+      <p>یه کار تیک بزن یا یه تمرکز شروع کن تا این صفحه پر بشه.</p>
     </div>
 
     <div id="statsBody" hidden>
       <div class="stat-section" id="statsInsightsSection" hidden>
-        <div class="stat-sec-head"><strong data-i18n="stats.insightsTitle">چیزهایی که دیدیم</strong><span data-i18n="stats.insightsPeriod">۷ روز گذشته</span></div>
+        <div class="stat-sec-head"><strong>چیزهایی که دیدیم</strong><span>۷ روز گذشته</span></div>
         <div class="stats-row" id="insightsSummary"></div>
         <div class="insights-list" id="insightsList"></div>
         <div class="insight-suggestion" id="insightsSuggestion" hidden>
-          <div class="vibe-head"><strong data-i18n="stats.forNextTime">برای دفعه بعد</strong></div>
+          <div class="vibe-head"><strong>برای دفعه بعد</strong></div>
           <p id="insightsSuggestionText"></p>
         </div>
       </div>
@@ -438,7 +440,7 @@
 
       <div class="stat-section" id="statsHistory" hidden>
         <div class="stat-sec-head">
-          <strong data-i18n="stats.historyTitle">سابقهٔ تمرکز</strong>
+          <strong>سابقهٔ تمرکز</strong>
           <span id="statsHistoryCount"></span>
         </div>
         <div class="stat-sessions" id="statsHistoryList"></div>
@@ -483,7 +485,7 @@
         </h1>
         <p class="subtitle">چیزهایی که داری می‌خونی.</p>
       </div>
-      <button class="import-btn" id="importBtn"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span data-i18n="library.addBook">افزودن کتاب</span></button>
+      <button class="import-btn" id="importBtn"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>افزودن کتاب</button>
       <input type="file" id="bookFile" accept="application/pdf" hidden>
     </header>
 
@@ -491,59 +493,60 @@
       <div class="lib-stats-strip sheet-paper" id="libraryStatsBar" hidden>
         <div class="lib-stat-item">
           <span class="lib-stat-num" id="statBooksCount">۰</span>
-          <span class="lib-stat-label" data-i18n="library.statBooks">📚 کتاب‌ها</span>
+          <span class="lib-stat-label"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h4v16H4z"/><path d="M10 4h4v16h-4z"/><path d="M16 5.5l3.8-1 3 14.6-3.8 1z" transform="translate(-1.4 .4)"/></svg> کتاب‌ها</span>
           <span class="lib-stat-sub" id="statBooksSub">۰ مطالعه · ۰ تمام</span>
         </div>
         <div class="lib-stat-item">
           <span class="lib-stat-num" id="statPagesCount">۰</span>
-          <span class="lib-stat-label" data-i18n="library.statPages">📄 صفحه‌ها</span>
+          <span class="lib-stat-label"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8M8 17h5"/></svg> صفحه‌ها</span>
         </div>
         <div class="lib-stat-item">
           <span class="lib-stat-num" id="statTimeCount">۰ دقیقه</span>
-          <span class="lib-stat-label" data-i18n="library.statTime">⏱ مطالعه</span>
+          <span class="lib-stat-label"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 2"/></svg> مطالعه</span>
         </div>
         <div class="lib-stat-item">
           <span class="lib-stat-num" id="statNotesCount">۰</span>
-          <span class="lib-stat-label" data-i18n="library.statNotes">📝 نکات</span>
+          <span class="lib-stat-label"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v12H9l-5 4z"/><path d="M8 9h8M8 12.5h5"/></svg> نکات</span>
         </div>
       </div>
 
       <div class="shelf-controls" id="shelfControls" hidden>
         <div class="shelf-bar">
           <svg class="shelf-search-icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-          <input type="search" id="shelfSearch" class="shelf-search-input" placeholder="جستجوی عنوان کتاب…" aria-label="جستجوی کتاب" data-i18n-placeholder="library.searchPlaceholder" data-i18n-aria-label="library.searchAria">
-          <button type="button" class="shelf-search-clear" id="shelfSearchClear" aria-label="پاک کردن جستجو" data-i18n-aria-label="tasks.clearSearch" hidden>✕</button>
+          <input type="search" id="shelfSearch" class="shelf-search-input" placeholder="جستجوی عنوان کتاب…" aria-label="جستجوی کتاب">
+          <button type="button" class="shelf-search-clear" id="shelfSearchClear" aria-label="پاک کردن جستجو" hidden><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
           <div class="shelf-sort-wrap">
-            <select id="shelfSortSelect" class="shelf-sort-select" aria-label="مرتب‌سازی کتاب‌ها" data-i18n-aria-label="library.sortAria">
-              <option value="lastRead" data-i18n="library.sortRecent">⇅ اخیر</option>
-              <option value="progress" data-i18n="library.sortProgress">⇅ پیشرفت</option>
-              <option value="newest" data-i18n="library.sortNewest">⇅ تازه‌ها</option>
-              <option value="title" data-i18n="library.sortTitle">⇅ الفبا</option>
+            <select id="shelfSortSelect" class="shelf-sort-select" aria-label="مرتب‌سازی کتاب‌ها">
+              <option value="lastRead">⇅ آخرین مطالعه</option>
+              <option value="progress">⇅ پیشرفت</option>
+              <option value="newest">⇅ تازه‌ترین</option>
+              <option value="title">⇅ الفبا</option>
             </select>
           </div>
         </div>
-        <div class="shelf-filter-chips" id="shelfFilter" role="group" aria-label="فیلتر وضعیت کتاب" data-i18n-aria-label="library.filterAria">
-          <button type="button" class="s-filter-chip on" data-filter="all" aria-pressed="true" data-i18n="library.filterAll">همه</button>
-          <button type="button" class="s-filter-chip" data-filter="reading" aria-pressed="false" data-i18n="library.filterReading">در حال مطالعه</button>
-          <button type="button" class="s-filter-chip" data-filter="unread" aria-pressed="false" data-i18n="library.filterUnread">خوانده‌نشده</button>
-          <button type="button" class="s-filter-chip" data-filter="done" aria-pressed="false" data-i18n="library.filterDone">تکمیل‌شده</button>
+        <div class="shelf-filter-chips" id="shelfFilter" role="group" aria-label="فیلتر وضعیت کتاب">
+          <button type="button" class="s-filter-chip on" data-filter="all" aria-pressed="true">همه</button>
+          <button type="button" class="s-filter-chip" data-filter="reading" aria-pressed="false">در حال مطالعه</button>
+          <button type="button" class="s-filter-chip" data-filter="unread" aria-pressed="false">خوانده‌نشده</button>
+          <button type="button" class="s-filter-chip" data-filter="done" aria-pressed="false">تکمیل‌شده</button>
         </div>
       </div>
 
-      <div class="shelf-head"><strong data-i18n="library.shelfTitle">قفسهٔ من</strong><span id="shelfCount"></span></div>
+      <div class="shelf-head"><strong>قفسهٔ من</strong><span id="shelfCount"></span></div>
       <div id="lastReadSlot"></div>
       <div class="shelf-grid" id="shelfGrid"></div>
       <div id="doneShelf" hidden>
-        <div class="shelf-head"><strong data-i18n="library.completedTitle">مطالعهٔ کامل‌شده</strong></div>
+        <div class="shelf-head"><strong>مطالعهٔ کامل‌شده</strong></div>
         <div class="shelf-grid" id="doneGrid"></div>
       </div>
+      <p class="shelf-note" id="shelfNote" hidden>فایل PDFها فقط روی همین دستگاه ذخیره می‌شن و توی پشتیبان دفترچه نیستن؛ با عوض‌کردن مرورگر یا دستگاه باید دوباره اضافه‌شون کنی. پیشرفت و یادداشت‌هات توی پشتیبان هست.</p>
       <div class="empty" id="shelfEmpty" hidden>
         <span class="art">
           <svg width="104" height="104" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/><path d="M9 7h7M9 11h5"/></svg>
         </span>
-        <p data-i18n="library.emptyTitle">هنوز کتابی اینجا نیست.</p>
-        <p class="empty-sub" data-i18n="library.emptySub">یک PDF اضافه کن تا مطالعه‌ات رو از همین‌جا ادامه بدی.</p>
-        <button class="empty-cta" id="emptyAdd" data-i18n="library.addPdf">افزودن PDF</button>
+        <p>هنوز کتابی اینجا نیست.</p>
+          <p class="empty-sub">یک PDF اضافه کن تا مطالعه‌ات رو از همین‌جا ادامه بدی. فایل فقط روی همین دستگاه می‌مونه.</p>
+          <button class="empty-cta" id="emptyAdd">افزودن PDF</button>
       </div>
     </div>
 
@@ -552,7 +555,7 @@
         <div class="reader-ribbon-row reader-top">
           <!-- گروه ۱ (راست / Start): هویت کتاب و هدف (Island 1) -->
           <div class="reader-island-book" role="region" aria-label="مشخصات کتاب">
-            <button type="button" class="r-back" id="readerBack" title="بازگشت به قفسه">→ قفسه</button>
+            <button type="button" class="r-back" id="readerBack" title="بازگشت به قفسه"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="M13 6l6 6-6 6"/></svg> قفسه</button>
             <img class="reader-thumb" id="readerThumb" alt="" hidden>
             <div class="reader-titles">
               <div class="reader-title" id="readerTitle"></div>
@@ -560,7 +563,7 @@
                 <span class="reader-sub" id="readerPct"></span>
                 <span class="reader-sub-sep" aria-hidden="true">·</span>
                 <button type="button" class="goal-chip" id="goalChip" title="تنظیم یا مشاهده هدف روزانه مطالعه">
-                  <span id="goalChipText">🎯 هدف</span>
+                  <span id="goalChipText"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.6"/></svg> هدف</span>
                 </button>
                 <button type="button" id="goalEdit" hidden aria-hidden="true"></button>
               </div>
@@ -578,14 +581,14 @@
               <button type="button" class="r-tool-btn r-nav-step" id="nextPage" aria-label="صفحهٔ بعد" title="صفحهٔ بعد">›</button>
               <button type="button" class="mark-read r-tool-btn" id="markReadBtn" title="علامت‌گذاری وضعیت مطالعه صفحه" aria-label="وضعیت مطالعه این صفحه">
                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
-                <span id="markReadText" class="sr-only">خواندم</span>
+                <span id="markReadText" class="mark-read-label">خواندم</span>
               </button>
             </div>
 
             <span class="bar-sep" aria-hidden="true"></span>
 
             <!-- جامدادی (ابزارهای حاشیه‌نویسی) -->
-            <div class="r-tool-group r-group-draw">
+            <div class="r-tool-group r-group-draw" id="drawGroup">
               <button type="button" class="r-tool-btn" id="hlTool" aria-label="هایلایتر (ماژیک)" title="هایلایتر (ماژیک)" aria-pressed="false">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 11-6 6v3h3l6-6"/><path d="m22 12-4.6 4.6a2 2 0 0 1-2.8 0l-5.2-5.2a2 2 0 0 1 0-2.8L14 4"/><path d="m18 8 2 2"/></svg>
                 <i class="hl-indicator" id="hlIndicator" aria-hidden="true"></i>
@@ -594,17 +597,17 @@
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg>
                 <i class="pen-indicator" id="penIndicator" aria-hidden="true"></i>
               </button>
-              <button type="button" class="r-tool-btn" id="eraserTool" aria-label="پاک‌کن" title="پاک‌کن — روی خطوط بکش تا پاک شوند" aria-pressed="false">
+              <button type="button" class="r-tool-btn r-extra" id="eraserTool" aria-label="پاک‌کن" title="پاک‌کن — روی خطوط بکش تا پاک شوند" aria-pressed="false">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 20H8.5L3.6 15.1a2 2 0 010-2.8L12.6 3.3a2 2 0 012.8 0l5 5a2 2 0 010 2.8L11 20"/><path d="M8.5 11.5l5.5 5.5"/></svg>
               </button>
-              <button type="button" class="r-tool-btn" id="strokeUndoBtn" aria-label="لغو آخرین علامت (Undo)" title="لغو آخرین علامت (Undo)" disabled>
+              <button type="button" class="r-tool-btn r-extra" id="strokeUndoBtn" aria-label="لغو آخرین علامت (Undo)" title="لغو آخرین علامت (Undo)" disabled>
                 <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14L4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5v0a5.5 5.5 0 0 1-5.5 5.5H11"/></svg>
               </button>
-              <button type="button" class="r-tool-btn" id="addNoteBtn" aria-label="افزودن یادداشت صفحه" title="افزودن یادداشت صفحه">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><path d="M12 18v-6"/><path d="M9 15h6"/></svg>
+              <button type="button" class="r-tool-btn" id="addNoteBtn" aria-label="افزودن یادداشت به این صفحه" title="افزودن یادداشت به این صفحه">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 4h16v12H9l-5 4z"/><path d="M12 7.5v5"/><path d="M9.5 10h5"/></svg>
               </button>
-              <button type="button" class="r-tool-btn has-badge" id="readerNotes" aria-label="یادداشت‌ها و هایلایت‌ها" title="یادداشت‌ها و هایلایت‌ها">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12a1 1 0 011 1v17l-7-4-7 4V4a1 1 0 011-1z"/></svg>
+              <button type="button" class="r-tool-btn has-badge" id="readerNotes" aria-label="فهرست یادداشت‌ها و هایلایت‌ها" title="فهرست یادداشت‌ها و هایلایت‌ها">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6h12M8 12h12M8 18h12"/><path d="M3.5 6h.01M3.5 12h.01M3.5 18h.01"/></svg>
                 <span class="r-notes-badge" id="readerNotesBadge" hidden>۰</span>
               </button>
             </div>
@@ -695,7 +698,7 @@
 
             <span class="dock-sep" aria-hidden="true"></span>
 
-            <button type="button" class="subribbon-clear" id="clearPageStrokesBtn" title="پاک کردن همهٔ علامت‌های این صفحه" aria-label="پاک کردن همهٔ علامت‌های این صفحه"><span class="clear-icon" aria-hidden="true">🗑️</span><span class="clear-label">پاک کردن</span></button>
+            <button type="button" class="subribbon-clear" id="clearPageStrokesBtn" title="پاک کردن همهٔ علامت‌های این صفحه" aria-label="پاک کردن همهٔ علامت‌های این صفحه"><span class="clear-icon" aria-hidden="true"><svg class="ico" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4a1 1 0 011-1h6a1 1 0 011 1v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6M10 11v6M14 11v6"/></svg></span><span class="clear-label">پاک کردن</span></button>
 
             <!-- بستن نوار رنگ: واپسین دکمه‌ای که پیش از کشیدن خط لمس می‌شود؛ جمع کردنش ابتدای صفحه را آزاد می‌کند -->
             <button type="button" class="subribbon-fold" id="penPopToggle" aria-expanded="true" aria-label="جمع کردن نوار رنگ" title="جمع کردن نوار رنگ">
@@ -750,7 +753,7 @@
             <input type="color" id="customHlBarColor" aria-label="رنگ دلخواه هایلایت" value="#f6c445">
           </label>
           <span class="bar-sep" aria-hidden="true"></span>
-          <button type="button" class="hlbar-note" id="hlNoteBtn" title="افزودن یادداشت" aria-label="افزودن یادداشت">📝</button>
+          <button type="button" class="hlbar-note" id="hlNoteBtn" title="افزودن یادداشت" aria-label="افزودن یادداشت"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v12H9l-5 4z"/><path d="M8 9h8M8 12.5h5"/></svg></button>
         </div>
         <div class="done-pop" id="donePop" hidden>
           <div class="done-pop-card">
@@ -776,7 +779,7 @@
         <strong id="notesTitle">یادداشت‌ها و هایلایت‌ها</strong>
         <div>
           <button class="b-ghost" id="notesExport">خروجی Markdown</button>
-          <button class="r-icon" id="notesClose">✕</button>
+          <button class="r-icon" id="notesClose"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
         </div>
       </div>
       <div class="notes-list" id="notesList"></div>
@@ -785,7 +788,7 @@
     <div class="sheet" id="settingsSheet" role="dialog" aria-modal="true" aria-labelledby="settingsTitle" hidden>
       <div class="sheet-head">
         <strong id="settingsTitle">تنظیمات مطالعه</strong>
-        <button class="r-icon" id="settingsClose" aria-label="بستن">✕</button>
+        <button class="r-icon" id="settingsClose" aria-label="بستن"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
       </div>
       <div class="settings-body">
         <div class="set-row">
@@ -815,26 +818,26 @@
 
     <div class="overlay" id="goalOverlay" hidden>
       <div class="name-card" role="dialog" aria-modal="true" aria-labelledby="goalTitle">
-        <h2 id="goalTitle" data-i18n="library.goalTitle">هدف مطالعه</h2>
-        <p data-i18n="library.goalSubtitle">می‌خوای با خوندن این کتاب به چی برسی؟</p>
+        <h2 id="goalTitle">هدف مطالعه</h2>
+        <p>می‌خوای با خوندن این کتاب به چی برسی؟</p>
         <div class="goal-choices">
-          <button type="button" class="goal-choice" data-gtype="full" data-i18n="library.goalFull">مطالعهٔ کامل کتاب</button>
-          <button type="button" class="goal-choice" data-gtype="personal" data-i18n="library.goalPersonal">هدف شخصی</button>
+          <button type="button" class="goal-choice" data-gtype="full">مطالعهٔ کامل کتاب</button>
+          <button type="button" class="goal-choice" data-gtype="personal">هدف شخصی</button>
         </div>
-        <input id="goalText" type="text" class="goal-text-input" placeholder="مثلاً: یادگیری معماری نرم‌افزار" hidden data-i18n-placeholder="library.goalTextPlaceholder">
-        <label class="goal-daily"><span data-i18n="library.goalDaily">هدف روزانه:</span> <input id="goalPages" type="number" min="1" max="500" placeholder="مثلاً ۱۰" data-i18n-placeholder="library.goalPagesPlaceholder"> <span data-i18n="library.goalPagesUnit">صفحه در روز</span></label>
-        <button class="go" id="goalSave" data-i18n="library.goalSave">ثبت هدف</button>
-        <button class="skip" id="goalClose" data-i18n="library.goalCancel">بی‌خیال</button>
+        <input id="goalText" type="text" class="goal-text-input" placeholder="مثلاً: یادگیری معماری نرم‌افزار" hidden>
+        <label class="goal-daily">هدف روزانه: <input id="goalPages" type="number" min="1" max="500" placeholder="مثلاً ۱۰"> صفحه در روز</label>
+        <button class="go" id="goalSave">ثبت هدف</button>
+        <button class="skip" id="goalClose">بی‌خیال</button>
       </div>
     </div>
 
     <div class="overlay" id="renameOverlay" hidden>
       <div class="name-card" role="dialog" aria-modal="true" aria-labelledby="renameTitle">
-        <h2 id="renameTitle" data-i18n="library.renameTitle">تغییر نام کتاب</h2>
-        <p data-i18n="library.renameSubtitle">نام دلخواهت رو برای این کتاب بنویس:</p>
-        <input type="text" id="renameInput" class="rename-input" placeholder="عنوان کتاب" data-i18n-placeholder="library.renamePlaceholder">
-        <button type="button" class="go" id="renameSave" data-i18n="library.renameSave">ذخیره نام</button>
-        <button type="button" class="skip" id="renameClose" data-i18n="library.renameCancel">انصراف</button>
+        <h2 id="renameTitle">تغییر نام کتاب</h2>
+        <p>نام دلخواهت رو برای این کتاب بنویس:</p>
+        <input type="text" id="renameInput" class="rename-input" placeholder="عنوان کتاب">
+        <button type="button" class="go" id="renameSave">ذخیره نام</button>
+        <button type="button" class="skip" id="renameClose">انصراف</button>
       </div>
     </div>
   </main>
@@ -873,35 +876,35 @@
 
     <div class="vibe-card">
       <div class="vibe-head">
-        <strong data-i18n="focus.focusSpace">فضای تمرکز</strong>
+        <strong>فضای تمرکز</strong>
         <div class="amb-control">
-          <span id="ambLabel" data-i18n="focus.ambienceLabelOn">صدای محیط: روشن</span>
-          <button class="switch on" id="ambSwitch" role="switch" aria-checked="true" aria-label="صدای محیط" data-i18n-aria-label="focus.ambienceTitle"></button>
+          <span id="ambLabel">صدای محیط: روشن</span>
+          <button class="switch on" id="ambSwitch" role="switch" aria-checked="true" aria-label="صدای محیط"></button>
         </div>
       </div>
       <div class="scene-chips" id="sceneChips">
-        <button data-scene="none" class="sel"><svg viewBox="0 0 24 24"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M22 9l-6 6M16 9l6 6"/></svg><span data-i18n="focus.sceneSilence">سکوت</span></button>
-        <button data-scene="rain"><svg viewBox="0 0 24 24"><path d="M12 2.7l5.7 5.7a8 8 0 11-11.4 0z"/><path d="M9 14l-1 3M13 14l-1 3"/></svg><span data-i18n="focus.sceneRain">باران</span></button>
-        <button data-scene="sea"><svg viewBox="0 0 24 24"><path d="M2 12c2-2 4-2 6 0s4 2 6 0 4-2 6 0"/><path d="M2 17c2-2 4-2 6 0s4 2 6 0 4-2 6 0"/><path d="M2 7c2-2 4-2 6 0s4 2 6 0 4-2 6 0"/></svg><span data-i18n="focus.sceneSea">دریا</span></button>
-        <button data-scene="forest"><svg viewBox="0 0 24 24"><path d="M12 22v-7"/><path d="M12 15c0-4 3-7 8-7 0 4-3 7-8 7z"/><path d="M12 15c0-4-3-7-8-7 0 4 3 7 8 7z"/></svg><span data-i18n="focus.sceneForest">جنگل</span></button>
+        <button data-scene="none" class="sel"><svg viewBox="0 0 24 24"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M22 9l-6 6M16 9l6 6"/></svg>سکوت</button>
+        <button data-scene="rain"><svg viewBox="0 0 24 24"><path d="M12 2.7l5.7 5.7a8 8 0 11-11.4 0z"/><path d="M9 14l-1 3M13 14l-1 3"/></svg>باران</button>
+        <button data-scene="sea"><svg viewBox="0 0 24 24"><path d="M2 12c2-2 4-2 6 0s4 2 6 0 4-2 6 0"/><path d="M2 17c2-2 4-2 6 0s4 2 6 0 4-2 6 0"/><path d="M2 7c2-2 4-2 6 0s4 2 6 0 4-2 6 0"/></svg>دریا</button>
+        <button data-scene="forest"><svg viewBox="0 0 24 24"><path d="M12 22v-7"/><path d="M12 15c0-4 3-7 8-7 0 4-3 7-8 7z"/><path d="M12 15c0-4-3-7-8-7 0 4 3 7 8 7z"/></svg>جنگل</button>
       </div>
       <div class="vol-row">
-        <label class="vol"><span data-i18n="focus.volMusic">موسیقی</span><input type="range" id="volMusic" min="0" max="100" value="80" aria-label="Music volume"></label>
-        <label class="vol"><span data-i18n="focus.volAmb">محیط</span><input type="range" id="volAmb" min="0" max="100" value="80" aria-label="Ambience volume"></label>
+        <label class="vol"><span>موسیقی</span><input type="range" id="volMusic" min="0" max="100" value="80"></label>
+        <label class="vol"><span>محیط</span><input type="range" id="volAmb" min="0" max="100" value="80"></label>
       </div>
     </div>
 
     <div class="vibe-card">
       <div class="vibe-head">
-        <strong data-i18n="focus.musicTitle">موسیقی</strong>
-        <label class="add-music" for="musicFile" data-i18n="focus.addMusic">+ افزودن آهنگ</label>
+        <strong>موسیقی</strong>
+        <label class="add-music" for="musicFile">+ افزودن آهنگ</label>
         <input type="file" id="musicFile" accept="audio/*" hidden>
       </div>
       <div class="scene-chips" id="musicChips">
-        <button data-music="none" class="sel"><svg viewBox="0 0 24 24"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M22 9l-6 6M16 9l6 6"/></svg><span data-i18n="focus.musicOff">خاموش</span></button>
-        <button data-music="night"><svg viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1111.2 3 7 7 0 0021 12.8z"/></svg><span data-i18n="focus.musicNight">آرامش شب</span></button>
-        <button data-music="spring"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg><span data-i18n="focus.musicSpring">صبح بهاری</span></button>
-        <button data-music="deep"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/></svg><span data-i18n="focus.musicDeep">تمرکز عمیق</span></button>
+        <button data-music="none" class="sel"><svg viewBox="0 0 24 24"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M22 9l-6 6M16 9l6 6"/></svg>خاموش</button>
+        <button data-music="night"><svg viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1111.2 3 7 7 0 0021 12.8z"/></svg>آرامش شب</button>
+        <button data-music="spring"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>صبح بهاری</button>
+        <button data-music="deep"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/></svg>تمرکز عمیق</button>
       </div>
       <div class="user-tracks" id="userTracks"></div>
     </div>
@@ -989,7 +992,7 @@
         <h1>تنظیمات
           <svg class="underline" viewBox="0 0 120 12" fill="none"><path d="M2 8 Q 20 2 40 7 T 80 7 T 118 5" stroke="currentColor" stroke-width="4" stroke-linecap="round"/></svg>
         </h1>
-        <p class="subtitle" data-i18n="settings.subtitle">دفترچه رو مال خودت کن</p>
+        <p class="subtitle">دفترچه رو مال خودت کن</p>
       </div>
     </header>
 
@@ -998,58 +1001,47 @@
          and the line under them says the rule out loud rather than leaving the
          reader to discover it by tapping. -->
     <div class="vibe-card">
-      <div class="vibe-head"><strong data-i18n="settings.appearance">ظاهر</strong></div>
+      <div class="vibe-head"><strong>ظاهر</strong></div>
       <div class="settings-row settings-row-theme">
-        <span class="settings-label" id="themeLabel" data-i18n="settings.theme">تم</span>
+        <span class="settings-label" id="themeLabel">تم</span>
         <div class="theme-picker">
-          <div id="themeModeSwitch" aria-label="روشن یا تیره" data-i18n-aria-label="settings.themeModeAria"></div>
+          <div id="themeModeSwitch" aria-label="روشن یا تیره"></div>
           <div class="swatch-row" id="themeSwatches" role="radiogroup" aria-labelledby="themeLabel"></div>
         </div>
       </div>
-      <p class="settings-hint" data-i18n="settings.themeHint">نه رنگ — پنج روشن و چهار تیره. انتخاب هر نصف یادش می‌مونه، پس دفعهٔ بعد که سر بزنی همون رنگی که گذاشتی برمی‌گرده.</p>
+      <p class="settings-hint">نه رنگ — پنج روشن و چهار تیره. انتخاب هر نصف یادش می‌مونه، پس دفعهٔ بعد که سر بزنی همون رنگی که گذاشتی برمی‌گرده.</p>
       <div class="settings-divider"></div>
       <div class="set-item">
         <div class="settings-row">
-          <span class="settings-label" data-i18n="settings.autoTheme">تم خودکار</span>
+          <span class="settings-label">تم خودکار</span>
           <div class="settings-value">
             <span id="themeAutoText">غیرفعال</span>
-            <button class="switch" id="themeAutoBtn" type="button" role="switch" aria-checked="false" aria-label="تم خودکار بر اساس تم سیستم" data-i18n-aria-label="settings.autoThemeAria"></button>
+            <button class="switch" id="themeAutoBtn" type="button" role="switch" aria-checked="false" aria-label="تم خودکار بر اساس تم سیستم"></button>
           </div>
         </div>
-        <p class="settings-hint" data-i18n="settings.autoThemeHint">تغییر خودکار تم روشن و تیره مطابق با حالت تاریک/روشن گوشی یا مرورگر.</p>
-      </div>
-      <div class="settings-divider"></div>
-      <div class="set-item">
-        <div class="settings-row">
-          <span class="settings-label" id="langLabel" data-i18n="settings.language">زبان / Language</span>
-          <div class="seg" id="langSwitch" role="radiogroup" aria-labelledby="langLabel">
-            <button type="button" class="seg-btn sel" role="radio" data-lang="fa" aria-checked="true" tabindex="0">فارسی</button>
-            <button type="button" class="seg-btn" role="radio" data-lang="en" aria-checked="false" tabindex="-1">English</button>
-          </div>
-        </div>
-        <p class="settings-hint" data-i18n="settings.languageHint">زبان رابط کاربری و سیستم تقویم دفترچه.</p>
+        <p class="settings-hint">تغییر خودکار تم روشن و تیره مطابق با حالت تاریک/روشن گوشی یا مرورگر.</p>
       </div>
     </div>
 
     <div class="vibe-card">
-      <div class="vibe-head"><strong data-i18n="settings.streakAndFocus">پیوستگی و تمرکز</strong></div>
+      <div class="vibe-head"><strong>پیوستگی و تمرکز</strong></div>
       <div class="set-item">
         <div class="settings-row">
-          <span class="settings-label" data-i18n="settings.freezeTitle">مرخصی پیوستگی</span>
+          <span class="settings-label">مرخصی پیوستگی</span>
           <div class="settings-value">
             <span id="profFreezeText">روشن</span>
-            <button class="switch" id="profFreezeBtn" type="button" role="switch" aria-checked="true" aria-label="مرخصی پیوستگی" data-i18n-aria-label="settings.freezeTitle"></button>
+            <button class="switch" id="profFreezeBtn" type="button" role="switch" aria-checked="true" aria-label="مرخصی پیوستگی"></button>
           </div>
         </div>
-        <p class="settings-hint" data-i18n="settings.freezeHint">هر ۳۰ روز فعال یه مرخصی می‌گیری (تا دو تا در انبار). اگه یه روز جا بمونی، خودش می‌پوشونه‌ش تا پیوستگیت نشکنه.</p>
+        <p class="settings-hint">هر ۳۰ روز فعال یه مرخصی می‌گیری (تا دو تا در انبار). اگه یه روز جا بمونی، خودش می‌پوشونه‌ش تا پیوستگیت نشکنه.</p>
       </div>
       <div class="settings-divider"></div>
       <div class="set-item">
         <div class="settings-row">
-          <span class="settings-label" data-i18n="settings.focusDurTitle">مدت هر نشست تمرکز</span>
+          <span class="settings-label">مدت هر نشست تمرکز</span>
           <div class="settings-value"><span id="profPomo"></span></div>
         </div>
-        <p class="settings-hint" data-i18n="settings.focusDurHint">پیش‌فرض هر نشست؛ از خود صفحهٔ تمرکز عوضش کن.</p>
+        <p class="settings-hint">پیش‌فرض هر نشست؛ از خود صفحهٔ تمرکز عوضش کن.</p>
       </div>
     </div>
 
@@ -1076,71 +1068,80 @@ rather than a form describing itself. -->
       <div class="vibe-head"><strong>تاریخ تولد</strong></div>
       <div class="set-item">
         <div class="settings-row">
-          <span class="settings-label" data-i18n="settings.birthdayLabel">تولدت</span>
+          <span class="settings-label">تولدت</span>
           <div class="settings-value">
             <button class="bd-date" id="bdPick" type="button" aria-haspopup="dialog">
               <span id="bdDate" class="empty"></span>
             </button>
           </div>
         </div>
-        <p class="settings-hint" data-i18n="settings.birthdayHint">دفترچه دوست داره تاریخ تولدتو بدونه!</p>
+        <p class="settings-hint">دفترچه دوست داره تاریخ تولدتو بدونه!</p>
       </div>
     </div>
 
     <div class="vibe-card">
-      <div class="vibe-head"><strong data-i18n="settings.aboutTitle">درباره</strong></div>
+      <div class="vibe-head"><strong>درباره</strong></div>
       <div class="set-item">
         <div class="settings-row">
-          <span class="settings-label" data-i18n="settings.tourTitle">راهنمای دفترچه</span>
-          <button class="settings-btn" id="profTour" type="button" data-i18n="settings.tourBtn">بریم</button>
+          <span class="settings-label">راهنمای دفترچه</span>
+          <button class="settings-btn" id="profTour" type="button">بریم</button>
         </div>
-        <p class="settings-hint" data-i18n="settings.tourHint">تور کوتاهی که همه‌جای دفترچه رو نشون می‌ده — همونی که بار اول دیدی، از اول.</p>
+        <p class="settings-hint">تور کوتاهی که همه‌جای دفترچه رو نشون می‌ده — همونی که بار اول دیدی، از اول.</p>
       </div>
       <div class="settings-divider"></div>
       <div class="set-item">
         <div class="settings-row">
-          <span class="settings-label" data-i18n="settings.versionTitle">نسخه</span>
+          <span class="settings-label">نسخه</span>
           <div class="settings-value"><span id="profVersion"></span></div>
         </div>
       </div>
       <div class="settings-divider"></div>
       <div class="set-item">
         <div class="settings-row">
-          <span class="settings-label" data-i18n="settings.changelogTitle">تازه‌های دفترچه</span>
-          <button class="settings-btn" id="profNotes" type="button" data-i18n="settings.changelogBtn">ببین</button>
+          <span class="settings-label">تازه‌های دفترچه</span>
+          <button class="settings-btn" id="profNotes" type="button">ببین</button>
         </div>
-        <p class="settings-hint" data-i18n="settings.changelogHint">هر بار دفترچه به‌روز می‌شه، این‌جا می‌تونی ببینی چی عوض شده.</p>
+        <p class="settings-hint">هر بار دفترچه به‌روز می‌شه، این‌جا می‌تونی ببینی چی عوض شده.</p>
       </div>
     </div>
 
     <div class="vibe-card">
-      <div class="vibe-head"><strong data-i18n="settings.backupTitle">پشتیبان‌گیری و ماندگاری</strong></div>
+      <div class="vibe-head"><strong>پشتیبان‌گیری و ماندگاری</strong></div>
       <div class="set-item">
         <div class="settings-row">
-          <span class="settings-label" data-i18n="settings.persistTitle">ذخیرهٔ پایدار</span>
+          <span class="settings-label">ذخیرهٔ پایدار</span>
           <div class="settings-value"><span id="persistStatusText">بررسی…</span></div>
         </div>
-        <p class="settings-hint" id="persistHint" data-i18n="settings.persistHint">با فعال بودن ذخیرهٔ پایدار، مرورگر اطلاعات دفترچه را در کمبود حافظه پاک نمی‌کند.</p>
+        <p class="settings-hint" id="persistHint">با فعال بودن ذخیرهٔ پایدار، مرورگر اطلاعات دفترچه را در کمبود حافظه پاک نمی‌کند.</p>
       </div>
       <div class="settings-divider"></div>
       <div class="set-item">
         <div class="settings-row">
-          <span class="settings-label" data-i18n="settings.exportTitle">گرفتن پشتیبان</span>
-          <button class="settings-btn" id="backupExport" type="button" data-i18n="settings.exportBtn">دانلود</button>
+          <span class="settings-label">گرفتن پشتیبان</span>
+          <button class="settings-btn" id="backupExport" type="button">دانلود</button>
         </div>
-        <p class="settings-hint" data-i18n="settings.exportHint">کارها، پیوستگی، نشان‌ها، تنظیمات و پیشرفت کتاب‌ها توی یه فایل ذخیره می‌شن. خودِ فایل PDFها و موسیقی‌ها توش نیستن.</p>
+        <p class="settings-hint">کارها، پیوستگی، نشان‌ها، تنظیمات و پیشرفت کتاب‌ها توی یه فایل ذخیره می‌شن. خودِ فایل PDFها و موسیقی‌ها توش نیستن؛ PDFها رو از «پک PDF کتاب‌ها» پایین بگیر.</p>
       </div>
       <div class="settings-divider"></div>
       <div class="set-item">
         <div class="settings-row">
-          <span class="settings-label" data-i18n="settings.importTitle">بازگردانی از پشتیبان</span>
-          <button class="settings-btn" id="backupImport" type="button" data-i18n="settings.importBtn">انتخاب فایل</button>
+          <span class="settings-label">پک PDF کتاب‌ها</span>
+          <button class="settings-btn" id="pdfPackExport" type="button">دانلود زیپ</button>
         </div>
-        <p class="settings-hint">
-          فایل‌های PDF در پشتیبان ذخیره نمی‌شوند — فقط اطلاعات، پیشرفت و یادداشت‌ها.
-          به‌زودی با اضافه شدن سرور، داده‌ها روی اکانت شما سینک خواهند شد.
-        </p>
-        <p class="settings-hint" id="backupStatus" role="status" aria-live="polite" data-i18n="settings.importHint">فایل معتبر که وارد شد، خودش می‌پرسه ادغام بشه یا جایگزین.</p>
+        <div class="settings-row">
+          <span class="settings-label">برگرداندن PDFها</span>
+          <button class="settings-btn" id="pdfPackImport" type="button">انتخاب زیپ</button>
+        </div>
+        <p class="settings-hint" id="pdfPackStatus" role="status" aria-live="polite">یه زیپ معمولیه و PDFهات توشه. برای برگشتن، اول پشتیبان JSON رو برگردون تا کتاب‌ها توی لیست باشن، بعد این زیپ رو بده.</p>
+        <input type="file" id="pdfPackFile" accept=".zip,application/zip" hidden>
+      </div>
+      <div class="settings-divider"></div>
+      <div class="set-item">
+        <div class="settings-row">
+          <span class="settings-label">بازگردانی از پشتیبان</span>
+          <button class="settings-btn" id="backupImport" type="button">انتخاب فایل</button>
+        </div>
+        <p class="settings-hint" id="backupStatus" role="status" aria-live="polite">فایل معتبر که وارد شد، خودش می‌پرسه ادغام بشه یا جایگزین.</p>
         <input type="file" id="backupFile" accept=".json,application/json" hidden>
       </div>
     </div>
@@ -1151,28 +1152,28 @@ rather than a form describing itself. -->
          behind it, the way it does for every .overlay here. -->
     <div class="overlay" id="backupOverlay" hidden>
       <div class="name-card backup-choice" role="dialog" aria-modal="true" aria-labelledby="backupChoiceTitle">
-        <h2 id="backupChoiceTitle" data-i18n="dialogs.backupChoiceTitle">پشتیبان وارد بشه</h2>
-        <p class="backup-when"><span id="backupWhenPrefix" data-i18n="dialogs.backupWhenPrefix">پشتیبان</span> <span id="backupWhen"></span> <span id="backupWhenSuffix" data-i18n="dialogs.backupWhenSuffix">گرفته شده.</span></p>
+        <h2 id="backupChoiceTitle">پشتیبان وارد بشه</h2>
+        <p class="backup-when">پشتیبان <span id="backupWhen"></span> گرفته شده.</p>
         <button type="button" class="backup-merge" id="backupMerge" data-autofocus>
-          <strong data-i18n="dialogs.backupMerge">ادغام با داده‌های فعلی</strong>
-          <span data-i18n="dialogs.backupMergeHint">چیزی که این‌جا هست نمی‌ره جای دیگه؛ فایل بهش اضافه می‌شه.</span>
+          <strong>ادغام با داده‌های فعلی</strong>
+          <span>چیزی که این‌جا هست نمی‌ره جای دیگه؛ فایل بهش اضافه می‌شه.</span>
         </button>
         <button type="button" class="backup-replace" id="backupReplace">
-          <strong data-i18n="dialogs.backupReplace">جایگزینی کامل</strong>
-          <span data-i18n="dialogs.backupReplaceHint">همهٔ داده‌های این دستگاه با فایل عوض می‌شه و برنمی‌گرده.</span>
+          <strong>جایگزینی کامل</strong>
+          <span>همهٔ داده‌های این دستگاه با فایل عوض می‌شه و برنمی‌گرده.</span>
         </button>
-        <button type="button" class="skip" id="backupCancel" data-i18n="dialogs.backupCancel">انصراف</button>
+        <button type="button" class="skip" id="backupCancel">انصراف</button>
       </div>
     </div>
 
     <div class="vibe-card">
-      <div class="vibe-head"><strong data-i18n="settings.shortcutsTitle">راهنما و میانبرها</strong></div>
+      <div class="vibe-head"><strong>راهنما و میانبرها</strong></div>
       <div class="set-item">
         <div class="settings-row">
-          <span class="settings-label" data-i18n="settings.shortcutsLabel">کلیدهای میانبر صفحه‌کلید</span>
-          <button class="settings-btn" id="openShortcutsBtn" type="button" data-i18n="settings.shortcutsBtn">راهنما (؟)</button>
+          <span class="settings-label">کلیدهای میانبر صفحه‌کلید</span>
+          <button class="settings-btn" id="openShortcutsBtn" type="button">راهنما (؟)</button>
         </div>
-        <p class="settings-hint" data-i18n="settings.shortcutsHint">میانبرهای سریع برای ایجاد کار (N)، جستجو (/) و حرکت بین ردیف‌ها (J/K) با کیبورد؛ برای جابه‌جایی ردیف Alt را نگه دار و ↑/↓ را بزن.</p>
+        <p class="settings-hint">میانبرهای سریع برای ایجاد کار (N)، جستجو (/) و حرکت بین ردیف‌ها (J/K) با کیبورد.</p>
       </div>
     </div>
 
@@ -1181,23 +1182,23 @@ rather than a form describing itself. -->
     <div class="vibe-card">
       <div class="set-item">
         <div class="settings-row danger">
-          <span class="settings-label" data-i18n="settings.clearDataTitle">پاک‌کردن همهٔ داده‌ها</span>
-          <button class="settings-btn danger" id="profClear" data-i18n="settings.clearDataBtn">پاک کن</button>
+          <span class="settings-label">پاک‌کردن همهٔ داده‌ها</span>
+          <button class="settings-btn danger" id="profClear">پاک کن</button>
         </div>
-        <p class="settings-hint" data-i18n="settings.clearDataHint">کارها، کتاب‌ها، موسیقی‌ها و تنظیمات پاک می‌شن. این کار برگشت‌پذیر نیست.</p>
+        <p class="settings-hint">کارها، کتاب‌ها، موسیقی‌ها و تنظیمات پاک می‌شن. این کار برگشت‌پذیر نیست.</p>
       </div>
     </div>
-    <p class="settings-about" data-i18n="settings.aboutTagline">کار هاتو به دفتَرچه بسپار</p>
+    <p class="settings-about">کار هاتو به دفتَرچه بسپار</p>
   </main>
 </div>
 
 <!-- ═══ Jalali Due-Date Picker ═══ -->
 <div class="overlay" id="dueOverlay" hidden>
-  <div class="name-card cal-card due-card sheet-paper" role="dialog" aria-modal="true" aria-label="انتخاب مهلت" data-i18n-aria-label="due.dialogTitle">
-    <h2 data-i18n="due.dialogTitle">مهلت انجام</h2>
-    <p data-i18n="due.dialogSub">تاریخ انجام کار را انتخاب کن</p>
+  <div class="name-card cal-card due-card sheet-paper" role="dialog" aria-modal="true" aria-label="انتخاب مهلت">
+    <h2>مهلت انجام</h2>
+    <p>تاریخ شمسی را انتخاب کن</p>
     <div id="dueCal"></div>
-    <button class="skip" id="dueClose" data-i18n="common.close">بستن</button>
+    <button class="skip" id="dueClose">بستن</button>
   </div>
 </div>
 
@@ -1327,7 +1328,7 @@ rather than a form describing itself. -->
 <div class="sheet more-sheet" id="moreSheet" role="dialog" aria-modal="true" aria-labelledby="moreTitle" hidden>
   <div class="sheet-head">
     <strong id="moreTitle">بیشتر</strong>
-    <button class="r-icon" id="moreClose" aria-label="بستن">✕</button>
+    <button class="r-icon" id="moreClose" aria-label="بستن"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
   </div>
   <div class="more-list" id="moreList">
     <button class="more-item" type="button" data-page="week">
@@ -1379,6 +1380,33 @@ rather than a form describing itself. -->
   <span class="toast-text" id="achvToastText"></span>
 </div>
 
+<div class="overlay" id="taskEditOverlay" hidden>
+  <form class="te-card" id="taskEditForm" role="dialog" aria-modal="true" aria-labelledby="teTitleH" novalidate>
+    <h2 id="teTitleH">ویرایش کار</h2>
+    <label class="te-label" for="teTitle">عنوان</label>
+    <input type="text" id="teTitle" class="te-input" data-autofocus maxlength="200" autocomplete="off">
+    <p class="te-error" id="teError" role="alert" hidden>عنوان کار نمی‌تونه خالی باشه.</p>
+    <div class="te-group" role="radiogroup" aria-label="اولویت" id="tePri"></div>
+    <div class="te-group" role="radiogroup" aria-label="دسته" id="teCat"></div>
+    <div class="te-field">
+      <span class="te-label" id="teDueLbl">مهلت</span>
+      <div class="te-due">
+        <button type="button" class="te-chip" id="teDueBtn" aria-labelledby="teDueLbl teDueBtn">بدون مهلت</button>
+        <button type="button" class="te-chip te-clear" id="teDueClear" hidden>برداشتن مهلت</button>
+      </div>
+    </div>
+    <div class="te-group" role="radiogroup" aria-label="زمان تقریبی" id="teDur"></div>
+    <div class="te-custom">
+      <label class="te-label" for="teDurCustom">زمان دلخواه (دقیقه)</label>
+      <input type="number" id="teDurCustom" class="te-input te-num" min="1" max="480" inputmode="numeric" placeholder="مثلاً ۴۵">
+    </div>
+    <div class="te-actions">
+      <button type="submit" class="go" id="teSave">ذخیره</button>
+      <button type="button" class="skip" id="teCancel">انصراف</button>
+    </div>
+  </form>
+</div>
+
 <div class="toast" id="undoToast" role="status" aria-live="polite" hidden>
   <span class="toast-text">حذف شد</span>
   <button class="toast-btn" id="undoBtn">پشیمون شدم!</button>
@@ -1416,7 +1444,7 @@ rather than a form describing itself. -->
   <div class="share-panel" role="dialog" aria-modal="true" aria-labelledby="shareTitle">
     <div class="sheet-head">
       <strong id="shareTitle">کارت آمار</strong>
-      <button class="r-icon" id="shareClose" aria-label="بستن">✕</button>
+      <button class="r-icon" id="shareClose" aria-label="بستن"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
     </div>
     <div class="share-body">
       <div class="share-preview" id="sharePreview">
@@ -1473,17 +1501,17 @@ rather than a form describing itself. -->
 <!-- ═══ Keyboard Shortcuts Cheat-Sheet ═══ -->
 <div class="overlay" id="shortcutsOverlay" hidden>
   <div class="name-card shortcuts-card sheet-paper" role="dialog" aria-modal="true" aria-labelledby="shortcutsTitle">
-    <h2 id="shortcutsTitle" data-i18n="dialogs.shortcutsTitle">کلیدهای میانبر صفحه‌کلید</h2>
+    <h2 id="shortcutsTitle">کلیدهای میانبر صفحه‌کلید</h2>
     <div class="shortcuts-table">
-      <div class="shortcut-row"><kbd>N</kbd><span data-i18n="shortcuts.addTask">افزودن کار جدید</span></div>
-      <div class="shortcut-row"><kbd>/</kbd><span data-i18n="shortcuts.search">جستجو بین کارها</span></div>
-      <div class="shortcut-row"><kbd>J</kbd><span data-i18n="shortcuts.nextRow">انتخاب ردیف بعدی</span></div>
-      <div class="shortcut-row"><kbd>K</kbd><span data-i18n="shortcuts.prevRow">انتخاب ردیف قبلی</span></div>
-      <div class="shortcut-row"><kbd>Alt + ↑↓</kbd><span data-i18n="shortcuts.moveRow">جابه‌جایی ردیف</span></div>
-      <div class="shortcut-row"><kbd id="shortcutHelpKey">؟</kbd><span data-i18n="shortcuts.help">نمایش این راهنما</span></div>
-      <div class="shortcut-row"><kbd>Esc</kbd><span data-i18n="shortcuts.close">بستن پنجره‌ها و منوها</span></div>
+      <div class="shortcut-row"><kbd>N</kbd><span>افزودن کار جدید</span></div>
+      <div class="shortcut-row"><kbd>/</kbd><span>جستجو بین کارها</span></div>
+      <div class="shortcut-row"><kbd>J</kbd><span>انتخاب ردیف بعدی</span></div>
+      <div class="shortcut-row"><kbd>K</kbd><span>انتخاب ردیف قبلی</span></div>
+      <div class="shortcut-row"><kbd>Alt</kbd><span>+ ↑ / ↓ جابه‌جایی ردیف انتخاب‌شده</span></div>
+      <div class="shortcut-row"><kbd>؟</kbd><span>نمایش این راهنما</span></div>
+      <div class="shortcut-row"><kbd>Esc</kbd><span>بستن پنجره‌ها و منوها</span></div>
     </div>
-    <button class="skip" id="shortcutsClose" type="button" data-i18n="dialogs.shortcutsClose">متوجه شدم</button>
+    <button class="skip" id="shortcutsClose" type="button">متوجه شدم</button>
   </div>
 </div>
 

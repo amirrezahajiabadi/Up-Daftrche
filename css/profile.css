@@ -18,11 +18,11 @@
 .avatar-big .ph-ico{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 .avatar-big .ph-txt{font-size:11px;font-weight:700;line-height:1.4;color:var(--accent)}
 .avatar-big.has-photo{border-style:solid;border-color:var(--accent);background:var(--bg)}
-.avatar-big.has-photo::after{content:'✎';position:absolute;bottom:2px;right:2px;width:26px;height:26px;background:var(--accent);color:#fff;border-radius:50%;display:grid;place-items:center;font-size:12px;border:2px solid var(--surface)}
+.avatar-big.has-photo::after{content:'';position:absolute;bottom:2px;right:2px;width:26px;height:26px;background:var(--accent) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 20h4L19 9l-4-4L4 16z'/%3E%3C/svg%3E") center/13px no-repeat;border-radius:50%;border:2px solid var(--surface)}
 
 /* A halo, not a lift: same language as the character tiles below. */
 @media (hover:hover){
-  .avatar-big:hover{transform:scale(1.03);box-shadow:0 0 0 3px var(--accent-soft),0 12px 26px -12px var(--accent)}
+  .avatar-big:hover{transform:scale(1.03)}
 }
 
 .photo-remove{border:none;background:transparent;color:var(--muted);font-family:var(--font-ui);font-size:12px;font-weight:600;padding:8px 14px;border-radius:var(--radius-pill);cursor:pointer;transition:color var(--duration-fast),background var(--duration-fast)}
@@ -41,7 +41,7 @@
 .badge b{font-size:11px;font-weight:600}
 .badge span{font-size:11px;color:var(--muted);line-height:1.5;font-weight:400}
 .badge.locked{opacity:.4;filter:grayscale(1)}
-.badge.locked::after{content:'🔒';position:absolute;top:6px;inset-inline-end:6px;font-size:11px}
+.badge.locked::after{content:'';position:absolute;top:6px;inset-inline-end:6px;width:12px;height:12px;background-color:var(--muted);-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='5' y='11' width='14' height='9' rx='2'/%3E%3Cpath d='M8 11V8a4 4 0 018 0v3'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='5' y='11' width='14' height='9' rx='2'/%3E%3Cpath d='M8 11V8a4 4 0 018 0v3'/%3E%3C/svg%3E") center/contain no-repeat}
 .badge.unlocked{border-color:var(--accent);background:var(--accent-soft);animation:pop var(--duration-base)}
 
 /* ═══ Character picker ═══
@@ -63,7 +63,7 @@
 .avatar-opt:not(.sel){opacity:.88}
 .avatar-opt.sel{border-color:var(--accent);background:transparent;opacity:1}
 .avatar-opt.sel span{color:var(--accent);font-weight:700}
-  .avatar-opt.sel::after{content:'✓';position:absolute;top:-6px;inset-inline-end:-6px;width:18px;height:18px;background:var(--accent);color:#fff;border-radius:50%;display:grid;place-items:center;font-size:11px;font-weight:700;line-height:1}
+  .avatar-opt.sel::after{content:'';position:absolute;top:-6px;inset-inline-end:-6px;width:18px;height:18px;background:var(--accent) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 12.5l4 4 8-9'/%3E%3C/svg%3E") center/11px no-repeat;border-radius:50%}
 .avatar-opt:focus-visible{outline:2px solid var(--color-focus);outline-offset:3px}
 @media (hover:hover){
   .avatar-opt:hover{transform:translateY(-2px);opacity:1}

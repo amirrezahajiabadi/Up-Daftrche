@@ -52,6 +52,7 @@ const normalizeTasks = list =>
 export const state = {
   tasks: normalizeTasks(loadTasks()),
   filter: 'all',
+  noDue: false,
   catFilter: 'all',
   query: '',
   selPri: 'mid',

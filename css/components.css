@@ -14,7 +14,7 @@
    so the progress ring stays on the compositor — a box-shadow loop would repaint
    the whole card on every frame while the ring sat at 100%. */
 .ring-wrap.complete::after{content:'';position:absolute;inset:-3px;border-radius:50%;border:2.5px solid var(--accent);opacity:0;pointer-events:none;animation:breathe 2.6s ease-in-out infinite}
-.ring-wrap.complete .ring-inner::after{content:'✓';position:absolute;bottom:-2px;right:-2px;width:24px;height:24px;background:var(--green);color:#fff;border-radius:50%;font-size:13px;display:grid;place-items:center;border:3px solid var(--surface);animation:popIn var(--duration-base) cubic-bezier(.34,1.56,.64,1);box-shadow:0 2px 8px rgba(127,176,105,.4)}
+.ring-wrap.complete .ring-inner::after{content:'';position:absolute;bottom:-2px;right:-2px;width:24px;height:24px;background:var(--green) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 12.5l4 4 8-9'/%3E%3C/svg%3E") center/14px no-repeat;border-radius:50%;border:3px solid var(--surface);animation:popIn var(--duration-base) cubic-bezier(.34,1.56,.64,1)}
 @keyframes breathe{0%{transform:scale(.96);opacity:.5}65%{transform:scale(1.14);opacity:0}100%{transform:scale(1.14);opacity:0}}
 @property --pct{syntax:'<number>';initial-value:0;inherits:false}
 
@@ -51,10 +51,10 @@ html[data-mode="dark"] .streak.hot{color:#ff8f8f}
 .moods{display:flex;gap:8px}
 .moods button{width:40px;height:40px;border-radius:var(--radius-sm);border:1.5px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;display:grid;place-items:center;transition:all var(--duration-base) cubic-bezier(.22,1,.36,1);position:relative}
 .moods button svg{width:22px;height:22px;transition:transform var(--duration-base) cubic-bezier(.34,1.56,.64,1)}
-.moods button:hover{border-color:var(--mc);color:var(--mc);box-shadow:0 4px 12px -3px rgba(0,0,0,.1)}
+.moods button:hover{border-color:var(--mc);color:var(--mc)}
 .moods button:hover svg{transform:scale(1.08)}
 .moods button:active{transform:scale(.94)}
-.moods button.sel{color:var(--mc);background:color-mix(in srgb,var(--mc) 12%,transparent);border-color:var(--mc);box-shadow:0 2px 10px -2px rgba(0,0,0,.08)}
+.moods button.sel{color:var(--mc);background:color-mix(in srgb,var(--mc) 12%,transparent);border-color:var(--mc)}
 .moods button.sel svg{animation:pop var(--duration-base) var(--ease-out)}
 .moods button[data-sub]:hover::after{content:attr(data-sub);position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);background:var(--text);color:var(--bg);font-size:11px;font-weight:500;line-height:1.5;padding:5px 10px;border-radius:var(--radius-xs);white-space:nowrap;pointer-events:none;animation:tooltipIn var(--duration-fast) ease;z-index:10}
 .moods button[data-sub]:hover::before{content:'';position:absolute;bottom:calc(100% + 3px);left:50%;transform:translateX(-50%);border:5px solid transparent;border-top-color:var(--text);pointer-events:none;animation:tooltipIn var(--duration-fast) ease;z-index:10}
@@ -89,6 +89,20 @@ html[data-mode="dark"] .streak.hot{color:#ff8f8f}
 }
 .add-form.shake,.name-card.shake{animation:shake var(--duration-base) ease;border-color:var(--danger)!important}
 
+/* ── Add form: details behind a toggle ── */
+.add-meta{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:0 8px 2px}
+.add-tip{margin:0;flex:1 1 220px;min-width:0;font-size:12px;line-height:1.7;color:var(--muted);font-weight:400}
+.add-more-toggle{display:inline-flex;align-items:center;gap:6px;flex-shrink:0;font-family:var(--font-ui);font-size:12px;font-weight:500;border:1.5px solid var(--border);background:transparent;color:var(--muted);border-radius:var(--radius-pill);padding:4px 12px;cursor:pointer;position:relative;transition:border-color var(--duration-fast),color var(--duration-fast)}
+.add-more-toggle::after{content:'';position:absolute;inset:-7px;border-radius:var(--radius-sm)}
+.add-more-toggle:hover{border-color:var(--muted);color:var(--text)}
+.add-more-toggle:focus-visible{outline:2px solid var(--color-focus,var(--accent));outline-offset:2px}
+.add-more-chev{transition:transform var(--duration-base) var(--ease-out)}
+.add-more-toggle[aria-expanded="true"] .add-more-chev{transform:rotate(180deg)}
+.add-more-dot{display:none;width:6px;height:6px;border-radius:50%;background:var(--accent)}
+.add-more-toggle.has-values .add-more-dot{display:inline-block}
+.add-error{margin:0;padding:0 10px 2px;font-size:12px;font-weight:500;color:var(--color-danger,var(--danger))}
+@media (prefers-reduced-motion:reduce){.add-more-chev{transition:none}}
+
 /* ── Priority Row ── */
 .pri-row{display:flex;align-items:center;gap:7px;padding:2px 8px 4px;flex-wrap:wrap}
 .pri-row>span{font-size:12px;color:var(--muted);flex-shrink:0;font-weight:500}
@@ -97,19 +111,12 @@ html[data-mode="dark"] .streak.hot{color:#ff8f8f}
 .pri-row button:hover{border-color:var(--muted)}
 .pri-row button:hover .ic{transform:scale(1.15)}
 .pri-row button:active{transform:scale(.95)}
-.pri-row button[data-p="low"]:hover .ic{filter:drop-shadow(0 0 4px rgba(127,176,105,.5))}
-.pri-row button[data-p="mid"]:hover .ic{filter:drop-shadow(0 0 4px rgba(255,180,92,.5))}
-.pri-row button[data-p="high"]:hover .ic{filter:drop-shadow(0 0 4px rgba(255,93,93,.5))}
-.pri-row button::before{content:'';position:absolute;inset-inline-start:6px;top:50%;width:22px;height:22px;border-radius:50%;transform:translateY(-50%) scale(0);opacity:0;transition:all var(--duration-base) var(--ease-out);z-index:0}
 .pri-row button .ic,.pri-row button span:not(.ic){position:relative;z-index:1}
 .pri-row button.sel.low{border-color:var(--green);color:#4a7a3a;background:rgba(127,176,105,.08);font-weight:600}
-.pri-row button.sel.low::before{background:rgba(127,176,105,.25);transform:translateY(-50%) scale(1);opacity:1}
 .pri-row button.sel.low .ic{stroke:var(--green);transform:scale(1.1)}
 .pri-row button.sel.mid{border-color:#ffb45c;color:#b06a10;background:rgba(255,180,92,.08);font-weight:600}
-.pri-row button.sel.mid::before{background:rgba(255,180,92,.3);transform:translateY(-50%) scale(1);opacity:1}
 .pri-row button.sel.mid .ic{stroke:#e8a030;transform:scale(1.1)}
 .pri-row button.sel.high{border-color:#ff5d5d;color:#c93a3a;background:rgba(255,93,93,.08);font-weight:600}
-.pri-row button.sel.high::before{background:rgba(255,93,93,.25);transform:translateY(-50%) scale(1);opacity:1}
 .pri-row button.sel.high .ic{stroke:#ff5d5d;transform:scale(1.1)}
 html[data-mode="dark"] .pri-row button.sel.low{color:#9ccc86}
 html[data-mode="dark"] .pri-row button.sel.mid{color:#ffcd8a}
@@ -121,7 +128,7 @@ html[data-mode="dark"] .pri-row button.sel.high{color:#ff8f8f}
 .due-row button,.dur-row button{display:inline-flex;align-items:center;gap:5px;font-family:var(--font-ui);font-size:12px;font-weight:500;border:1.5px solid var(--border);background:transparent;color:var(--muted);border-radius:var(--radius-pill);padding:4px 11px;cursor:pointer;transition:all var(--duration-fast) cubic-bezier(.22,1,.36,1)}
 .due-row button:hover,.dur-row button:hover{border-color:var(--muted)}
 .due-row button:active,.dur-row button:active{transform:scale(.95)}
-.due-row button.sel,.dur-row button.sel{background:var(--accent);border-color:var(--accent);color:var(--color-text-on-accent);box-shadow:0 2px 8px -2px rgba(244,112,58,.4);font-weight:600}
+.due-row button.sel,.dur-row button.sel{background:var(--accent);border-color:var(--accent);color:var(--color-text-on-accent);font-weight:600}
 #durCustom{width:84px;font-family:var(--font-ui);font-size:12px;font-weight:500;text-align:center;border:1.5px dashed var(--border);background:transparent;color:var(--text);border-radius:var(--radius-pill);padding:4px 8px;outline:none;transition:border-color var(--duration-fast)}
 #durCustom:focus{border-color:var(--accent)}
 .dur-hint{font-size:11px;color:var(--danger);font-weight:500;padding:0 10px;line-height:1.6}
@@ -132,7 +139,7 @@ html[data-mode="dark"] .pri-row button.sel.high{color:#ff8f8f}
 .cat-scroll button:hover{border-color:var(--muted)}
 .cat-scroll button:active{transform:scale(.95)}
 .cat-scroll .dot{width:7px;height:7px;border-radius:50%;background:var(--cc)}
-.cat-scroll button.sel{background:var(--cc);border-color:var(--cc);color:var(--color-text-on-accent);box-shadow:0 2px 8px -2px rgba(0,0,0,.15);font-weight:600}
+.cat-scroll button.sel{background:var(--cc);border-color:var(--cc);color:var(--color-text-on-accent);font-weight:600}
 .cat-scroll button.sel .dot{background:var(--color-text-on-accent);opacity:.85}
 
 /* ═══ Search + Dice ═══ */
@@ -141,7 +148,7 @@ html[data-mode="dark"] .pri-row button.sel.high{color:#ff8f8f}
 .search input{flex:1;min-width:0;border:none;outline:none;background:transparent;font-family:var(--font-ui);font-size:14px;font-weight:400;color:var(--text)}
 .search input::placeholder{color:var(--muted);font-weight:400}
 .search>svg{color:var(--muted);flex-shrink:0}
-.dice{position:relative;border:none;background:var(--accent-soft);color:var(--accent);width:34px;height:34px;border-radius:var(--radius-xs);cursor:pointer;display:grid;place-items:center;transition:all var(--duration-fast);flex-shrink:0}
+.dice{position:relative;border:none;background:var(--accent-soft);color:var(--accent);min-width:34px;height:34px;padding:0 10px;gap:6px;border-radius:var(--radius-xs);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-family:var(--font-ui);font-size:12px;font-weight:600;white-space:nowrap;transition:all var(--duration-fast);flex-shrink:0}
 /* 44px of finger around the die at every size it is drawn, including the 30px
    it shrinks to on a phone, where the row it sits in has nothing else to spare. */
 .dice::after{content:'';position:absolute;inset:-5px;border-radius:var(--radius-sm)}
@@ -151,13 +158,13 @@ html[data-mode="dark"] .pri-row button.sel.high{color:#ff8f8f}
 /* ═══ Category Bar ═══ */
 .cats{display:flex;gap:8px;overflow-x:auto;padding:3px 1px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
 .cats::-webkit-scrollbar{display:none}
-.cat-chip{flex-shrink:0;display:inline-flex;align-items:center;gap:6px;font-family:var(--font-ui);font-size:12px;font-weight:500;padding:6px 13px;border-radius:var(--radius-pill);border:1.5px solid var(--border);background:var(--surface);color:var(--muted);cursor:pointer;transition:all var(--duration-fast);box-shadow:var(--shadow-sm)}
+.cat-chip{flex-shrink:0;display:inline-flex;align-items:center;gap:6px;font-family:var(--font-ui);font-size:12px;font-weight:500;padding:6px 13px;border-radius:var(--radius-pill);border:1.5px solid var(--border);background:var(--surface);color:var(--muted);cursor:pointer;transition:all var(--duration-fast)}
 .cat-chip .dot{width:8px;height:8px;border-radius:50%;background:var(--cc)}
 .cat-chip .cnt{font-size:11px;opacity:.75;font-weight:600}
 .cat-chip:hover{border-color:var(--color-text-muted)}
 .cat-chip:active{transform:scale(.95)}
 .cat-chip.active{background:var(--cc);border-color:var(--cc);color:#fff;font-weight:600}
-.cat-chip.drag-target-over{transform:scale(1.08) translateY(-2px);border-color:var(--cc);box-shadow:0 4px 14px color-mix(in srgb,var(--cc) 35%,transparent);background:color-mix(in srgb,var(--cc) 12%,var(--surface));color:var(--color-text-primary)}
+.cat-chip.drag-target-over{transform:scale(1.08) translateY(-2px);border-color:var(--cc);background:color-mix(in srgb,var(--cc) 12%,var(--surface));color:var(--color-text-primary)}
 
 /* ═══ Filters — quiet, not a SaaS toolbar (8.5) ═══ */
 .filters{display:flex;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:4px;position:relative;box-shadow:none;transition:background var(--duration-slow)}
@@ -187,6 +194,7 @@ html[data-mode="dark"] .pri-row button.sel.high{color:#ff8f8f}
   transition:transform var(--duration-fast) var(--ease-out)}
 @media (hover:hover){.entry-card:hover{transform:translateY(-1px)}}
 .entry-card:active{transform:translateY(1px)}
+.entry-card{box-shadow:none}
 .entry-card:focus-visible{outline:2px solid var(--color-focus);outline-offset:2px}
 .entry-card .vibe-head{margin-bottom:6px}
 .entry-go{flex:0 0 auto;font-size:12px;font-weight:600;color:var(--accent);border:1.5px solid var(--border);
@@ -208,8 +216,6 @@ html[data-mode="dark"] .pri-row button.sel.high{color:#ff8f8f}
 .switch:hover::after{transform:translateY(-50%) scale(1.15)}
 .switch.on{background:var(--green);border-color:var(--green)}
 .switch.on::after{inset-inline-end:calc(100% - 19px);background:var(--color-text-on-success)}
-html[dir="ltr"] .switch::after{inset-inline-end:auto;inset-inline-start:3px}
-html[dir="ltr"] .switch.on::after{inset-inline-end:auto;inset-inline-start:calc(100% - 19px)}
 
 /* Scene and music chips — same family as the rest of the product */
 .scene-chips{display:flex;gap:7px;flex-wrap:wrap}
@@ -218,7 +224,7 @@ html[dir="ltr"] .switch.on::after{inset-inline-end:auto;inset-inline-start:calc(
 .scene-chips button:hover{border-color:var(--muted);color:var(--text)}
 .scene-chips button:hover svg{transform:scale(1.1)}
 .scene-chips button:active{transform:scale(.95)}
-.scene-chips button.sel{background:var(--accent);border-color:var(--accent);color:var(--color-text-on-accent);box-shadow:0 3px 10px -2px rgba(244,112,58,.45);font-weight:600;transition:background var(--duration-fast),border-color var(--duration-fast)}
+.scene-chips button.sel{background:var(--accent);border-color:var(--accent);color:var(--color-text-on-accent);font-weight:600;transition:background var(--duration-fast),border-color var(--duration-fast)}
 
 /* Add song */
 .add-music{display:inline-flex;align-items:center;gap:4px;border:1.5px dashed var(--border);color:var(--muted);font-family:var(--font-ui);font-size:12px;font-weight:500;padding:5px 12px;border-radius:var(--radius-pill);cursor:pointer;transition:all var(--duration-fast)}
@@ -230,7 +236,6 @@ html[dir="ltr"] .switch.on::after{inset-inline-end:auto;inset-inline-start:calc(
 .vol{flex:1;min-width:140px;display:flex;align-items:center;gap:8px}
 .vol span{font-size:11px;color:var(--muted);flex-shrink:0;font-weight:500}
 .vol input[type=range]{flex:1;min-width:0;-webkit-appearance:none;appearance:none;height:5px;border-radius:var(--radius-pill);background:linear-gradient(to left,var(--accent) var(--v,80%),var(--border) var(--v,80%));outline:none;cursor:pointer}
-html[dir="ltr"] .vol input[type=range]{background:linear-gradient(to right,var(--accent) var(--v,80%),var(--border) var(--v,80%))}
 .vol input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--surface);border:2.5px solid var(--accent);box-shadow:var(--shadow-sm);transition:transform var(--duration-fast);cursor:grab}
 .vol input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2)}
 .vol input[type=range]::-webkit-slider-thumb:active{cursor:grabbing;transform:scale(1.1)}
@@ -274,7 +279,6 @@ html[dir="ltr"] .vol input[type=range]{background:linear-gradient(to right,var(-
   .pri-row::-webkit-scrollbar{display:none}
   .pri-row button{font-size:11px;padding:4px 10px;gap:5px;flex-shrink:0}
   .pri-row .ic{width:11px;height:11px}
-  .pri-row button::before{width:18px;height:18px;inset-inline-start:5px}
   .cat-row,.due-row,.dur-row{gap:5px;padding:2px 4px 6px;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
   .cat-row::-webkit-scrollbar,.due-row::-webkit-scrollbar,.dur-row::-webkit-scrollbar{display:none}
   .due-row button,.dur-row button,#durCustom{flex-shrink:0}
@@ -283,19 +287,13 @@ html[dir="ltr"] .vol input[type=range]{background:linear-gradient(to right,var(-
   .cat-scroll button{font-size:11px;padding:3px 8px}
   .search{padding:6px 12px 6px 6px}
   .search input{font-size:13px}
-  .dice{width:30px;height:30px;border-radius:var(--radius-xs)}
+  .dice{min-width:30px;height:30px;padding:0 8px;border-radius:var(--radius-xs)}
   .dice::after{inset:-7px}
   .dice svg{width:15px;height:15px}
   .cats{gap:6px}
   .cat-chip{font-size:11px;padding:5px 11px}
   .cat-chip .dot{width:7px;height:7px}
-  /* Five labels — «کار های عقب افتاده» among them — no longer fit as five equal
-     shares of a phone's width, and an equal share clipped that chip. The bar
-     scrolls sideways instead, the way the category chips already do, so every
-     label stays whole and no chip is squeezed into an ellipsis. */
-  .filters{overflow-x:auto;overflow-y:hidden;scrollbar-width:none;-webkit-overflow-scrolling:touch}
-  .filters::-webkit-scrollbar{display:none}
-  .filters button{font-size:12px;padding:8px 11px;white-space:nowrap;flex:0 0 auto}
+  .filters button{font-size:12px;padding:8px 2px;white-space:nowrap}
   .vibe-card{padding:14px 14px}
   .vibe-head strong{font-size:14px}
   .scene-chips button{font-size:11px;padding:5px 12px}
@@ -328,7 +326,7 @@ html[dir="ltr"] .vol input[type=range]{background:linear-gradient(to right,var(-
   .chart{height:56px;gap:4px}
   .scene-chips button{font-size:11px;padding:4px 10px}
   .vol{min-width:0;width:100%}
-  .filters button{font-size:11px;padding:7px 9px;white-space:nowrap}
+  .filters button{font-size:11px;padding:7px 1px;white-space:nowrap}
   .cat-chip{font-size:11px;padding:4px 9px}
 }
 
@@ -388,3 +386,9 @@ html[dir="ltr"] .vol input[type=range]{background:linear-gradient(to right,var(-
   color:var(--text);
   line-height:1;
 }
+
+/* «بدون مهلت» — a toggle among the category chips, not one of them */
+.cat-chip.is-flag{border-style:dashed}
+.cat-chip.is-flag.on{background:var(--accent-soft);border-style:solid;border-color:var(--accent);color:var(--color-accent-strong);font-weight:600}
+.cat-chip .flag-ico{font-size:12px;line-height:1}
+.dice[hidden]{display:none}

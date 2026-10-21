@@ -19,7 +19,6 @@
    calling `confirmDialog`. */
 
 import { $ } from './utils.js';
-import { getLang } from './i18n.js';
 
 /* ── The yes/no box ──
    Resolves true only when the user actually confirms. Every other exit —
@@ -28,8 +27,8 @@ import { getLang } from './i18n.js';
 export function confirmDialog({
   title,
   body = '',
-  confirmLabel = (getLang() === 'en' ? 'Confirm' : 'تأیید'),
-  cancelLabel = (getLang() === 'en' ? 'Cancel' : 'انصراف'),
+  confirmLabel = 'تأیید',
+  cancelLabel = 'انصراف',
   danger = false,
 } = {}) {
   return new Promise(resolve => {

@@ -21,7 +21,6 @@
 import { faNum } from './utils.js';
 import { loadTourDone, saveTourDone, saveTourAwarded } from './store.js';
 import { notify } from './bus.js';
-import { isEn, t } from './i18n.js';
 
 /* ═══ The stations ═══
    `sel` is what the spotlight cuts its hole around; `wrap` lifts the hole to
@@ -48,7 +47,7 @@ export const STEPS = [
   {
     page: 'settings', sel: '#profTour',
     title: 'حالا دفترچه مال خودته!',
-    text: 'هر وقت خواستی این راهنما رو دوباره مرور کنی، از همین دکمه توی تنظیمات در دسترسه. موفق باشی! ✨',
+    text: 'هر وقت خواستی این راهنما رو دوباره مرور کنی، از همین دکمه توی تنظیمات در دسترسه. موفق باشی!',
   },
 ];
 
@@ -291,17 +290,12 @@ function ensureRoot() {
 
 function render() {
   const s = STEPS[idx];
-  const en = isEn();
   card.querySelector('.tour-copy').scrollTop = 0;
-  kickerEl.textContent = en
-    ? t('tour.stationKicker', { letter: String.fromCharCode(65 + idx) })
-    : `ایستگاه ${LETTERS[idx]}`;
-  titleEl.textContent = en ? t(`tour.step${idx + 1}Title`) : s.title;
-  textEl.textContent = en ? t(`tour.step${idx + 1}Text`) : s.text;
+  kickerEl.textContent = `ایستگاه ${LETTERS[idx]}`;
+  titleEl.textContent = s.title;
+  textEl.textContent = s.text;
 
-  countEl.textContent = en
-    ? `${idx + 1} of ${STEPS.length}`
-    : `${faNum(idx + 1)} از ${faNum(STEPS.length)}`;
+  countEl.textContent = `${faNum(idx + 1)} از ${faNum(STEPS.length)}`;
   dotsEl.replaceChildren(...STEPS.map((_, i) => {
     const d = el('i', 'tour-dot' + (i === idx ? ' on' : ''));
     d.textContent = '';
@@ -309,17 +303,7 @@ function render() {
   }));
 
   prevBtn.hidden = idx === 0;
-  prevBtn.textContent = en ? t('tour.prev') : 'قبلی';
-  nextBtn.textContent = idx === 0
-    ? (en ? t('tour.start') : 'بریم!')
-    : idx === STEPS.length - 1
-      ? (en ? t('tour.finish') : 'تمومش کن')
-      : (en ? t('tour.next') : 'بعدی');
-
-  const skipLabel = skipBtn.querySelector('.tour-skip-label');
-  if (skipLabel) skipLabel.textContent = en ? t('tour.skipLong') : 'دفترچه رو میشناسم بذار بریم سراغ کار زندگیمون';
-  const skipMobile = skipBtn.querySelector('.tour-skip-mobile');
-  if (skipMobile) skipMobile.textContent = en ? t('tour.skipShort') : 'فعلاً رد کن';
+  nextBtn.textContent = idx === 0 ? 'بریم!' : idx === STEPS.length - 1 ? 'تمومش کن' : 'بعدی';
 }
 
 function position() {
@@ -400,7 +384,7 @@ function position() {
      card keeps its CSS-driven width (never an inline one) so a resize can
      re-measure it; the hole and the arrow carry their own sizes. */
   const put = (node, left, top, w, h) => {
-    node.style.insetInlineStart = Math.round(isEn() ? left : (vw - left - w)) + 'px';
+    node.style.insetInlineStart = Math.round(vw - left - w) + 'px';
     node.style.insetBlockStart = Math.round(top) + 'px';
     if (w != null && node !== card) node.style.width = w + 'px';
     if (h != null && node !== card) node.style.height = h + 'px';
@@ -472,10 +456,9 @@ function finish(markDone, award = false) {
 }
 
 function onKey(e) {
-  const en = isEn();
   if (e.key === 'Escape') finish(false);
-  else if (e.key === (en ? 'ArrowRight' : 'ArrowLeft') && idx < STEPS.length - 1) show(idx + 1);
-  else if (e.key === (en ? 'ArrowLeft' : 'ArrowRight') && idx > 0) show(idx - 1);
+  else if (e.key === 'ArrowLeft' && idx < STEPS.length - 1) show(idx + 1);   // RTL: forward is leftward
+  else if (e.key === 'ArrowRight' && idx > 0) show(idx - 1);
 }
 
 /* While the walk is open, a rotated phone or a scrolled page must not leave the

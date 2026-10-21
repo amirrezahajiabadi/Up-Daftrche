@@ -5,8 +5,8 @@
 .frog-txt{flex:1;min-width:0}
 .frog-txt strong{display:block;font-family:var(--font-personality);font-size:14px;font-weight:700;color:var(--color-success);line-height:1.5}
 .frog-txt span{display:block;font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
-.frog-go{border:none;background:var(--green);color:var(--color-text-on-success);font-family:var(--font-ui);font-size:13px;font-weight:600;padding:8px 14px;border-radius:var(--radius-pill);cursor:pointer;box-shadow:0 3px 0 0 color-mix(in srgb,var(--color-success) 50%,transparent);transition:transform var(--duration-fast);flex-shrink:0}
-.frog-go:active{transform:translateY(2px);box-shadow:none}
+.frog-go{border:none;background:var(--green);color:var(--color-text-on-success);font-family:var(--font-ui);font-size:13px;font-weight:600;padding:8px 14px;border-radius:var(--radius-pill);cursor:pointer;transition:transform var(--duration-fast);flex-shrink:0}
+.frog-go:active{transform:translateY(2px)}
 .frog-close{border:none;background:transparent;color:var(--green);opacity:.5;width:26px;height:26px;border-radius:var(--radius-xs);cursor:pointer;display:grid;place-items:center;flex-shrink:0;transition:all var(--duration-fast)}
 .frog-close:hover{opacity:1;background:color-mix(in srgb,var(--color-success) 20%,transparent)}
 
@@ -37,38 +37,17 @@
 .task[data-p="mid"]{--pr:var(--color-warning)}
 .task[data-p="low"]{--pr:var(--color-success)}
 
-/* The grip is the one thing on a row that drags. `touch-action:none` sits on it
-   alone, so the row itself scrolls exactly as it did: a hand reading further
-   down the list is never ambushed by a lift. */
-.grip{position:relative;color:var(--muted);opacity:.5;cursor:grab;display:grid;place-items:center;flex-shrink:0;touch-action:none;-webkit-touch-callout:none;user-select:none;transition:opacity var(--duration-fast),transform var(--duration-fast),color var(--duration-fast)}
-/* A handle the eye barely sees and the finger still finds. */
-.grip::after{content:'';position:absolute;inset:-6px -7px;border-radius:var(--radius-xs)}
+.grip{color:var(--muted);opacity:.5;cursor:grab;display:grid;place-items:center;flex-shrink:0;transition:opacity var(--duration-fast),transform var(--duration-fast),color var(--duration-fast)}
 .grip:hover{opacity:1;transform:scale(1.18);color:var(--color-accent)}
 .task:hover .grip{opacity:.85}
-/* Held by a finger: the row in the list is the slot it will land in, so it
-   recedes to a dashed outline while the card under the thumb carries the words. */
-.task.finger-dragging{opacity:.4!important;box-shadow:none;border-style:dashed;border-color:color-mix(in srgb,var(--accent) 42%,var(--border))}
-.task.finger-dragging::before{opacity:.3}
-html.task-dragging{user-select:none;-webkit-user-select:none;cursor:grabbing}
-html.task-dragging .grip{cursor:grabbing}
-/* The card that follows the finger. Same recipe as the planner's ghost — an
-   accent-bordered slip of paper — because it is the same gesture. */
-.task-ghost{position:fixed;inset-block-start:0;inset-inline-start:0;z-index:99;pointer-events:none;
-  display:flex;align-items:center;gap:8px;max-width:min(20rem,80vw);
-  background:var(--surface);border:1.5px solid var(--accent);border-radius:var(--radius-sm);
-  padding:9px 12px;box-shadow:var(--shadow-lg);will-change:transform}
-.task-ghost-t{font-family:var(--font-ui);font-size:13.5px;font-weight:500;color:var(--text);
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:min(14rem,60vw)}
-.task-ghost-chip{flex-shrink:0;font-family:var(--font-ui);font-size:11px;font-weight:600;
-  padding:2px 8px;border-radius:var(--radius-pill);
-  background:var(--accent-soft);color:var(--color-accent-text)}
 .task.dragging{opacity:1!important;box-shadow:var(--shadow-md);z-index:50;cursor:grabbing;background:var(--surface)}
 .task.removing{transition:opacity 260ms cubic-bezier(.2,0,0,1),transform 260ms cubic-bezier(.2,0,0,1),height 280ms cubic-bezier(.2,0,0,1),padding 280ms cubic-bezier(.2,0,0,1),margin 280ms cubic-bezier(.2,0,0,1),border-color 200ms!important;opacity:0!important;transform:scale(.94) translateY(-4px)!important;height:0!important;min-height:0!important;padding-block:0!important;margin-block:0!important;border-color:transparent!important;pointer-events:none!important;overflow:hidden!important}
 
-.pri-dot{width:11px;height:11px;border-radius:50%;background:var(--pr);border:none;cursor:pointer;flex-shrink:0;position:relative;transition:transform var(--duration-fast),background var(--duration-base)}
+.pri-dot{width:16px;height:16px;padding:0;border-radius:50%;background:transparent;color:var(--pr);border:none;cursor:pointer;flex-shrink:0;position:relative;display:grid;place-items:center;transition:transform var(--duration-fast),color var(--duration-base)}
+.pri-dot svg{width:15px;height:15px;display:block}
 /* 41px of finger around an 11px dot. It used to stop at 31px, so the one control
    that cycles priority was the smallest thing in the row by a wide margin. */
-.pri-dot::after{content:'';position:absolute;inset:-15px;border-radius:50%;display:block}
+.pri-dot::after{content:'';position:absolute;inset:-14px;border-radius:50%;display:block}
 .pri-dot:hover{transform:scale(1.35)}
 /* The "this one matters" halo on high-priority dots.
    It used to animate box-shadow, which is a paint-only property: every
@@ -77,12 +56,10 @@ html.task-dragging .grip{cursor:grabbing}
    the same slow breath at no per-frame paint cost. The hold at the end of the
    cycle (70%→100%) is what makes it read as a calm exhale rather than a
    repeating blink. */
-.task[data-p="high"] .pri-dot::before{content:'';position:absolute;inset:-2px;border-radius:50%;border:2px solid var(--pr);opacity:0;pointer-events:none;animation:pulse 2.6s ease-in-out infinite}
-@keyframes pulse{0%{transform:scale(.85);opacity:.55}70%{transform:scale(2.2);opacity:0}100%{transform:scale(2.2);opacity:0}}
 /* Priority change confirms itself with the expanding ring alone — the previous
    scale bounce was the only spring overshoot left in the product. */
 .pri-dot.changed{animation:priPulse var(--duration-slow) ease}
-@keyframes priPulse{0%{box-shadow:0 0 0 0 var(--pr)}50%{box-shadow:0 0 0 10px transparent}100%{box-shadow:0 0 0 0 transparent}}
+@keyframes priPulse{0%{transform:scale(1)}45%{transform:scale(1.3)}100%{transform:scale(1)}}
 
 .check{width:26px;height:26px;flex-shrink:0;border-radius:var(--radius-xs);border:2px solid var(--muted);background:transparent;cursor:pointer;display:grid;place-items:center;position:relative;transition:background var(--duration-fast) var(--ease-out),border-color var(--duration-fast),box-shadow var(--duration-base) var(--ease-out),transform var(--duration-fast) var(--ease-out)}
 /* 44px touch target without visual growth (hit-area only) */
@@ -92,17 +69,18 @@ html.task-dragging .grip{cursor:grabbing}
 .check svg{width:14px;height:14px;stroke:var(--color-text-on-success);stroke-width:3;fill:none;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:24;stroke-dashoffset:24;transition:stroke-dashoffset var(--duration-fast) ease .05s}
 /* Completion sequence: press → checked → reduced visual weight.
    Transform/opacity only — no layout shift. */
-.task.done .check{background:var(--green);border-color:transparent;box-shadow:0 4px 10px -5px var(--green);animation:pop var(--duration-base) var(--ease-out)}
+.task.done .check{background:var(--green);border-color:transparent;animation:pop var(--duration-base) var(--ease-out)}
 .task.done .check svg{stroke-dashoffset:0}
 
 .title{flex:1;min-width:0;font-family:var(--font-ui);font-size:15px;font-weight:500;line-height:1.6;position:relative;transition:color var(--duration-base);word-break:break-word}
-.title::after{content:'';position:absolute;inset-inline-start:0;top:55%;height:1.6px;width:100%;background:var(--muted);border-radius:2px;transform:scaleX(0);transform-origin:100% 50%;transition:transform var(--duration-base) var(--ease-out) 50ms}
-:dir(ltr) .title::after{transform-origin:0 50%}
+/* The strike is a text decoration, so it covers the words and stops where they do
+   (the old pseudo-line spanned the whole flexible title box, well past a short title). */
+.title{text-decoration:line-through transparent 1.6px;text-underline-offset:-.38em;transition:color var(--duration-base),text-decoration-color var(--duration-base) var(--ease-out) 50ms}
 /* Completed: visibly quieter group — recessed surface, lighter shadow,
    still fully readable and interactive (no over-fading) */
 .task.done{background:var(--color-bg);box-shadow:var(--shadow-0);opacity:.75}
 .task.done .title{color:var(--muted);font-weight:400}
-.task.done .title::after{transform:scaleX(1)}
+.task.done .title{text-decoration-color:var(--muted)}
 .title-input{flex:1;min-width:0;font-family:var(--font-ui);font-size:15px;font-weight:500;border:none;outline:none;background:var(--accent-soft);border-radius:var(--radius-xs);padding:5px 10px;color:var(--text)}
 
 .cat-tag{position:relative;min-height:26px;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;font-family:var(--font-ui);font-size:11px;font-weight:500;line-height:1.4;color:var(--cc);background:var(--accent-soft);background:color-mix(in srgb,var(--cc) 12%,transparent);border:1px solid transparent;border-color:color-mix(in srgb,var(--cc) 28%,transparent);padding:3px 10px;border-radius:var(--radius-pill);cursor:pointer;transition:transform var(--duration-fast)}
@@ -168,20 +146,6 @@ html.task-dragging .grip{cursor:grabbing}
 @media (hover:none){.bell-btn{opacity:.7}}
 .bell-btn:focus-visible{outline:2px solid var(--color-focus,var(--accent));outline-offset:2px}
 @media (prefers-reduced-motion:reduce){.bell-btn{transition:none}.bell-btn:hover{transform:none}}
-
-/* ── Editing a title from the row itself ──
-   Double-click is the desktop way to change a title and it is undiscoverable on
-   a phone: there is no second click there, only a long press the browser keeps
-   for its own selection menu. The pencil is that second door — always on the row
-   where there is no hover, revealed on hover/focus where there is, the same
-   contract .del already follows. */
-.task-edit-btn{border:none;background:transparent;color:var(--muted);width:32px;height:32px;border-radius:var(--radius-xs);cursor:pointer;display:grid;place-items:center;flex-shrink:0;opacity:0;transform:scale(.85);position:relative;transition:all var(--duration-fast);order:1}
-.task-edit-btn::after{content:'';position:absolute;inset:-6px;border-radius:var(--radius-sm)}
-.task:hover .task-edit-btn,.task:focus-within .task-edit-btn{opacity:.7;transform:none}
-.task-edit-btn:hover{color:var(--accent);background:var(--accent-soft);opacity:1;transform:scale(1.1)}
-.task-edit-btn:active{transform:scale(.9)}
-.task-edit-btn:focus-visible{opacity:1;transform:none;outline:2px solid var(--color-focus,var(--accent));outline-offset:2px}
-@media (hover:none){.task-edit-btn{opacity:.7;transform:none}}
 
 .del{border:none;background:transparent;color:var(--muted);width:32px;height:32px;border-radius:var(--radius-xs);cursor:pointer;display:grid;place-items:center;flex-shrink:0;opacity:0;transform:scale(.8);position:relative;transition:all var(--duration-fast)}
 .del::after{content:'';position:absolute;inset:-6px;border-radius:var(--radius-sm)}
@@ -261,14 +225,7 @@ html.task-dragging .grip{cursor:grabbing}
    around a title that has no room left. */
 @media (max-width:480px){
   .task{padding:12px 14px;margin-bottom:8px;border-radius:var(--radius-md)}
-  /* A 44px target without a 44px row: the handle is 36px tall and the hit area
-     reaches 4px past it top and bottom, so the row grows by four pixels, not
-     twelve. */
-  .grip{display:grid;width:44px;height:36px;margin-inline-start:-8px;opacity:.45}
-  .grip::after{inset:-4px 0}
-  .grip:active{opacity:1;color:var(--accent)}
-  .task-edit-btn{width:28px;height:28px}
-  .task-edit-btn::after{inset:-8px}
+  .grip{width:18px;margin-inline-end:-4px;touch-action:none;opacity:.6}
   .check{width:24px;height:24px}
   .check::after{inset:-10px}
   .title{font-size:14px}
@@ -278,8 +235,7 @@ html.task-dragging .grip{cursor:grabbing}
   .focus-btn::after{inset:-8px}
   .bell-btn{opacity:.7;width:28px;height:28px}
   .bell-btn::after{inset:-8px}
-  .pri-dot{margin-inline-start:28px}
-  .pri-dot::after{inset:-15px}
+  .pri-dot{margin-inline-start:54px}
   .cat-tag{font-size:11px;padding:2px 8px}
   .due-chip{font-size:11px;padding:2px 8px}
   .dur-chip{font-size:11px;padding:2px 8px}
@@ -301,34 +257,65 @@ html.task-dragging .grip{cursor:grabbing}
   .title{font-size:13px}
   .del,.focus-btn{width:26px;height:26px}
   .del::after,.focus-btn::after{inset:-9px}
-  .task-edit-btn{width:26px;height:26px}
-  .task-edit-btn::after{inset:-9px}
-  .pri-dot{margin-inline-start:24px}
+  .pri-dot{margin-inline-start:50px}
   .cat-tag,.due-chip,.dur-chip{font-size:11px;padding:3px 8px}
   .empty .art svg{width:72px}
 }
 
-/* micro-feedback on single task completion */
-@media (prefers-reduced-motion: no-preference) {
-  .task-done-pulse {
-    animation: task-pulse 0.4s ease-out;
-  }
-  @keyframes task-pulse {
-    0%   { transform: scale(1); }
-    40%  { transform: scale(1.03); }
-    100% { transform: scale(1); }
-  }
-}
-
-/* ═══ Empty chips wait for the row to be engaged ═══
-   Every row otherwise opens with two dashed placeholders («+ مهلت», «+ زمان»),
-   which at list scale is the loudest thing on the page. The chip keeps its DOM
-   node, its tab order and its click target; only its paint waits for the row to
-   be hovered or to hold focus — so a keyboard user tabs to it and it appears.
-   Touch screens get no hover and no second way to add a deadline, so there the
-   chips stay visible exactly as before. */
-@media (hover:hover) {
-  .task .due-chip.none,.task .dur-chip.none{opacity:0;pointer-events:none;transition:opacity var(--duration-fast),transform var(--duration-fast)}
+/* ── Empty chips only show up when they can be used ──
+   «+ زمان» and «+ مهلت» on every row were a column of dashed placeholders that
+   said nothing until a row was touched. Where a pointer can hover they now
+   appear with the row (or with keyboard focus inside it); on touch screens they
+   stay, because there is nothing to hover and they are the only way in. */
+@media (hover:hover){
+  .task .due-chip.none,.task .dur-chip.none{opacity:0;pointer-events:none}
   .task:hover .due-chip.none,.task:hover .dur-chip.none,
   .task:focus-within .due-chip.none,.task:focus-within .dur-chip.none{opacity:.65;pointer-events:auto}
 }
+
+
+/* ── Touch handle, tick reward, priority shapes ── */
+.grip{touch-action:none}
+.task.touch-drag{box-shadow:var(--shadow-md);transform:scale(1.015);z-index:50}
+.task.just-done .check{animation:pop var(--duration-base) var(--ease-out)}
+#counter.bump{animation:counterBump 520ms var(--ease-out)}
+@keyframes counterBump{0%{transform:scale(1)}35%{transform:scale(1.12);color:var(--color-accent-strong)}100%{transform:scale(1)}}
+@media (prefers-reduced-motion:reduce){#counter.bump,.task.just-done .check{animation:none}}
+
+/* ── Chip picker (category / duration / priority under a row's chip) ── */
+.chip-pop{position:fixed;z-index:120;min-width:150px;max-width:calc(100vw - 16px);background:var(--color-surface);border:1px solid var(--color-border-strong);border-radius:var(--radius-md);box-shadow:var(--shadow-2);padding:5px;display:flex;flex-direction:column;gap:2px;animation:popIn var(--duration-fast) var(--ease-out)}
+.chip-pop-item{display:flex;align-items:center;gap:9px;width:100%;min-height:40px;padding:7px 10px;border:none;background:transparent;border-radius:var(--radius-xs);color:var(--color-text-primary);font-family:var(--font-ui);font-size:13px;font-weight:500;cursor:pointer;text-align:start}
+.chip-pop-item:hover,.chip-pop-item:focus-visible{background:var(--accent-soft);color:var(--color-accent-strong)}
+.chip-pop-item[aria-checked="true"]{font-weight:700}
+.chip-pop-check{margin-inline-start:auto;color:var(--color-accent-strong)}
+.chip-pop-dot{width:9px;height:9px;border-radius:50%;background:var(--cc);flex-shrink:0}
+.chip-pop-ico{width:16px;height:16px;display:inline-grid;place-items:center;flex-shrink:0;color:var(--color-text-muted)}
+.chip-pop-ico[data-p="high"]{color:var(--color-danger)}
+.chip-pop-ico[data-p="mid"]{color:var(--color-warning)}
+.chip-pop-ico[data-p="low"]{color:var(--color-success)}
+.chip-pop-ico svg{width:15px;height:15px}
+.chip-pop-custom{display:flex;align-items:center;gap:8px;padding:6px 10px 4px;border-top:1px solid var(--color-border);margin-top:3px;font-size:12px;color:var(--color-text-muted)}
+.chip-pop-custom input{width:72px;margin-inline-start:auto;font-family:var(--font-ui);font-size:16px;text-align:center;border:1.5px solid var(--color-border);background:var(--color-bg);color:var(--color-text-primary);border-radius:var(--radius-xs);padding:5px 6px}
+.chip-pop-custom input[aria-invalid="true"]{border-color:var(--color-danger)}
+
+/* ── Full task editor ── */
+.te-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-xl);padding:24px 22px 18px;width:100%;max-width:420px;box-shadow:var(--shadow-2);animation:popCard var(--duration-base) var(--ease-out);display:flex;flex-direction:column;gap:12px;max-height:calc(100dvh - 40px);overflow-y:auto}
+.te-card h2{font-family:var(--font-personality);font-size:20px;font-weight:700}
+.te-label{font-size:12px;color:var(--muted);font-weight:500}
+.te-input{width:100%;font-family:var(--font-ui);font-size:16px;color:var(--text);background:var(--bg);border:1.5px solid var(--border);border-radius:var(--radius-sm);padding:var(--space-3) var(--space-4);outline:none}
+.te-input:focus{border-color:var(--accent)}
+.te-num{max-width:140px}
+.te-error{color:var(--danger);font-size:12.5px}
+.te-group,.te-due{display:flex;flex-wrap:wrap;gap:7px}
+.te-field,.te-custom{display:flex;flex-direction:column;gap:6px}
+.te-chip{display:inline-flex;align-items:center;gap:6px;min-height:36px;font-family:var(--font-ui);font-size:12.5px;font-weight:500;color:var(--color-text-primary);background:transparent;border:1.5px solid var(--border);border-radius:var(--radius-pill);padding:5px 13px;cursor:pointer}
+.te-chip[hidden]{display:none}
+.te-chip:hover{border-color:var(--muted)}
+.te-chip.sel{border-color:var(--cc,var(--accent));background:color-mix(in srgb,var(--cc,var(--accent)) 14%,transparent);font-weight:700}
+.te-actions{display:flex;flex-direction:column;gap:6px;margin-top:6px}
+.te-actions .go,.te-actions .skip{width:100%}
+.te-actions .go{border:none;background:var(--accent);color:var(--color-text-on-accent);font-family:var(--font-ui);font-size:15px;font-weight:600;padding:12px;border-radius:var(--radius-sm);cursor:pointer;min-height:44px}
+.te-actions .go:active{transform:translateY(2px)}
+.te-actions .skip{margin-top:0;min-height:44px}
+.chip-pop-item.danger:hover,.chip-pop-item.danger:focus-visible{background:color-mix(in srgb,var(--color-danger) 12%,transparent);color:var(--color-danger)}
+.chip-pop-item .ico{width:15px;height:15px}

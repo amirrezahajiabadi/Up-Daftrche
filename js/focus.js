@@ -2,7 +2,7 @@ import { state, getTask } from './state.js';
 import { savePomo, loadSession, saveSession, clearSession, safeSet, readString } from './store.js';
 import { addSessionToHistory, getHistory } from './focushistory.js';
 import { $, faNum, faDigits, formatDuration, normalizeFa, startOfToday, esc } from './utils.js';
-import { APP_TITLE } from './constants.js';
+import { APP_TITLE, LIB_ICONS } from './constants.js';
 import { confetti, beep } from './confetti.js';
 import { setTaskDone, dueLabel } from './tasks.js';
 import { notify, subscribe } from './bus.js';
@@ -11,7 +11,6 @@ import { rememberFocus } from './ledger.js';
 import { qorqoriMarkup } from './qorqori.js';
 import { jingoolMarkup } from './jingool.js';
 import * as audio from './audio.js';
-import { getLang, formatNumber, formatDurationI18n, t } from './i18n.js';
 
 /* ═══ Focus Session Model ═══
    One active/paused session at a time, persisted so it survives reload
@@ -31,13 +30,6 @@ import { getLang, formatNumber, formatDurationI18n, t } from './i18n.js';
 
 const SESSION_PRESETS = [5, 15, 30, 60, 90];
 const RATINGS = { good: 'خوب بود', okay: 'معمولی بود', hard: 'سخت بود' };
-const ratingLabel = (key, lang = getLang()) => {
-  if (lang === 'en') {
-    const map = { good: 'Satisfying', okay: 'Neutral', hard: 'Challenging' };
-    return map[key] || key;
-  }
-  return RATINGS[key] || key;
-};
 const END_MESSAGE = 'وقتت تموم شد.';
 
 /* Read through the store, not straight from localStorage: these three run
@@ -208,10 +200,7 @@ function applyScene(visualOnly = false) {
   if (!sw) return;
   sw.classList.toggle('on', ambOn);
   sw.setAttribute('aria-checked', String(ambOn));
-  const isEn = getLang() === 'en';
-  $('#ambLabel').textContent = ambOn
-    ? (isEn ? t('focus.ambienceLabelOn') : 'صدای محیط: روشن')
-    : (isEn ? t('focus.ambienceLabelOff') : 'صدای محیط: خاموش');
+  $('#ambLabel').textContent = ambOn ? 'صدای محیط: روشن' : 'صدای محیط: خاموش';
   if (!visualOnly) audio.setAmbience(scene, ambOn);
 }
 
@@ -245,14 +234,13 @@ function renderUserTracks() {
   const wrap = $('#userTracks');
   if (!wrap) return;
   wrap.innerHTML = '';
-  const isEn = getLang() === 'en';
   userList.forEach(t => {
     const b = document.createElement('button');
     const chosen = ('user:' + t.id) === musicSel;
     b.className = 'user-chip' + (chosen ? ' sel' : '');
     b.setAttribute('aria-pressed', String(chosen));
     b.dataset.id = t.id;
-    b.innerHTML = `<svg viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg><span></span><i class="rm" title="${isEn ? 'Remove' : 'حذف'}">×</i>`;
+    b.innerHTML = `<svg viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg><span></span><i class="rm" title="حذف" role="img" aria-label="حذف">${LIB_ICONS.close}</i>`;
     b.querySelector('span').textContent = t.name;
     b.onclick = async e => {
       if (e.target.closest('.rm')) {
@@ -361,8 +349,7 @@ function taskTitle(id) {
 
 function fmtClock(sec) {
   const m = Math.floor(sec / 60), s = sec % 60;
-  const str = `${m}:${String(s).padStart(2, '0')}`;
-  return getLang() === 'fa' ? faDigits(str) : str;
+  return faDigits(`${m}:${String(s).padStart(2, '0')}`);
 }
 
 function renderFocusPage() {
@@ -384,12 +371,11 @@ function renderFocusPage() {
   }
 
   /* Active / paused view */
-  const isEn = getLang() === 'en';
   document.body?.classList.add('focus-immersive');
   const paused = session.status === 'paused';
   card.innerHTML = `
     <span class="focus-char" aria-hidden="true">${fekrbazMarkup('focused')}</span>
-    <p class="focus-task">${isEn ? 'Focusing on' : 'در حال تمرکز روی'}<br><strong></strong></p>
+    <p class="focus-task">در حال تمرکز روی<br><strong></strong></p>
     <div class="focus-ring" id="focusRing" style="--fp:0">
       <div class="focus-inner">
         <div>
@@ -400,11 +386,11 @@ function renderFocusPage() {
     </div>
     <div class="focus-page-actions">
       ${paused
-        ? `<button class="go" id="sessionResume">${isEn ? 'Resume' : 'ادامه'}</button>`
-        : `<button class="ghost" id="sessionPause">${isEn ? 'Pause' : 'مکث'}</button>`}
-      <button class="go" id="sessionFinish">${isEn ? 'Finish' : 'پایان'}</button>
+        ? `<button class="go" id="sessionResume">ادامه</button>`
+        : `<button class="ghost" id="sessionPause">مکث</button>`}
+      <button class="go" id="sessionFinish">پایان</button>
     </div>
-    <button class="focus-sound-toggle" id="focusSoundToggle" type="button" aria-expanded="false">${isEn ? 'Sound & Ambience' : 'صدا و موسیقی'}</button>`;
+    <button class="focus-sound-toggle" id="focusSoundToggle" type="button" aria-expanded="false">صدا و موسیقی</button>`;
   card.querySelector('strong').textContent = taskTitle(session.taskId);
   card.querySelector('#sessionPause')?.addEventListener('click', () => { pauseSession(); renderFocusPage(); updateFocusPill(); });
   card.querySelector('#sessionResume')?.addEventListener('click', () => { resumeSession(); renderFocusPage(); updateFocusPill(); });
@@ -436,7 +422,6 @@ function renderFocusPage() {
 function syncRunningUI() {
   const session = getActiveSession();
   if (!session) return;
-  const isEn = getLang() === 'en';
   const remain = remainingSec(session);
   const total = session.plannedDurationMin * 60;
   const ring = $('#focusRing');
@@ -444,8 +429,8 @@ function syncRunningUI() {
   const timeEl = $('#focusTime');
   if (timeEl) timeEl.textContent = fmtClock(remain);
   const stateEl = $('#focusState');
-  if (stateEl) stateEl.textContent = session.status === 'paused' ? (isEn ? 'Paused' : 'متوقف شده') : (isEn ? 'Focusing…' : 'در حال تمرکز…');
-  document.title = session.status === 'active' ? `${fmtClock(remain)} · ${isEn ? 'Daftarche' : 'دفتَرچه'}` : APP_TITLE;
+  if (stateEl) stateEl.textContent = session.status === 'paused' ? 'متوقف شده' : 'در حال تمرکز…';
+  document.title = session.status === 'active' ? `${fmtClock(remain)} · دفتَرچه` : APP_TITLE;
 }
 
 /* ═══ Pick view — the task book ═══
@@ -462,10 +447,9 @@ const SEARCH_FROM = 8;   // from this many open tasks the book gets a search lin
 function relDay(ts) {
   const then = new Date(ts); then.setHours(0, 0, 0, 0);
   const diff = Math.round((startOfToday() - then) / 864e5);
-  const isEn = getLang() === 'en';
-  if (diff <= 0) return isEn ? 'today' : 'امروز';
-  if (diff === 1) return isEn ? 'yesterday' : 'دیروز';
-  if (diff <= 7) return isEn ? `${diff} days ago` : `${faNum(diff)} روز پیش`;
+  if (diff <= 0) return 'امروز';
+  if (diff === 1) return 'دیروز';
+  if (diff <= 7) return `${faNum(diff)} روز پیش`;
   return '';
 }
 
@@ -481,32 +465,25 @@ function openTasksForPick() {
 
 /* One factual line about the load on the desk — counts only, never a score */
 function openSummary(open) {
-  const isEn = getLang() === 'en';
-  const num = n => formatNumber(n, getLang());
   const late = open.filter(t => !!t.dueDate && dueLabel(t.dueDate)?.cls === 'late').length;
   const today = open.filter(t => !!t.dueDate && dueLabel(t.dueDate)?.cls === 'today').length;
-  const parts = [isEn ? (open.length === 1 ? '1 task on your desk' : `${num(open.length)} tasks on your desk`) : `${faNum(open.length)} کار روی میز`];
-  if (late) {
-    parts.push(isEn ? (late === 1 ? '1 overdue task' : `${num(late)} overdue tasks`) : (late === 1 ? '۱ کار از مهلت گذشته' : `${faNum(late)} کار از مهلت گذشته`));
-  } else if (today) {
-    parts.push(isEn ? (today === 1 ? '1 task due today' : `${num(today)} tasks due today`) : (today === 1 ? '۱ کار با مهلت امروز' : `${faNum(today)} کار با مهلت امروز`));
-  } else if (open.length >= SEARCH_FROM) {
-    parts.push(isEn ? 'Pick any task you like' : 'هر کدوم رو خواستی بردار');
-  }
+  const parts = [`${faNum(open.length)} کار روی میز`];
+  if (late) parts.push(late === 1 ? '۱ کار از مهلت گذشته' : `${faNum(late)} کار از مهلت گذشته`);
+  else if (today) parts.push(today === 1 ? '۱ کار با مهلت امروز' : `${faNum(today)} کار با مهلت امروز`);
+  else if (open.length >= SEARCH_FROM) parts.push('هر کدوم رو خواستی بردار');
   return parts.join(' · ');
 }
 
 /* One entry of the book: title first, then its own deadline and estimate */
 function pickRowHtml(task, rec) {
-  const isEn = getLang() === 'en';
   const meta = [];
   if (rec) {
     const day = relDay(rec.endedAt);
-    meta.push(`<span class="pick-note">${isEn ? 'Last focused' : 'آخرین تمرکزت'}${day ? ' · ' + day : ''}</span>`);
+    meta.push(`<span class="pick-note">آخرین تمرکزت${day ? ' · ' + day : ''}</span>`);
   }
   const dl = task.dueDate ? dueLabel(task.dueDate) : null;
   if (dl) meta.push(`<span class="due-chip ${dl.cls}">${dl.ltr ? `<span dir="ltr">${esc(dl.text)}</span>` : esc(dl.text)}</span>`);
-  const dur = formatDurationI18n(task.durationMin);
+  const dur = formatDuration(task.durationMin);
   if (dur) meta.push(`<span class="dur-chip">${esc(dur)}</span>`);
   return `
       <label class="pickrow">
@@ -521,15 +498,14 @@ function pickRowHtml(task, rec) {
 
 /* Nothing to focus on yet: a warm note, never an error */
 function renderPickEmpty(card) {
-  const isEn = getLang() === 'en';
   const hasTasks = state.tasks.length > 0;
   card.dataset.pick = '1';
   card.innerHTML = `
     <span class="focus-char" aria-hidden="true">${qorqoriMarkup(hasTasks ? 'celebrating' : 'default')}</span>
-    <p class="focus-task">${hasTasks ? (isEn ? 'All tasks completed!' : 'همه کارات تموم شده.') : (isEn ? 'No tasks on your desk yet.' : 'هنوز کاری روی میز نیست.')}</p>
-    <p class="focus-sub">${hasTasks ? (isEn ? 'Add a fresh task to dive into focus.' : 'یه کار تازه اضافه کن تا روش تمرکز کنیم.') : (isEn ? 'Add a task first, then come back here to focus.' : 'اول یه کار اضافه کن، بعدش میایم سراغ تمرکز.')}</p>
+    <p class="focus-task">${hasTasks ? 'همه کارات تموم شده.' : 'هنوز کاری روی میز نیست.'}</p>
+    <p class="focus-sub">${hasTasks ? 'یه کار تازه اضافه کن تا روش تمرکز کنیم.' : 'اول یه کار اضافه کن، بعدش میایم سراغ تمرکز.'}</p>
     <div class="focus-page-actions">
-      <button class="go" id="pickAdd">${isEn ? 'Add Task' : 'افزودن کار'}</button>
+      <button class="go" id="pickAdd">افزودن کار</button>
     </div>`;
   card.querySelector('#pickAdd').addEventListener('click', () =>
     window.dispatchEvent(new CustomEvent('navigate', { detail: 'tasks' })));
@@ -542,32 +518,30 @@ function renderPickView() {
   const { open, rec } = openTasksForPick();
   if (!open.length) { renderPickEmpty(card); return; }
 
-  const isEn = getLang() === 'en';
-  const num = n => formatNumber(n, getLang());
   card.dataset.pick = '1';
   const rows = open.map(t => pickRowHtml(t, t.id === rec?.taskId ? rec : null)).join('');
   card.innerHTML = `
     <span class="focus-char" aria-hidden="true">${qorqoriMarkup('default')}</span>
-    <p class="focus-task">${state.userName ? esc(state.userName) + (isEn ? ', ' : '، ') : ''}${isEn ? 'Which task shall we focus on?' : 'کدوم کار رو برداریم؟'}</p>
+    <p class="focus-task">${state.userName ? esc(state.userName) + '، ' : ''}کدوم کار رو برداریم؟</p>
     <p class="focus-sub">${openSummary(open)}</p>
     <div class="pickbook">
       <button type="button" class="pickbook-head" id="pickToggle" aria-expanded="false" aria-controls="pickBookList">
-        <span>${isEn ? 'Target task' : 'کار مورد نظرت'}</span>
-        <span class="pickbook-count">${isEn ? `${num(open.length)} task${open.length === 1 ? '' : 's'}` : `${faNum(open.length)} کار`}</span>
+        <span>کار مورد نظرت</span>
+        <span class="pickbook-count">${faNum(open.length)} کار</span>
         <svg class="pickbook-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
       </button>
       <div class="pickbook-body" id="pickBody">
         <div class="pickbook-body-inner">
-      ${open.length > SEARCH_FROM ? `<div class="pickbook-search"><input id="pickSearch" type="search" autocomplete="off" placeholder="${isEn ? 'Search your tasks…' : 'بین کارهات بگرد…'}" aria-label="${isEn ? 'Search tasks' : 'جست‌وجو در کارها'}"></div>` : ''}
-      <div class="pickbook-list" id="pickBookList" role="radiogroup" aria-label="${isEn ? 'Select task' : 'انتخاب کار'}">${rows}</div>
-      <p class="pickbook-none" id="pickNone" hidden>${isEn ? 'No matching tasks found.' : 'چیزی با این اسم پیدا نشد.'}</p>
+      ${open.length > SEARCH_FROM ? `<div class="pickbook-search"><input id="pickSearch" type="search" autocomplete="off" placeholder="بین کارهات بگرد…" aria-label="جست‌وجو در کارها"></div>` : ''}
+      <div class="pickbook-list" id="pickBookList" role="radiogroup" aria-label="انتخاب کار">${rows}</div>
+      <p class="pickbook-none" id="pickNone" hidden>چیزی با این اسم پیدا نشد.</p>
         </div>
       </div>
     </div>
     <div class="focus-presets" id="focusPresets"></div>
     <div class="focus-page-actions">
-      <button class="go" id="focusStartBtn" disabled>${isEn ? 'Start Focus' : 'شروع تمرکز'}</button>
-      <span class="focus-start-hint" id="focusStartHint">${isEn ? 'Select a task to get started' : 'برای شروع، ابتدا یک کار را انتخاب کن'}</span>
+      <button class="go" id="focusStartBtn" disabled>شروع تمرکز</button>
+      <span class="focus-start-hint" id="focusStartHint">برای شروع، ابتدا یک کار را انتخاب کن</span>
     </div>`;
 
   const startBtn = card.querySelector('#focusStartBtn');
@@ -589,7 +563,7 @@ function renderPickView() {
       const b = document.createElement('button');
       b.type = 'button';
       b.dataset.min = m;
-      b.textContent = isEn ? `${m} min` : `${faNum(m)} دقیقه`;
+      b.textContent = `${faNum(m)} دقیقه`;
       if (m === suggested) b.classList.add('sel');
       b.addEventListener('click', () => {
         presets.querySelectorAll('button').forEach(x => x.classList.remove('sel'));
@@ -648,14 +622,13 @@ function renderEndedView() {
   const card = $('.focus-page-card');
   if (!card) return;
   const session = state.session;
-  const isEn = getLang() === 'en';
   card.innerHTML = `
     <span class="focus-char" aria-hidden="true">${jingoolMarkup('excited')}</span>
-    <p class="focus-task focus-end-msg">${isEn ? "Time's up." : END_MESSAGE}</p>
-    <p class="focus-sub">${isEn ? 'Did you complete your task?' : 'کارت انجام شد؟'}</p>
+    <p class="focus-task focus-end-msg">${END_MESSAGE}</p>
+    <p class="focus-sub">کارت انجام شد؟</p>
     <div class="focus-page-actions">
-      <button class="go" id="endDone">${isEn ? '✓ Yes, task finished' : '✓ کار انجام شد'}</button>
-      <button class="ghost" id="endContinue">${isEn ? '→ Still in progress' : '→ هنوز ادامه داره'}</button>
+      <button class="go" id="endDone">${LIB_ICONS.check} کار انجام شد</button>
+      <button class="ghost" id="endContinue">${LIB_ICONS.arrowBack} هنوز ادامه داره</button>
     </div>`;
   card.querySelector('#endDone').addEventListener('click', () => {
     // The ended-view choice already answers the completion question —
@@ -679,13 +652,12 @@ function renderReflection() {
   const card = $('.focus-page-card');
   if (!card) return;
   const session = state.session;
-  const isEn = getLang() === 'en';
   card.innerHTML = `
     <span class="focus-char" aria-hidden="true">${session.taskCompleted ? jingoolMarkup('celebrating') : fekrbazMarkup('thinking')}</span>
-    <p class="focus-task">${isEn ? 'Did you complete your task?' : 'کارت انجام شد؟'}</p>
+    <p class="focus-task">کارت انجام شد؟</p>
     <div class="focus-page-actions">
-      <button class="go" id="reflYes">${isEn ? '✓ Yes' : '✓ بله'}</button>
-      <button class="ghost" id="reflNo">${isEn ? '→ Still in progress' : '→ هنوز ادامه داره'}</button>
+      <button class="go" id="reflYes">${LIB_ICONS.check} بله</button>
+      <button class="ghost" id="reflNo">${LIB_ICONS.arrowBack} هنوز ادامه داره</button>
     </div>`;
   card.querySelector('#reflYes').addEventListener('click', () => {
     // Reuse the shared completion action — no second completion path
@@ -706,14 +678,13 @@ function renderRating() {
   const card = $('.focus-page-card');
   if (!card) return;
   const session = state.session;
-  const isEn = getLang() === 'en';
   card.innerHTML = `
     <span class="focus-char" aria-hidden="true">${fekrbazMarkup('curious')}</span>
-    <p class="focus-task">${isEn ? 'How was this session?' : 'این تمرکز چطور بود؟'}</p>
+    <p class="focus-task">این تمرکز چطور بود؟</p>
     <div class="focus-rating">
-      <button type="button" data-rating="good" aria-label="${ratingLabel('good')}">😊 ${ratingLabel('good')}</button>
-      <button type="button" data-rating="okay" aria-label="${ratingLabel('okay')}">😐 ${ratingLabel('okay')}</button>
-      <button type="button" data-rating="hard" aria-label="${ratingLabel('hard')}">😵 ${ratingLabel('hard')}</button>
+      <button type="button" data-rating="good" aria-label="خوب بود">${LIB_ICONS.smile} خوب بود</button>
+      <button type="button" data-rating="okay" aria-label="معمولی بود">${LIB_ICONS.meh} معمولی بود</button>
+      <button type="button" data-rating="hard" aria-label="سخت بود">${LIB_ICONS.frown} سخت بود</button>
     </div>`;
   card.querySelectorAll('[data-rating]').forEach(b => {
     b.addEventListener('click', () => {
@@ -743,15 +714,14 @@ function showSessionSummary() {
   const card = $('.focus-page-card');
   if (!card) return;
   const s = state.session;
-  const isEn = getLang() === 'en';
   const mins = Math.max(1, Math.round((s.activeMs || 0) / 60000));
   const done = s.taskCompleted;
   card.innerHTML = `
     <span class="focus-char" aria-hidden="true">${done ? jingoolMarkup('delighted') : fekrbazMarkup('proud')}</span>
-    <p class="focus-task">${done ? (isEn ? 'Well done! Task completed 🎉' : 'آفرین! کارت تموم شد 🎉') : (isEn ? 'Focus session logged' : 'تمرکزت ثبت شد')}</p>
-    <p class="focus-sub">${isEn ? `${mins} min focus` : `${faNum(mins)} دقیقه تمرکز`}${s.rating ? ' · ' + ratingLabel(s.rating) : ''}</p>
+    <p class="focus-task">${done ? `آفرین! کارت تموم شد ${LIB_ICONS.spark}` : 'تمرکزت ثبت شد'}</p>
+    <p class="focus-sub">${faNum(mins)} دقیقه تمرکز${s.rating ? ' · ' + RATINGS[s.rating] : ''}</p>
     <div class="focus-page-actions">
-      <button class="go" id="summaryOk">${isEn ? 'Done' : 'باشه'}</button>
+      <button class="go" id="summaryOk">باشه</button>
     </div>`;
   card.querySelector('#summaryOk').addEventListener('click', () => {
     if (state.session) delete state.session._reflectDone;
@@ -796,10 +766,9 @@ function updateFocusPill() {
   pillEl.classList.toggle('running', session.status === 'active');
   const label = pillEl.querySelector('span');
   if (label) {
-    const isEn = getLang() === 'en';
     label.textContent = session.status === 'paused'
-      ? (isEn ? 'Focus paused — click to resume' : 'تمرکز متوقف شده — بازگشت به تمرکز')
-      : (isEn ? `Focusing: ${taskTitle(session.taskId)} · ${fmtClock(remainingSec(session))}` : `در حال تمرکز: ${taskTitle(session.taskId)} · ${fmtClock(remainingSec(session))}`);
+      ? 'تمرکز متوقف شده — بازگشت به تمرکز'
+      : `در حال تمرکز: ${taskTitle(session.taskId)} · ${fmtClock(remainingSec(session))}`;
   }
 }
 
@@ -841,11 +810,9 @@ setInterval(() => {
 
 /* A hidden tab throttles its interval to about once a minute (and a sleeping
    phone stops it altogether), so the expiry check is run again on return. */
-if (typeof document !== 'undefined' && document.addEventListener) {
-  document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'visible') checkExpiry();
-  });
-}
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible') checkExpiry();
+});
 
 /* ═══ Public page API ═══ */
 
@@ -915,10 +882,4 @@ export function initFocusPage() {
   updateFocusPill();
   notify();
   subscribe(() => { refreshIfPickView(); updateFocusPill(); });
-  window.addEventListener('daftarche:lang-changed', () => {
-    applyScene(true);
-    renderFocusPage();
-    updateFocusPill();
-  });
 }
-

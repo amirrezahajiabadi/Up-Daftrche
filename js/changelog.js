@@ -16,8 +16,69 @@
    it is unavailable the running release is unknown and the dialog stays shut. */
 
 import { esc } from './utils.js';
+import { LIB_ICONS } from './constants.js';
 import { safeSet, readString } from './store.js';
-import { isEn, t } from './i18n.js';
+
+/* Changelog history was written with emoji; render them as the same line icons
+   as the rest of the app so the dialog stays consistent. */
+const ICON_BY_EMOJI = {
+  '🖼️': 'image',
+  '🎂': 'image',
+  '📐': 'layout',
+  '🪟': 'layout',
+  '🖥️': 'layout',
+  '🗂️': 'layout',
+  '↕️': 'layout',
+  '🔘': 'layout',
+  '🎨': 'spark',
+  '✨': 'spark',
+  '🎉': 'spark',
+  '🧹': 'spark',
+  '🧼': 'spark',
+  '🧊': 'spark',
+  '🌫️': 'spark',
+  '💜': 'spark',
+  '🐸': 'spark',
+  '🧭': 'compass',
+  '🚪': 'compass',
+  '📱': 'phone',
+  '👆': 'phone',
+  '✋': 'phone',
+  '📅': 'calendar',
+  '🗓️': 'calendar',
+  '🌗': 'moon',
+  '🌙': 'moon',
+  '🕰️': 'clock',
+  '⏰': 'clock',
+  '📊': 'chart',
+  '🔢': 'chart',
+  '🧠': 'chart',
+  '📖': 'book',
+  '📓': 'book',
+  '📜': 'book',
+  '🔖': 'book',
+  '💾': 'folder',
+  '🗜️': 'folder',
+  '📌': 'folder',
+  '👀': 'eye',
+  '🏅': 'medal',
+  '🏆': 'medal',
+  '🎯': 'target',
+  '✅': 'target',
+  '✏️': 'edit',
+  '✍️': 'edit',
+  '🖋️': 'edit',
+  '🛡️': 'shield',
+  '⚠️': 'shield',
+  '🔎': 'search',
+  '🔄': 'undo',
+  '↩️': 'undo',
+  '🏷️': 'tag',
+  '🎧': 'music',
+  '⌨️': 'keyboard',
+};
+const changelogIcon = (e) => LIB_ICONS[ICON_BY_EMOJI[e] || ICON_BY_EMOJI[String(e).replace(/\uFE0F/g, '')] || 'spark'];
+
 
 export const APP_VERSION = self.DAFTARCHE_RELEASE || '';
 
@@ -237,26 +298,13 @@ export const CHANGELOG = [
   {
     version: '3.2.0',
     date: 'مهر ۱۴۰۵',
-    dateEn: 'October 2026',
-    title: 'تجربهٔ کامل و اصیل انگلیسی',
-    titleEn: 'Full English Experience & Settings Localization',
+    title: 'کارها و کتاب‌ها، راحت‌تر و دم‌دست‌تر',
     highlights: [
-      { icon: '🌐', text: 'پشتیبانی کامل از زبان انگلیسی با تغییر سریع از تنظیمات (Language Switcher)', textEn: 'Complete English experience with seamless language switching in Settings' },
-      { icon: '🔤', text: 'تایپوگرافی اصیل با فونت‌های محلی Manrope و Bricolage Grotesque', textEn: 'Tailored typography using Manrope and Bricolage Grotesque font families' },
-      { icon: '📅', text: 'تقویم میلادی کامل برای انتخاب تاریخ و برنامه‌ریزی هفتگی با شروع از دوشنبه', textEn: 'Full Gregorian calendar integration with Monday week starts in planner' },
-      { icon: '🧭', text: 'چیدمان طبیعی چپ‌به‌راست (LTR) و هماهنگی کامل تمام صفحات و انیمیشن‌ها', textEn: 'Native LTR interface layout with polished micro-interactions and dialogs' },
-    ],
-  },
-  {
-    version: '3.3.0',
-    date: 'مهر ۱۴۰۵',
-    dateEn: 'October 2026',
-    title: 'کارها زیر انگشت',
-    titleEn: 'Tasks under your thumb',
-    highlights: [
-      { icon: '👆', text: 'کارها را روی گوشی با انگشت جابه‌جا کن؛ دستگیرهٔ هر ردیف دوباره پیداست', textEn: 'Reorder tasks with a finger on your phone — every row shows its handle again' },
-      { icon: '⌨️', text: 'با Alt و کلیدهای بالا/پایین هم می‌شود یک کار را بالا یا پایین برد', textEn: 'Hold Alt with ↑ / ↓ to move a task up or down from the keyboard' },
-      { icon: '✏️', text: 'یک مداد کنار عنوان، ویرایش را با یک لمس باز می‌کند — و گزینهٔ «ویرایش» از منوی سه‌نقطه برداشته شد', textEn: 'A pencil beside the title opens editing with a single tap — the menu item is gone' },
+      { icon: '✏️', text: 'دسته، زمان و اولویت هر کار از یه منو انتخاب می‌شه؛ «ویرایش» هم همهٔ بخش‌های کار رو یک‌جا باز می‌کنه' },
+      { icon: '↕️', text: 'کارها رو با لمس، یا با Alt و فلش‌ها جابه‌جا کن؛ فیلتر «عقب‌افتاده» هم اضافه شد' },
+      { icon: '📖', text: 'هدف مطالعه و «کدوم اول؟» اومدن توی صفحهٔ امروز؛ صفحه هم بعد از یه دقیقه ماندن خودش خونده حساب می‌شه' },
+      { icon: '🗜️', text: 'PDFهای کتاب‌ها رو می‌تونی توی یه زیپ جدا نگه داری و برگردونی' },
+      { icon: '🧼', text: 'آیکن‌ها یکدست شدن و کارت کتاب خلوت‌تر شد' },
     ],
   },
 ];
@@ -266,19 +314,13 @@ const SEEN_KEY = 'daftarche-seen-version';
 /* ── rendering ─────────────────────────────────────────────────────────── */
 
 function entryHtml(entry) {
-  const en = isEn();
-  const items = entry.highlights.map(h => {
-    const text = (en && h.textEn) ? h.textEn : h.text;
-    return `<li class="changelog-item"><span class="changelog-icon" aria-hidden="true">${esc(h.icon)}</span><span>${esc(text)}</span></li>`;
-  }).join('');
-  const parts = entry.version.split('.');
-  const verLabel = en ? `Version ${parts[0]}.${parts[1] || '0'}` : `نسخهٔ ${esc(faVer(entry.version))}`;
-  const dateLabel = (en && entry.dateEn) ? entry.dateEn : entry.date;
-  const title = (en && entry.titleEn) ? entry.titleEn : entry.title;
+  const items = entry.highlights.map(h =>
+    `<li class="changelog-item"><span class="changelog-icon" aria-hidden="true">${changelogIcon(h.icon)}</span><span>${esc(h.text)}</span></li>`
+  ).join('');
   return `
     <div class="changelog-entry">
-      <div class="changelog-ver"><b>${esc(verLabel)}</b><span>${esc(dateLabel)}</span></div>
-      <h3 class="changelog-title">${esc(title)}</h3>
+      <div class="changelog-ver"><b>نسخهٔ ${esc(faVer(entry.version))}</b><span>${esc(entry.date)}</span></div>
+      <h3 class="changelog-title">${esc(entry.title)}</h3>
       <ul class="changelog-list">${items}</ul>
     </div>`;
 }
@@ -305,10 +347,10 @@ function build() {
       <span class="badge" aria-hidden="true">
         <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.4 7.6L22 12l-7.6 2.4L12 22l-2.4-7.6L2 12l7.6-2.4z"/></svg>
       </span>
-      <h2 id="changelogTitle">${esc(t('changelog.title'))}</h2>
-      <p class="changelog-sub">${esc(t('changelog.subtitle'))}</p>
+      <h2 id="changelogTitle">دفترچه به‌روز شد</h2>
+      <p class="changelog-sub">یه کم تازه‌تر شدیم — اینا عوض شدن</p>
       <div class="changelog-body"></div>
-      <button class="go" id="changelogOk">${esc(t('changelog.ok'))}</button>
+      <button class="go" id="changelogOk">فهمیدم</button>
     </div>`;
   document.body.appendChild(overlay);
 }
@@ -328,12 +370,6 @@ function close() {
 function openChangelog(entries) {
   if (!overlay) build();
   if (!overlay.hidden) return;
-  const tEl = overlay.querySelector('#changelogTitle');
-  if (tEl) tEl.textContent = t('changelog.title');
-  const subEl = overlay.querySelector('.changelog-sub');
-  if (subEl) subEl.textContent = t('changelog.subtitle');
-  const okBtn = overlay.querySelector('#changelogOk');
-  if (okBtn) okBtn.textContent = t('changelog.ok');
   /* The entries are written in at open time: which ones belong to this reader is
      only known by the boot check that opens the dialog. */
   const body = overlay.querySelector('.changelog-body');

@@ -7,13 +7,15 @@ import { P_LABEL, ICONS } from './constants.js';
 import { subscribe } from './bus.js';
 import { addTask, dueLabel, collapse, setTaskDone, timeRangeLabel } from './tasks.js';
 import { frogScore } from './progress.js';
+import { readingGoalsToday } from './library.js';
+import { openRoll, setRollScope } from './roll.js';
+import { LIB_ICONS } from './constants.js';
 import { openFocus } from './focus.js';
 import { qorqoriMarkup } from './qorqori.js';
 import { getHistory } from './focushistory.js';
 import { buildDecisionContext } from './decisioncontext.js';
 import { getRecommendation, reasonForTask, energyFromMood, ALL_DONE_REASON } from './decision.js';
 import { parseQuickAdd, renderQuickAddPreview, stripQuickAddToken } from './quickadd.js';
-import { getLang, t, formatNumber, formatDurationI18n } from './i18n.js';
 
 const DAY = 864e5;
 /* Priority is meaning, not decoration: the three dots read from the palette's
@@ -55,32 +57,24 @@ const todayDone = () => state.tasks.filter(isDoneToday);
 /* ── Header: greeting, date, summary ── */
 function renderHeader() {
   const greet = $('#todayGreet');
-  if (greet) {
-    greet.textContent = state.userName
-      ? t('today.greeting', { name: state.userName })
-      : t('today.greetingAnonymous');
-  }
+  if (greet) greet.textContent = state.userName ? `سلام ${state.userName}` : 'سلام';
   const date = $('#todayDate');
-  if (date) {
-    date.textContent = getLang() === 'en'
-      ? new Intl.DateTimeFormat('en-US', { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date())
-      : new Intl.DateTimeFormat('fa-IR', { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date());
-  }
+  if (date) date.textContent = new Intl.DateTimeFormat('fa-IR', { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date());
 
   const summary = $('#todaySummary');
   if (!summary) return;
   const pending = todayPending(), done = todayDone();
   const n = pending.length, m = done.length;
   if (!n && !m) {
-    summary.textContent = t('today.emptySummary');
+    summary.textContent = 'برنامه‌ات برای امروز خالیه؛ هر کاری خواستی اضافه کن.';
     return;
   }
   const parts = [];
   if (n) {
     const casual = pending.some(t => t.p !== 'high' && !(t.dueDate && dueDiff(t.dueDate) < 0));
-    parts.push(casual ? t('today.pendingCasual', { n }) : t('today.pendingImportant', { n }));
+    parts.push(`${faNum(n)} ${casual ? 'کار برای امروز' : 'کار مهم'}`);
   }
-  if (m) parts.push(t('today.completed', { n: m }));
+  if (m) parts.push(`${faNum(m)} انجام شده`);
   summary.textContent = parts.join(' · ');
 }
 
@@ -100,17 +94,13 @@ function frogExpr() {
 
 function recChips(task) {
   const dl = task.dueDate ? dueLabel(task.dueDate) : null;
-  const pKey = task.p || 'mid';
-  const pText = getLang() === 'en'
-    ? t('tasks.priorityLabel', { p: t('tasks.priority' + (pKey === 'high' ? 'High' : pKey === 'low' ? 'Low' : 'Mid')) })
-    : `اولویت ${P_LABEL[pKey]}`;
-  const chips = [`<span class="frog-chip" style="--fc:${PRI_COLORS[pKey]}">${pText}</span>`];
+  const chips = [`<span class="frog-chip" style="--fc:${PRI_COLORS[task.p || 'mid']}">اولویت ${P_LABEL[task.p || 'mid']}</span>`];
   if (dl) {
     const fc = dl.cls === 'late' ? 'var(--color-danger)' : dl.cls === 'today' ? 'var(--color-accent)' : 'var(--color-success)';
     const txt = dl.ltr ? `<span dir="ltr">${dl.text}</span>` : dl.text;
     chips.push(`<span class="frog-chip" style="--fc:${fc}">${txt}</span>`);
   }
-  const dlbl = formatDurationI18n(task.durationMin);
+  const dlbl = formatDuration(task.durationMin);
   if (dlbl) chips.push(`<span class="frog-chip" style="--fc:var(--color-accent)">${dlbl}</span>`);
   return chips.join('');
 }
@@ -157,32 +147,29 @@ function renderFrog(force) {
   heroFrog = frog;
   const alts = frog ? rec.alternatives.filter(a => a.id !== frog.id) : [];
   const sig = frog
-    ? ['task', frog.id, frog.text, frog.p || 'mid', frog.dueDate || '', frog.durationMin || '', rec.reason || '', alts.map(a => a.id).join(','), frogExpr(), getLang()].join('~')
-    : ['none', rec.state, rec.reason || '', getLang()].join('~');
+    ? ['task', frog.id, frog.text, frog.p || 'mid', frog.dueDate || '', frog.durationMin || '', rec.reason || '', alts.map(a => a.id).join(','), frogExpr()].join('~')
+    : ['none', rec.state, rec.reason || ''].join('~');
   if (!force && sig === lastFrogSig) return;
   lastFrogSig = sig;
-  const isEn = getLang() === 'en';
   if (!frog) {
     shownRecId = null;
     const allDone = rec.state === 'all-done';
     const nothing = rec.state === 'empty';
     const kind = allDone ? 'done' : nothing ? 'none' : 'stuck';
     const expr = allDone ? 'celebrating' : 'thinking';
-    const title = allDone
-      ? (isEn ? 'All wrapped up for today.' : 'امروز کارت رو جمع کردی.')
-      : (isEn ? 'No tasks on the table today.' : 'امروز کاری روی میز نیست.');
+    const title = allDone ? 'امروز کارت رو جمع کردی.' : 'امروز کاری روی میز نیست.';
     const msg = allDone
-      ? (rec.reason || (isEn ? 'All tasks scheduled for today are complete.' : ALL_DONE_REASON))
+      ? (rec.reason || ALL_DONE_REASON)
       : nothing
-        ? (isEn ? 'When you add tasks, recommendations will appear right here.' : 'وقتی کاری اضافه کنی، همین‌جا پیشنهادش رو می‌ذارم.')
-        : (rec.reason || (isEn ? 'All tasks scheduled for today are complete.' : ALL_DONE_REASON));
+        ? 'وقتی کاری اضافه کنی، همین‌جا پیشنهادش رو می‌ذارم.'
+        : (rec.reason || ALL_DONE_REASON);
     wrap.innerHTML = `
       <div class="frog-hero sheet-paper frog-empty frog-empty-${kind}">
         <span class="frog-emoji" aria-hidden="true">${qorqoriMarkup(expr)}</span>
-        <span class="frog-kicker">${t('today.recommendationTitle')}</span>
+        <span class="frog-kicker">الان چی کار کنیم؟</span>
         <h3 class="frog-empty-title"></h3>
         <p class="frog-none"></p>
-        ${nothing ? `<button class="frog-add" type="button" id="frogAddBtn">${isEn ? '+ Add Task' : '+ افزودن کار'}</button>` : ''}
+        ${nothing ? '<button class="frog-add" type="button" id="frogAddBtn">+ افزودن کار</button>' : ''}
       </div>`;
     wrap.querySelector('.frog-empty-title').textContent = title;
     wrap.querySelector('.frog-none').textContent = msg;
@@ -195,28 +182,28 @@ function renderFrog(force) {
       <div class="frog-main-row">
         <span class="frog-emoji" aria-hidden="true">${qorqoriMarkup(frogExpr())}</span>
         <div class="frog-info">
-          <span class="frog-kicker">${t('today.recommendationTitle')}</span>
+          <span class="frog-kicker">الان چی کار کنیم؟</span>
           <h3 class="frog-name"></h3>
           <div class="frog-meta">${recChips(frog)}</div>
         </div>
       </div>
       <div class="frog-actions">
-        <button class="frog-start" type="button">${isEn ? 'Start Task' : 'شروع کار'}</button>
-        <button class="frog-next" type="button">${isEn ? 'Another One' : 'یکی دیگه'}</button>
-        ${(rec.reason || alts.length) ? `<button class="frog-toggle" type="button" aria-expanded="false">${isEn ? 'Details ▼' : 'جزئیات ▼'}</button>` : ''}
+        <button class="frog-start" type="button">شروع کار</button>
+        <button class="frog-next" type="button">یکی دیگه</button>
+        ${(rec.reason || alts.length) ? `<button class="frog-toggle" type="button" aria-expanded="false">جزئیات ${LIB_ICONS.chevDown}</button>` : ''}
       </div>
       <div class="frog-details" hidden>
         ${rec.reason ? `<p class="rec-reason"></p>` : ''}
         ${alts.length ? `
         <div class="rec-alts">
-          <span class="rec-alts-label">${isEn ? 'Other options' : 'گزینه‌های دیگه'}</span>
+          <span class="rec-alts-label">گزینه‌های دیگه</span>
           <ul>${alts.map(a => `<li><button type="button" class="rec-alt" data-id="${a.id}"></button></li>`).join('')}</ul>
         </div>` : ''}
       </div>
     </div>`;
   wrap.querySelector('.frog-name').textContent = frog.text;
   const startBtn = wrap.querySelector('.frog-start');
-  if (startBtn) startBtn.setAttribute('aria-label', isEn ? `Start task: ${frog.text}` : `شروع کار: ${frog.text}`);
+  if (startBtn) startBtn.setAttribute('aria-label', `شروع کار: ${frog.text}`);
   const reasonEl = wrap.querySelector('.rec-reason');
   if (reasonEl) reasonEl.textContent = rec.reason;
   wrap.querySelectorAll('.rec-alt').forEach(b => {
@@ -229,9 +216,7 @@ function renderFrog(force) {
       const isHidden = detailsEl.hidden;
       detailsEl.hidden = !isHidden;
       toggleBtn.setAttribute('aria-expanded', String(isHidden));
-      toggleBtn.textContent = isHidden
-        ? (isEn ? 'Close details ▲' : 'بستن جزئیات ▲')
-        : (isEn ? 'Details ▼' : 'جزئیات ▼');
+      toggleBtn.innerHTML = isHidden ? `بستن جزئیات ${LIB_ICONS.chevUp}` : `جزئیات ${LIB_ICONS.chevDown}`;
     });
   }
 }
@@ -257,7 +242,6 @@ function focusFrogControl(selector) {
 
 /* ── Today's tasks ── */
 function todayRow(t) {
-  const isEn = getLang() === 'en';
   const li = document.createElement('li');
   li.className = 't-row' + (t.done ? ' done' : '');
   li.dataset.id = t.id;
@@ -268,7 +252,7 @@ function todayRow(t) {
     const dl = dueLabel(t.dueDate);
     if (dl.cls === 'late' || dl.cls === 'today' || dl.cls === 'soon') dueChip = `<span class="t-due ${dl.cls}">${dl.text}</span>`;
   }
-  const durLabel = formatDurationI18n(t.durationMin);
+  const durLabel = formatDuration(t.durationMin);
   const durChip = durLabel ? `<span class="t-dur">${durLabel}</span>` : '';
   const spanLabel = timeRangeLabel(t);
   /* `span-chip` is the chip's name everywhere else (js/tasks.js) and css/tasks.css
@@ -276,13 +260,13 @@ function todayRow(t) {
      rules hang off. */
   const spanChip = spanLabel ? `<span class="t-span span-chip">${spanLabel}</span>` : '';
   li.innerHTML = `
-    <button class="t-check" type="button" aria-label="${isEn ? 'Toggle completion' : 'تغییر وضعیت تکمیل'}">${ICONS.check}</button>
+    <button class="t-check" type="button" aria-label="تغییر وضعیت تکمیل">${ICONS.check}</button>
     <span class="t-dot" style="--pr:${PRI_COLORS[t.p || 'mid']}"></span>
     <span class="t-title"></span>
     ${spanChip}
     ${dueChip}
     ${durChip}
-    <button class="t-del" type="button" aria-label="${isEn ? 'Delete' : 'حذف'}">${ICONS.trash}</button>`;
+    <button class="t-del" type="button" aria-label="حذف">${ICONS.trash}</button>`;
   li.querySelector('.t-title').textContent = t.text;
   return li;
 }
@@ -299,20 +283,13 @@ const rowSig = t => [t.text, t.p || 'mid', t.dueDate || '', t.durationMin || '',
 
 /* The one wording of the way into the full list, so the label is written down
    once and the count is merely appended to it. */
-const ALL_TASKS_LABEL = 'مشاهده همه کارها ←';
+const ALL_TASKS_LABEL = `مشاهده همه کارها ${LIB_ICONS.arrowFwd}`;
 function updateAllBtn(hiddenCount) {
   const btn = $('#todayAllBtn');
   if (!btn) return;
-  const isEn = getLang() === 'en';
-  if (isEn) {
-    btn.textContent = hiddenCount > 0
-      ? `View all tasks (${formatNumber(hiddenCount)} more) →`
-      : 'View all tasks →';
-  } else {
-    btn.textContent = hiddenCount > 0
-      ? `مشاهده همه کارها (و ${faNum(hiddenCount)} مورد دیگر) ←`
-      : ALL_TASKS_LABEL;
-  }
+  btn.innerHTML = hiddenCount > 0
+    ? `مشاهده همه کارها (و ${faNum(hiddenCount)} مورد دیگر) ${LIB_ICONS.arrowFwd}`
+    : ALL_TASKS_LABEL;
 }
 
 function renderTodayList() {
@@ -333,10 +310,9 @@ function renderTodayList() {
     if (!list.querySelector('.t-empty')) {
       const li = document.createElement('li');
       li.className = 't-empty';
-      const isEn = getLang() === 'en';
       li.textContent = state.tasks.length
-        ? (isEn ? 'Nothing scheduled for today; add any task from above ✨' : 'چیزی برای امروز برنامه‌ریزی نشده؛ هر کاری خواستی از بالا اضافه کن ✨')
-        : (isEn ? 'No tasks created yet — add your first task from above ✨' : 'هنوز کاری نساختی — اولین کار امروزت رو از بالا اضافه کن ✨');
+        ? 'چیزی برای امروز برنامه‌ریزی نشده؛ هر کاری خواستی از بالا اضافه کن.'
+        : 'هنوز کاری نساختی — اولین کار امروزت رو از بالا اضافه کن.';
       list.appendChild(li);
     }
     return;
@@ -392,26 +368,44 @@ function renderProgress() {
   const pending = todayPending(), done = todayDone();
   const total = pending.length + done.length;
   const text = $('#todayProgText');
-  const isEn = getLang() === 'en';
   if (!total) {
     bar.style.width = '0%';
     track?.setAttribute('aria-valuenow', '0');
-    if (text) text.textContent = isEn ? 'No tasks recorded for today yet' : 'هنوز کاری برای امروز ثبت نشده';
+    if (text) text.textContent = 'هنوز کاری برای امروز ثبت نشده';
     return;
   }
   const pct = Math.round(done.length / total * 100);
   bar.style.width = pct + '%';
   track?.setAttribute('aria-valuenow', String(pct));
   bar.classList.toggle('full', pct === 100);
-  if (isEn) {
-    text.innerHTML = pct === 100
-      ? `Great job! All <b>${formatNumber(total)}</b> tasks completed for today 🎉`
-      : `<b>${formatNumber(done.length)}</b> of <b>${formatNumber(total)}</b> tasks done · ${formatNumber(pct)}%`;
-  } else {
-    text.innerHTML = pct === 100
-      ? `آفرین! هر <b>${faNum(total)}</b> کار امروز انجام شد 🎉`
-      : `<b>${faNum(done.length)}</b> از <b>${faNum(total)}</b> کار انجام شده · ${faNum(pct)}٪`;
-  }
+  text.innerHTML = pct === 100
+    ? `آفرین! هر <b>${faNum(total)}</b> کار امروز انجام شد ${LIB_ICONS.spark}`
+    : `<b>${faNum(done.length)}</b> از <b>${faNum(total)}</b> کار انجام شده · ${faNum(pct)}٪`;
+}
+
+/* A book with a daily page goal is part of the day, so it is on the day's page: how
+   far today's reading has got and a way straight back into the book. */
+function renderReading() {
+  const sec = $('#todayReading'), list = $('#todayReadingList');
+  if (!sec || !list) return;
+  const goals = readingGoalsToday().slice(0, 2);
+  sec.hidden = !goals.length;
+  list.replaceChildren(...goals.map(g => {
+    const li = document.createElement('li');
+    li.className = 'tr-row' + (g.met ? ' met' : '');
+    li.innerHTML = `<span class="tr-ico">${g.met ? LIB_ICONS.check : LIB_ICONS.target}</span>
+      <div class="tr-body"><strong class="tr-title"></strong>
+        <span class="tr-sub">${g.met ? 'هدف امروز تموم شد' : `${faNum(g.pages)} از ${faNum(g.goal)} صفحه`}</span>
+        <i class="tr-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${g.pct}" aria-label="پیشرفت هدف مطالعه"><b style="width:${g.pct}%"></b></i></div>
+      <button type="button" class="tr-go">${g.met ? 'ادامه بخون' : 'برو بخون'}</button>`;
+    li.querySelector('.tr-title').textContent = g.title;
+    /* The reader lives on the library page, so go there first, then open the book. */
+    li.querySelector('.tr-go').addEventListener('click', () => {
+      window.dispatchEvent(new CustomEvent('navigate', { detail: 'library' }));
+      window.dispatchEvent(new CustomEvent('open-book', { detail: g.id }));
+    });
+    return li;
+  }));
 }
 
 function renderToday() {
@@ -419,6 +413,9 @@ function renderToday() {
   renderFrog();
   renderTodayList();
   renderProgress();
+  renderReading();
+  const dice = $('#todayDiceBtn');
+  if (dice) dice.hidden = todayPending().length < 2;
 }
 
 /* ── Init ── */
@@ -526,9 +523,7 @@ export function initToday() {
 
   renderToday();
   subscribe(renderToday);
-  window.addEventListener('daftarche:lang-changed', () => {
-    liveRows.clear();
-    lastFrogSig = '';
-    renderToday();
-  });
+  window.addEventListener('daftarche:books-changed', renderReading);
+  setRollScope(() => todayPending());
+  $('#todayDiceBtn')?.addEventListener('click', () => openRoll(todayPending()));
 }

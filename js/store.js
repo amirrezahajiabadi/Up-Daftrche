@@ -28,23 +28,27 @@ export function safeRemove(key) {
   catch (error) { reportStorageError(key, error); return false; }
 }
 
-/* The wipe behind Â«Ù‡Ù…Ù‡Ù” Ø¯Ø§Ø¯Ù‡â€ŒÙ‡Ø§Â» in settings. Guarded like every other
+/* Asks the browser to keep this origin's storage (localStorage *and* the IndexedDB
+   that holds the PDFs) out of the pool it may clear when the device runs short
+   on space. Best effort and silent: a browser that has no such call, or that
+   declines, simply leaves things as they were. The two doors that put data in —
+   adding a task and importing a book — both ask, because a person who only ever
+   imports books would otherwise never trigger the request. */
+export function requestPersistentStorage() {
+  try {
+    if (typeof navigator !== 'undefined' && navigator.storage && navigator.storage.persist) {
+      return Promise.resolve(navigator.storage.persist()).catch(() => false);
+    }
+  } catch { /* nothing more can be done */ }
+  return Promise.resolve(false);
+}
+
+/* The wipe behindÂ«Ù‡Ù…Ù‡Ù” Ø¯Ø§Ø¯Ù‡â€ŒÙ‡Ø§Â» in settings. Guarded like every other
    write, so a browser that refuses storage reports the failure instead of
    throwing out of a click handler with half the action already done. */
 export function clearAll() {
   try { localStorage.clear(); return true; }
   catch (error) { reportStorageError(null, error); return false; }
-}
-
-/* Ask the browser to keep this origin's data out of its eviction sweep. A
-   refusal is normal (the browser may decide on its own criteria, and a private
-   window never grants it), so the answer is ignored and nothing waits on it.
-   Shared here because both kinds of data need it: a task list and, far more
-   expensively, a book's PDF in IndexedDB (js/library.js). */
-export function tryPersistStorage() {
-  if (typeof navigator !== 'undefined' && navigator.storage && navigator.storage.persist) {
-    navigator.storage.persist().catch(() => {});
-  }
 }
 
 /* Guarded read of one stored value: a corrupt entry falls back instead of
@@ -155,7 +159,3 @@ export const saveTourDone   = ()    => safeSet(STORAGE_KEYS.tourDone, 'yes');
    count as completing the tour or unlock an achievement reward on next boot. */
 export const saveTourAwarded = () => safeSet(STORAGE_KEYS.tourAwarded, 'yes');
 export const loadTourAwarded = ()    => readString(STORAGE_KEYS.tourAwarded) === 'yes';
-
-export const loadLang = ()           => readString(STORAGE_KEYS.lang, 'fa');
-export const saveLang = lang         => safeSet(STORAGE_KEYS.lang, lang === 'en' ? 'en' : 'fa');
-

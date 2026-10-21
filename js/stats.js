@@ -23,7 +23,7 @@
 
 import { state } from './state.js';
 import { $, faNum, dayKey, parseDurationMin, esc } from './utils.js';
-import { CATS, MOODS, WEEKDAY_LETTERS } from './constants.js';
+import { CATS, MOODS, WEEKDAY_LETTERS, LIB_ICONS } from './constants.js';
 import { getBooks } from './library.js';
 import { getHistory, RATING_LABEL, RATING_FACE, historyDayLabel } from './focushistory.js';
 import { dateToJalali, JALALI_MONTHS } from './jalali.js';
@@ -31,9 +31,6 @@ import { subscribe } from './bus.js';
 import { qorqoriMarkup } from './qorqori.js';
 import { loadStatsRange, saveStatsRange } from './store.js';
 import { streakToday } from './ledger.js';
-import { getLang, formatNumber, t } from './i18n.js';
-
-const num = n => formatNumber(n, getLang());
 
 /* ── The five windows ──
    `bucket` decides how the window is drawn: a bar per day for the two short
@@ -45,20 +42,6 @@ export const RANGES = [
   { key: 'q6',    days: 180, label: '۶ ماه',   sub: '۱۸۰ روز گذشته', bucket: 'month' },
   { key: 'year',  days: 365, label: 'یک‌سال',  sub: '۱ سال گذشته',   bucket: 'month' },
 ];
-
-export const rangeLabel = (key, lang = getLang()) => {
-  if (lang === 'en') {
-    switch (key) {
-      case 'week': return { label: 'Week', sub: 'Past 7 days' };
-      case 'month': return { label: 'Month', sub: 'Past 30 days' };
-      case 'q3': return { label: '3 Months', sub: 'Past 90 days' };
-      case 'q6': return { label: '6 Months', sub: 'Past 180 days' };
-      case 'year': return { label: 'Year', sub: 'Past 1 year' };
-    }
-  }
-  const r = rangeByKey(key);
-  return { label: r.label, sub: r.sub };
-};
 
 const DEFAULT_RANGE = 'week';
 
@@ -137,7 +120,7 @@ function daysBetween(fromTs, toTs) {
   while (d.getTime() <= end) {
     const j = dateToJalali(d);
     out.push({
-      ts: d.getTime(), key: dayKey(d), jd: j.jd, jm: j.jm, weekday: (d.getDay() + 1) % 7,
+      ts: d.getTime(), key: dayKey(d), jd: j.jd, jm: j.jm, weekday: d.getDay(),
       done: 0, created: 0, focusMin: 0, readMin: 0, readPages: 0, marks: 0, mood: 0,
     });
     d.setDate(d.getDate() + 1);
@@ -217,7 +200,6 @@ function fillDays(days) {
 function bucketize(days, kind, nowTs) {
   const groups = new Map();
   const todayKey = dayKey(new Date(nowTs));
-  const isEn = getLang() === 'en';
   /* Where each day sits in the window. The tick rows are counted from the end of
      the window rather than from a date's own number, so the labels stay evenly
      spaced however the window happens to fall. */
@@ -231,22 +213,19 @@ function bucketize(days, kind, nowTs) {
       /* Only every third week is labelled: thirteen labels under thirteen
          columns is noise, four is a timeline. */
       const idx = Math.round((start - weekStartTs(days[0].ts)) / (7 * 864e5));
-      glabel = idx % 3 === 0 ? (isEn ? `W${new Date(d.ts).getDate()}` : `م${faNum(d.jd)}`) : '';
+      glabel = idx % 3 === 0 ? `م${faNum(d.jd)}` : '';
     } else if (kind === 'month') {
-      gkey = isEn ? `${new Date(d.ts).getMonth()}-${new Date(d.ts).getFullYear()}` : `${d.jm}-${dateToJalali(new Date(d.ts)).jy}`;
-      glabel = isEn
-        ? new Date(d.ts).toLocaleString('en-US', { month: 'short' })
-        : JALALI_MONTHS[d.jm - 1];
+      gkey = `${d.jm}-${dateToJalali(new Date(d.ts)).jy}`;
+      glabel = JALALI_MONTHS[d.jm - 1];
     } else {
       gkey = d.key;
       /* Seven days get their weekday letter; thirty get a date every fifth bar,
          counted back from today: the ticks keep an even rhythm, and the day the
          reader is living in always carries its number instead of only when its
          date happens to land on the fifth step. */
-      const enWeekdays = ['Sa', 'Su', 'Mo', 'Tu', 'We', 'Th', 'Fr'];
       glabel = days.length <= 7
-        ? (isEn ? enWeekdays[d.weekday] : WEEKDAY_LETTERS[d.weekday])
-        : ((days.length - 1 - pos.get(d.key)) % 5 === 0 ? (isEn ? String(new Date(d.ts).getDate()) : faNum(d.jd)) : '');
+        ? WEEKDAY_LETTERS[d.weekday]
+        : ((days.length - 1 - pos.get(d.key)) % 5 === 0 ? faNum(d.jd) : '');
     }
 
     let g = groups.get(gkey);
@@ -287,7 +266,7 @@ const sum = (list, pick) => list.reduce((s, x) => s + (pick(x) || 0), 0);
 let memo = { key: '', model: null };
 
 function fingerprint(rangeKey, now) {
-  const parts = [getLang(), rangeKey, dayKey(new Date(now))];
+  const parts = [rangeKey, dayKey(new Date(now))];
   const tasks = Array.isArray(state.tasks) ? state.tasks : [];
   parts.push('t' + tasks.length);
   for (const t of tasks) {
@@ -403,13 +382,9 @@ function buildStats(rangeKey = DEFAULT_RANGE, now = Date.now()) {
 
   /* ── Best day and best weekday ── */
   const bestDay = days.reduce((best, d) => (d.done > 0 && (!best || d.done >= best.done) ? d : best), null);
-  const isEn = getLang() === 'en';
   const byWeekday = WEEKDAY_LETTERS.map((letter, i) => ({
-    i,
     letter,
-    name: isEn
-      ? ['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'][i]
-      : ['شنبه', 'یک‌شنبه', 'دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنج‌شنبه', 'جمعه'][i],
+    name: ['شنبه', 'یک‌شنبه', 'دوشنبه', 'سه‌شنبه', 'چهارشنبه', 'پنج‌شنبه', 'جمعه'][i],
     count: sum(days.filter(d => d.weekday === i), d => d.done),
   }));
   const bestWeekday = activeDays >= 3 && Math.max(...byWeekday.map(w => w.count)) > 0
@@ -453,14 +428,8 @@ function buildStats(rangeKey = DEFAULT_RANGE, now = Date.now()) {
     mood,
     timing: { onTime, late, dated, onTimePct: rate(onTime, dated) },
     best: {
-      day: bestDay ? {
-        key: bestDay.key,
-        label: getLang() === 'en'
-          ? new Date(bestDay.ts).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-          : `${faNum(dateToJalali(new Date(bestDay.ts)).jd)} ${JALALI_MONTHS[bestDay.jm - 1]}`,
-        count: bestDay.done
-      } : null,
-      weekday: bestWeekday ? { name: bestWeekday.name, count: bestWeekday.count, i: bestWeekday.i } : null,
+      day: bestDay ? { key: bestDay.key, label: `${faNum(dateToJalali(new Date(bestDay.ts)).jd)} ${JALALI_MONTHS[bestDay.jm - 1]}`, count: bestDay.done } : null,
+      weekday: bestWeekday ? { name: bestWeekday.name, count: bestWeekday.count } : null,
     },
     hasAny,
   };
@@ -482,43 +451,33 @@ let historyExpanded = false;
 
 export const currentRangeKey = () => rangeKey || DEFAULT_RANGE;
 
-const deltaText = (now, before, unitFa, unitEn) => {
+const deltaText = (now, before, unit) => {
   const diff = now - before;
   if (!diff) return '';
-  const isEn = getLang() === 'en';
-  const n = num(Math.abs(diff));
-  if (isEn) {
-    return `${n} ${unitEn} ${diff > 0 ? 'more' : 'fewer'} than previous period`;
-  }
-  return `${faNum(Math.abs(diff))} ${unitFa} ${diff > 0 ? 'بیشتر' : 'کمتر'} از بازهٔ قبل`;
+  return `${faNum(Math.abs(diff))} ${unit} ${diff > 0 ? 'بیشتر' : 'کمتر'} از بازهٔ قبل`;
 };
 
 function paintRangeButtons() {
   const wrap = $('#statsRange');
   if (!wrap) return;
-  const curLang = getLang();
-  if (wrap.dataset.lang !== curLang) {
-    wrap.dataset.lang = curLang;
-    wrap.innerHTML = RANGES.map(r => {
-      const rl = rangeLabel(r.key, curLang);
-      return `<button type="button" class="stat-range-btn" role="radio" data-key="${r.key}" aria-checked="false">${rl.label}</button>`;
-    }).join('');
-    if (!wrap.dataset.bound) {
-      wrap.dataset.bound = '1';
-      wrap.addEventListener('click', e => {
-        const b = e.target.closest('.stat-range-btn');
-        if (b) setRange(b.dataset.key);
-      });
-      wrap.addEventListener('keydown', e => {
-        const step = e.key === 'ArrowLeft' ? 1 : e.key === 'ArrowRight' ? -1 : 0;
-        if (!step) return;
-        e.preventDefault();
-        const i = RANGES.findIndex(r => r.key === currentRangeKey());
-        const next = RANGES[(i + step + RANGES.length) % RANGES.length];
-        setRange(next.key);
-        wrap.querySelector(`[data-key="${next.key}"]`)?.focus();
-      });
-    }
+  if (!wrap.dataset.built) {
+    wrap.dataset.built = '1';
+    wrap.innerHTML = RANGES.map(r =>
+      `<button type="button" class="stat-range-btn" role="radio" data-key="${r.key}" aria-checked="false">${r.label}</button>`
+    ).join('');
+    wrap.addEventListener('click', e => {
+      const b = e.target.closest('.stat-range-btn');
+      if (b) setRange(b.dataset.key);
+    });
+    wrap.addEventListener('keydown', e => {
+      const step = e.key === 'ArrowLeft' ? 1 : e.key === 'ArrowRight' ? -1 : 0;
+      if (!step) return;
+      e.preventDefault();
+      const i = RANGES.findIndex(r => r.key === currentRangeKey());
+      const next = RANGES[(i + step + RANGES.length) % RANGES.length];
+      setRange(next.key);
+      wrap.querySelector(`[data-key="${next.key}"]`)?.focus();
+    });
   }
   wrap.querySelectorAll('.stat-range-btn').forEach(b => {
     const on = b.dataset.key === currentRangeKey();
@@ -543,15 +502,7 @@ export function setRange(key) {
    and by the two branches below that build and update the columns. */
 let frozenKeys = new Set();
 
-const barTitle = b => {
-  const isEn = getLang() === 'en';
-  if (isEn) {
-    const moodIdx = Math.round(b.mood);
-    const moodLbl = moodIdx ? (t(`moods.m${moodIdx}.label`) || '') : '';
-    return `${num(b.done)} task${b.done === 1 ? '' : 's'}${b.focusMin ? ` · ${num(b.focusMin)} min focus` : ''}${moodLbl ? ` · Mood: ${moodLbl}` : ''}${frozenKeys.has(b.key) ? ' · Streak freeze' : ''}`;
-  }
-  return `${faNum(b.done)} کار${b.focusMin ? ` · ${faNum(b.focusMin)} دقیقه تمرکز` : ''}${b.mood ? ` · حال: ${MOODS[Math.round(b.mood) - 1].label}` : ''}${frozenKeys.has(b.key) ? ' · با مرخصی پیوستگی' : ''}`;
-};
+const barTitle = b => `${faNum(b.done)} کار${b.focusMin ? ` · ${faNum(b.focusMin)} دقیقه تمرکز` : ''}${b.mood ? ` · حال: ${MOODS[Math.round(b.mood) - 1].label}` : ''}${frozenKeys.has(b.key) ? ' · با مرخصی پیوستگی' : ''}`;
 
 /* ── Ticks that fit ──
    A column is about thirty pixels wide and «اردیبهشت» is half as wide again as
@@ -588,10 +539,7 @@ function paintChart(model) {
   frozenKeys = new Set(model.frozen || []);
   const max = Math.max(...buckets.map(b => b.done), 1);
   const meta = $('#statsChartMeta');
-  if (meta) {
-    const isEn = getLang() === 'en';
-    meta.textContent = max > 1 ? (isEn ? `Peak: ${num(max)} tasks` : `بیشترین: ${faNum(max)} کار`) : '';
-  }
+  if (meta) meta.textContent = max > 1 ? `بیشترین: ${faNum(max)} کار` : '';
 
   if (chart.dataset.n !== String(buckets.length)) {
     chart.dataset.n = String(buckets.length);
@@ -661,18 +609,17 @@ function paintRing(model, animate) {
     ring.style.setProperty('--pct', pct === null ? 0 : pct);
     ring.classList.toggle('complete', pct === 100);
   }
-  const isEn = getLang() === 'en';
   const pv = $('#percentVal');
   if (pv) {
     /* The final number is written first and the count-up then climbs from zero
        over it. A frame loop that never runs — a backgrounded tab — leaves the
        true value on screen rather than a stale one. */
-    pv.textContent = pct === null ? (isEn ? '0' : '۰') : num(pct);
+    pv.textContent = pct === null ? '۰' : faNum(pct);
     if (animate && pct !== null) {
       const start = performance.now();
       const tick = now => {
         const t = Math.min((now - start) / 700, 1);
-        pv.textContent = num(Math.round(pct * (1 - Math.pow(1 - t, 3))));
+        pv.textContent = faNum(Math.round(pct * (1 - Math.pow(1 - t, 3))));
         if (t < 1) requestAnimationFrame(tick);
       };
       requestAnimationFrame(tick);
@@ -681,27 +628,15 @@ function paintRing(model, animate) {
   const st = $('#stats');
   if (st) {
     const done = model.headline.done;
-    const rLabels = rangeLabel(model.range.key, getLang());
-    if (isEn) {
-      const subClean = rLabels.sub.toLowerCase();
-      st.textContent = model.headline.created || done
-        ? `${num(done)} task${done === 1 ? '' : 's'} completed in this ${subClean}`
-        : 'No tasks in this period yet';
-    } else {
-      st.textContent = model.headline.created || done
-        ? `${faNum(done)} کار در این ${rLabels.sub.replace(' گذشته', '')} انجام شد`
-        : 'این بازه هنوز کاری نداشته';
-    }
+    st.textContent = model.headline.created || done
+      ? `${faNum(done)} کار در این ${model.range.sub.replace(' گذشته', '')} انجام شد`
+      : 'این بازه هنوز کاری نداشته';
   }
   const dl = $('#statsDelta');
   if (dl) {
-    const taskUnitFa = 'کار';
-    const taskUnitEn = 'tasks';
-    const focusUnitFa = 'دقیقه تمرکز';
-    const focusUnitEn = 'min focus';
-    const parts = [deltaText(model.headline.done, model.headline.donePrev, taskUnitFa, taskUnitEn)];
+    const parts = [deltaText(model.headline.done, model.headline.donePrev, 'کار')];
     if (model.headline.focusMinutes || model.headline.focusMinutesPrev) {
-      parts.push(deltaText(model.headline.focusMinutes, model.headline.focusMinutesPrev, focusUnitFa, focusUnitEn));
+      parts.push(deltaText(model.headline.focusMinutes, model.headline.focusMinutesPrev, 'دقیقه تمرکز'));
     }
     const text = parts.filter(Boolean).join(' · ');
     dl.textContent = text;
@@ -717,17 +652,13 @@ export function renderStats(force = false) {
 
   const model = computeStats(rangeKey);
   const h = model.headline;
-  const isEn = getLang() === 'en';
 
   const sub = $('#statsSub');
-  if (sub) {
-    const rLabels = rangeLabel(rangeKey, getLang());
-    sub.textContent = isEn ? `Looking at ${rLabels.sub.toLowerCase()}` : `نگاهی به ${rLabels.sub}`;
-  }
+  if (sub) sub.textContent = `نگاهی به ${model.range.sub}`;
 
   /* Signature: a repaint that would write the same numbers is a repaint the
      reader pays for and never sees. */
-  const sig = [getLang(), rangeKey, h.done, h.donePrev, h.rate, h.focusMinutes, h.focusMinutesPrev, h.activeDays, h.streak, model.focus.count, model.reading.marks, model.mood.days, model.timing.dated, historyExpanded].join('|');
+  const sig = [rangeKey, h.done, h.donePrev, h.rate, h.focusMinutes, h.focusMinutesPrev, h.activeDays, h.streak, model.focus.count, model.reading.marks, model.mood.days, model.timing.dated, historyExpanded].join('|');
   if (!force && sig === lastSig) return;
   const animate = !lastSig;
   lastSig = sig;
@@ -739,12 +670,12 @@ export function renderStats(force = false) {
   if (head) {
     const chips = [];
     if (h.done || h.created) {
-      chips.push({ v: num(h.done), l: isEn ? (h.done === 1 ? 'task done' : 'tasks done') : 'کار انجام‌شده' });
-      if (h.rate !== null) chips.push({ v: `${num(h.rate)}${isEn ? '%' : '٪'}`, l: isEn ? 'completion rate' : 'نرخ تکمیل' });
+      chips.push({ v: faNum(h.done), l: 'کار انجام‌شده' });
+      if (h.rate !== null) chips.push({ v: `${faNum(h.rate)}٪`, l: 'نرخ تکمیل' });
     }
-    if (h.focusMinutes) chips.push({ v: num(h.focusMinutes), l: isEn ? 'min focus' : 'دقیقه تمرکز' });
-    chips.push({ v: num(h.activeDays), l: isEn ? `active days of ${num(h.days)}` : `روز فعال از ${faNum(h.days)}` });
-    if (h.streak > 0) chips.push({ v: num(h.streak), l: isEn ? (h.streak === 1 ? 'day streak' : 'days streak') : 'روز پیاپی' });
+    if (h.focusMinutes) chips.push({ v: faNum(h.focusMinutes), l: 'دقیقه تمرکز' });
+    chips.push({ v: faNum(h.activeDays), l: `روز فعال از ${faNum(h.days)}` });
+    if (h.streak > 0) chips.push({ v: faNum(h.streak), l: 'روز پیاپی' });
     /* The streak is not one of the window's numbers — it is about today. The code
        above appends it last, and only when there is a run worth showing, so it is
        lifted back out here and handed to the pill beside the chart, label and
@@ -756,69 +687,60 @@ export function renderStats(force = false) {
     const streakVal = $('#streakVal');
     if (streakWrap) streakWrap.classList.toggle('hot', !!streakChip);
     if (streakVal) {
-      if (isEn) {
-        streakVal.textContent = streakChip
-          ? `${streakChip.v} ${streakChip.l}${h.streakFreezes ? ` · with ${num(h.streakFreezes)} freeze` : ''}`
-          : 'Check off your first task';
-      } else {
-        streakVal.textContent = streakChip
-          ? `${streakChip.v} ${streakChip.l}${h.streakFreezes ? ` · با ${faNum(h.streakFreezes)} مرخصی` : ''}`
-          : 'اولین تیک رو بزن';
-      }
+      streakVal.textContent = streakChip
+        ? `${streakChip.v} ${streakChip.l}${h.streakFreezes ? ` · با ${faNum(h.streakFreezes)} مرخصی` : ''}`
+        : 'اولین تیک رو بزن';
     }
   }
 
   paintChart(model);
 
-  /* ── تمرکز / Focus ── */
+  /* ── تمرکز ── */
   const f = model.focus;
-  paintSection('#statsFocus', isEn ? 'Focus' : 'تمرکز', f.count ? [
-    line(isEn ? 'Sessions' : 'جلسه‌ها', num(f.count)),
-    line(isEn ? 'Minutes' : 'دقیقه‌ها', num(f.minutes)),
-    f.avgMin ? line(isEn ? 'Average session' : 'میانگین هر جلسه', isEn ? `${num(f.avgMin)} min` : `${faNum(f.avgMin)} دقیقه`) : '',
-    f.bestMin ? line(isEn ? 'Best session' : 'بهترین جلسه', isEn ? `${num(f.bestMin)} min` : `${faNum(f.bestMin)} دقیقه`) : '',
-    f.completed ? line(isEn ? 'Reached real task' : 'به کار واقعی رسید', isEn ? `${num(f.completed)} of ${num(f.count)}` : `${faNum(f.completed)} از ${faNum(f.count)}`) : '',
-  ].join('') : '', f.count ? (isEn ? `${num(f.daysActive)} days · ${num(f.count)} sessions` : `${faNum(f.daysActive)} روز · ${faNum(f.count)} جلسه`) : '');
+  paintSection('#statsFocus', 'تمرکز', f.count ? [
+    line('جلسه‌ها', faNum(f.count)),
+    line('دقیقه‌ها', faNum(f.minutes)),
+    f.avgMin ? line('میانگین هر جلسه', `${faNum(f.avgMin)} دقیقه`) : '',
+    f.bestMin ? line('بهترین جلسه', `${faNum(f.bestMin)} دقیقه`) : '',
+    f.completed ? line('به کار واقعی رسید', `${faNum(f.completed)} از ${faNum(f.count)}`) : '',
+  ].join('') : '', f.count ? `${faNum(f.daysActive)} روز · ${faNum(f.count)} جلسه` : '');
 
-  /* ── دسته‌ها / Categories ── */
-  paintSection('#statsCats', isEn ? 'Categories' : 'دسته‌ها', model.cats.length ? model.cats.map(c => {
-    const catLabel = isEn ? t(`categories.${c.key}`, {}, c.label) : c.label;
-    return `<div class="stat-barrow"><span class="stat-barrow-name">${catLabel}</span>
+  /* ── دسته‌ها ── */
+  paintSection('#statsCats', 'دسته‌ها', model.cats.length ? model.cats.map(c =>
+    `<div class="stat-barrow"><span class="stat-barrow-name">${c.label}</span>
       <span class="stat-barrow-track"><i style="width:${c.pct}%;background:${c.color}"></i></span>
-      <b>${num(c.count)}</b><i class="stat-barrow-pct">${num(c.pct)}${isEn ? '%' : '٪'}</i></div>`;
-  }).join('') : '', isEn ? `${num(h.done)} categorized tasks` : `${faNum(h.done)} کار دسته‌بندی‌شده`);
+      <b>${faNum(c.count)}</b><i class="stat-barrow-pct">${faNum(c.pct)}٪</i></div>`
+  ).join('') : '', `${faNum(h.done)} کار دسته‌بندی‌شده`);
 
-  /* ── مطالعه / Reading ── */
+  /* ── مطالعه ── */
   const r = model.reading;
-  paintSection('#statsRead', isEn ? 'Reading' : 'مطالعه', (r.minutes || r.pages || r.marks) ? [
-    r.minutes ? line(isEn ? 'Reading minutes' : 'دقیقهٔ مطالعه', num(r.minutes)) : '',
-    r.pages ? line(isEn ? 'Pages read' : 'صفحه‌های خوانده‌شده', num(r.pages)) : '',
-    r.marks ? line(isEn ? 'Notes & highlights' : 'یادداشت و هایلایت', num(r.marks)) : '',
-    r.booksOpen ? line(isEn ? 'Active books' : 'کتاب‌های در جریان', num(r.booksOpen)) : '',
+  paintSection('#statsRead', 'مطالعه', (r.minutes || r.pages || r.marks) ? [
+    r.minutes ? line('دقیقهٔ مطالعه', faNum(r.minutes)) : '',
+    r.pages ? line('صفحه‌های خوانده‌شده', faNum(r.pages)) : '',
+    r.marks ? line('یادداشت و هایلایت', faNum(r.marks)) : '',
+    r.booksOpen ? line('کتاب‌های در جریان', faNum(r.booksOpen)) : '',
   ].join('') : '');
 
-  /* ── حال / Mood ── */
+  /* ── حال ── */
   const moodMax = Math.max(...model.mood.dist, 1);
-  paintSection('#statsMood', isEn ? 'Mood' : 'حال', model.mood.days ? [
-    line(isEn ? 'Average mood' : 'میانگین حال', isEn ? `${num(Math.round(model.mood.avg * 10) / 10)} of ${num(MOODS.length)}` : `${faNum(Math.round(model.mood.avg * 10) / 10)} از ${faNum(MOODS.length)}`, isEn ? `${num(model.mood.days)} days logged` : `${faNum(model.mood.days)} روز ثبت شده`),
-    `<div class="stat-moods">${MOODS.map((m, i) => {
-      const moodName = isEn ? (t(`moods.m${i + 1}.label`) || m.label) : m.label;
-      return `<div class="stat-mood" title="${moodName}"><span class="mdot" style="background:${m.color}"></span>
+  paintSection('#statsMood', 'حال', model.mood.days ? [
+    line('میانگین حال', `${faNum(Math.round(model.mood.avg * 10) / 10)} از ${faNum(MOODS.length)}`, `${faNum(model.mood.days)} روز ثبت شده`),
+    `<div class="stat-moods">${MOODS.map((m, i) =>
+      `<div class="stat-mood"><span class="mdot" style="background:${m.color}"></span>
         <span class="stat-mood-bar"><i style="height:${Math.round((model.mood.dist[i] / moodMax) * 100)}%;background:${m.color}"></i></span>
-        <b>${num(model.mood.dist[i])}</b></div>`;
-    }).join('')}</div>`,
+        <b>${faNum(model.mood.dist[i])}</b></div>`).join('')}</div>`,
   ].join('') : '');
 
-  /* ── بهترین‌ها و وقت‌شناسی / Highlights ── */
+  /* ── بهترین‌ها و وقت‌شناسی ── */
   const best = [];
-  if (model.best.day) best.push(line(isEn ? 'Most productive day' : 'پربارترین روز', isEn ? `${num(model.best.day.count)} tasks` : `${faNum(model.best.day.count)} کار`, model.best.day.label));
-  if (model.best.weekday) best.push(line(isEn ? 'Best day of week' : 'بهترین روز هفته', model.best.weekday.name, isEn ? `${num(model.best.weekday.count)} tasks` : `${faNum(model.best.weekday.count)} کار`));
-  if (h.bestStreak > 1) best.push(line(isEn ? 'Longest streak in period' : 'بلندترین زنجیرهٔ این بازه', isEn ? `${num(h.bestStreak)} days` : `${faNum(h.bestStreak)} روز`));
+  if (model.best.day) best.push(line('پربارترین روز', `${faNum(model.best.day.count)} کار`, model.best.day.label));
+  if (model.best.weekday) best.push(line('بهترین روز هفته', model.best.weekday.name, `${faNum(model.best.weekday.count)} کار`));
+  if (h.bestStreak > 1) best.push(line('بلندترین زنجیرهٔ این بازه', `${faNum(h.bestStreak)} روز`));
   if (model.timing.dated) {
-    best.push(line(isEn ? 'Completed on time' : 'سر وقت تمام شد', `${num(model.timing.onTimePct)}${isEn ? '%' : '٪'}`,
-      model.timing.late ? (isEn ? `${num(model.timing.late)} overdue tasks` : `${faNum(model.timing.late)} کار از موعد گذشته`) : (isEn ? 'All on time' : 'همه سر وقت')));
+    best.push(line('سر وقت تمام شد', `${faNum(model.timing.onTimePct)}٪`,
+      model.timing.late ? `${faNum(model.timing.late)} کار از موعد گذشته` : 'همه سر وقت'));
   }
-  paintSection('#statsBest', isEn ? 'Highlights' : 'بهترین‌ها', best.join(''));
+  paintSection('#statsBest', 'بهترین‌ها', best.join(''));
 
   paintHistory(model);
 
@@ -844,41 +766,26 @@ function paintHistory(model) {
   if (!sessions.length) { list.innerHTML = ''; return; }
 
   const shown = historyExpanded ? sessions : sessions.slice(0, HISTORY_PREVIEW);
-  const isEn = getLang() === 'en';
   list.innerHTML = shown.map(s => {
-    const face = RATING_FACE[s.rating] || '•';
-    const title = s.taskTitle ? esc(s.taskTitle) : (isEn ? 'No linked task' : 'بدون کار مشخص');
-    const label = isEn
-      ? (s.rating === 'good' ? 'Felt good' : s.rating === 'okay' ? 'Felt okay' : s.rating === 'hard' ? 'Felt hard' : '')
-      : (RATING_LABEL[s.rating] || '');
-    const doneTitle = isEn ? 'Reached real task' : 'به کار واقعی رسید';
-    const minText = isEn ? `${num(s.actualDurationMin)} min` : `${faNum(s.actualDurationMin)} دقیقه`;
+    const face = RATING_FACE[s.rating] || LIB_ICONS.meh;
+    const title = s.taskTitle ? esc(s.taskTitle) : 'بدون کار مشخص';
+    const label = RATING_LABEL[s.rating] || '';
     return `<div class="stat-session">
-      <span class="stat-session-face" title="${esc(label)}" aria-hidden="true">${face}</span>
+      <span class="stat-session-face" role="img" title="${esc(label)}" aria-label="${esc(label)}">${face}</span>
       <span class="stat-session-title">${title}</span>
-      ${s.taskCompleted ? `<span class="stat-session-done" title="${doneTitle}">✓</span>` : ''}
+      ${s.taskCompleted ? `<span class="stat-session-done" role="img" aria-label="به کار واقعی رسید" title="به کار واقعی رسید">${LIB_ICONS.check}</span>` : ''}
       <span class="stat-session-when">${historyDayLabel(s.startedAt)}</span>
-      <span class="stat-session-min">${minText}</span>
+      <span class="stat-session-min">${faNum(s.actualDurationMin)} دقیقه</span>
     </div>`;
   }).join('');
 
   const count = $('#statsHistoryCount');
   const extra = sessions.length - HISTORY_PREVIEW;
-  if (count) {
-    count.textContent = isEn
-      ? `${num(sessions.length)} sessions · ${num(model.focus.minutes)} min`
-      : `${faNum(sessions.length)} جلسه · ${faNum(model.focus.minutes)} دقیقه`;
-  }
+  if (count) count.textContent = `${faNum(sessions.length)} جلسه · ${faNum(model.focus.minutes)} دقیقه`;
   const more = $('#statsHistoryMore');
   if (more) {
     more.hidden = extra <= 0;
-    if (extra > 0) {
-      if (isEn) {
-        more.textContent = historyExpanded ? 'Show less' : `Show ${num(extra)} older session${extra === 1 ? '' : 's'}`;
-      } else {
-        more.textContent = historyExpanded ? 'کمتر' : `نمایش ${faNum(extra)} جلسهٔ قدیمی‌تر`;
-      }
-    }
+    if (extra > 0) more.textContent = historyExpanded ? 'کمتر' : `نمایش ${faNum(extra)} جلسهٔ قدیمی‌تر`;
   }
 }
 
@@ -893,10 +800,4 @@ export function initStats() {
   subscribe(() => {
     if ($('#page-stats')?.classList.contains('active')) renderStats();
   });
-  if (typeof window !== 'undefined') {
-    window.addEventListener('daftarche:lang-changed', () => {
-      lastSig = '';
-      if ($('#page-stats')?.classList.contains('active')) renderStats(true);
-    });
-  }
 }

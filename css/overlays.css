@@ -19,13 +19,12 @@ html[data-mode="dark"] .overlay{background:rgba(0,0,0,.5)}
 .name-card>p{color:var(--muted);font-size:13px;margin-bottom:18px;line-height:1.7;font-weight:400}
 .name-card input{width:100%;border:1.5px solid var(--border);background:var(--bg);border-radius:var(--radius-sm);padding:var(--space-3) var(--space-4);font-family:var(--font-ui);font-size:16px;font-weight:400;text-align:center;color:var(--text);outline:none;transition:border-color var(--duration-base),box-shadow var(--duration-base)}
 .name-card input:focus{border-color:var(--accent);box-shadow:0 0 0 4px var(--accent-soft)}
-.name-card .go{margin-top:var(--space-3);width:100%;border:none;background:var(--accent);color:var(--color-text-on-accent);font-family:var(--font-ui);font-size:15px;font-weight:600;padding:12px;border-radius:var(--radius-sm);cursor:pointer;box-shadow:var(--shadow-accent);transition:transform var(--duration-fast),box-shadow var(--duration-fast)}
-.name-card .go:active{transform:translateY(3px);box-shadow:0 1px 0 0 rgba(120,55,20,.35)}
+.name-card .go{margin-top:var(--space-3);width:100%;border:none;background:var(--accent);color:var(--color-text-on-accent);font-family:var(--font-ui);font-size:15px;font-weight:600;padding:12px;border-radius:var(--radius-sm);cursor:pointer;transition:transform var(--duration-fast),box-shadow var(--duration-fast)}
+.name-card .go:active{transform:scale(.97)}
 /* The themed confirm's destructive choice: the same .go button, filled with the
    danger token and labelled with the ink that reads on it — so «حذف» looks like
    the thing it is instead of like every other confirm in the app. */
-.name-card .go.danger{background:var(--color-danger);color:var(--color-text-on-danger);box-shadow:0 4px 0 0 color-mix(in srgb,var(--color-danger) 55%,transparent)}
-.name-card .go.danger:active{box-shadow:0 1px 0 0 color-mix(in srgb,var(--color-danger) 55%,transparent)}
+.name-card .go.danger{background:var(--color-danger);color:var(--color-text-on-danger)}
 /* The confirm answers one question, so its title and its body sit tighter than
    the name card's greeting does. */
 .confirm-card h2{margin-top:0}
@@ -150,10 +149,8 @@ html[data-mode="dark"] .overlay{background:rgba(0,0,0,.5)}
   font-family:var(--font-ui);font-size:13px;font-weight:700;line-height:1.7}
 .bd-age[hidden]{display:none}
 .bd-line{margin:12px 0 18px;color:var(--muted);font-size:13px;line-height:1.9;font-weight:400}
-.bd-card .go{margin-top:0;width:100%;border:none;background:var(--accent);color:var(--color-text-on-accent);
-  font-family:var(--font-ui);font-size:15px;font-weight:600;padding:12px;border-radius:var(--radius-sm);
-  cursor:pointer;box-shadow:var(--shadow-accent);transition:transform var(--duration-fast),box-shadow var(--duration-fast)}
-.bd-card .go:active{transform:translateY(3px);box-shadow:0 1px 0 0 rgba(120,55,20,.35)}
+.bd-card .go{margin-top:0;width:100%;border:none;background:var(--accent);color:var(--color-text-on-accent);  font-family:var(--font-ui);font-size:15px;font-weight:600;padding:12px;border-radius:var(--radius-sm);  cursor:pointer;transition:transform var(--duration-fast),box-shadow var(--duration-fast)}
+.bd-card .go:active{transform:scale(.97)}
 @media (hover:hover){.bd-card .go:hover{transform:translateY(-2px)}}
 
 /* Reduced motion: the character's idle drift is decoration and stops with
@@ -182,8 +179,8 @@ html.tab-hidden .bd-char svg{animation-play-state:paused}
 .roll-box.landed{border-color:var(--accent);border-style:solid;animation:pop var(--duration-base) cubic-bezier(.34,1.56,.64,1)}
 .roll-actions{display:flex;gap:8px;margin-top:14px}
 .roll-actions[hidden]{display:none}
-.roll-actions .go{flex:1;border:none;background:var(--accent);color:var(--color-text-on-accent);font-family:var(--font-ui);font-weight:600;font-size:14px;padding:11px;border-radius:var(--radius-xs);cursor:pointer;box-shadow:var(--shadow-accent);transition:transform var(--duration-fast),box-shadow var(--duration-fast)}
-.roll-actions .go:active{transform:translateY(3px);box-shadow:0 1px 0 0 rgba(120,55,20,.35)}
+.roll-actions .go{flex:1;border:none;background:var(--accent);color:var(--color-text-on-accent);font-family:var(--font-ui);font-weight:600;font-size:14px;padding:11px;border-radius:var(--radius-xs);cursor:pointer;transition:transform var(--duration-fast),box-shadow var(--duration-fast)}
+.roll-actions .go:active{transform:scale(.97)}
 .roll-actions .ghost{flex:1;border:1.5px solid var(--border);background:transparent;color:var(--muted);font-family:var(--font-ui);font-weight:500;font-size:13px;padding:11px;border-radius:var(--radius-xs);cursor:pointer;transition:all var(--duration-fast)}
 
 .focus-card{padding:26px 24px 20px}
@@ -351,10 +348,8 @@ body.focus-immersive .focus-sound-toggle{display:inline-flex}
    does, and with the same ink token: a hardcoded #fff was unreadable in seven of
    the nine palettes, and a picker whose selection cannot be read has not
    answered the question it was opened to answer. */
-.bd-year-cell.sel{background:var(--color-accent);border-color:var(--color-accent);
-  color:var(--color-text-on-accent);font-weight:700;box-shadow:0 3px 10px -3px var(--color-accent)}
-.bd-year-cell.now.sel{border-width:2px;
-  box-shadow:0 3px 10px -3px var(--color-accent),inset 0 0 0 1px var(--color-text-on-accent)}
+.bd-year-cell.sel{background:var(--color-accent);border-color:var(--color-accent);  color:var(--color-text-on-accent);font-weight:700}
+.bd-year-cell.now.sel{border-width:2px;box-shadow:inset 0 0 0 1px var(--color-text-on-accent)}
 
 @media (hover:hover){
   .bd-year-cell:not(.sel):hover{background:var(--color-accent-soft);border-color:var(--color-accent)}
@@ -468,12 +463,11 @@ body.focus-immersive .focus-sound-toggle{display:inline-flex}
    calendar that has not answered the question it was opened to answer.
    --color-text-on-accent is the token that exists for exactly this, and every
    palette in css/base.css already declares its own value for it. */
-.cal-day.sel{background:var(--color-accent);border-color:var(--color-accent);color:var(--color-text-on-accent);
-  font-weight:700;box-shadow:0 3px 10px -3px var(--color-accent)}
+.cal-day.sel{background:var(--color-accent);border-color:var(--color-accent);color:var(--color-text-on-accent);  font-weight:700}
 
 /* Today *and* chosen: the fill is what wins, because it is the answer, and the
    border thickens so the day is still identifiable as today underneath. */
-.cal-day.today.sel{border-width:2px;box-shadow:0 3px 10px -3px var(--color-accent),inset 0 0 0 1px var(--color-text-on-accent)}
+.cal-day.today.sel{border-width:2px;box-shadow:inset 0 0 0 1px var(--color-text-on-accent)}
 
 /* Placed here rather than with the other media queries on purpose: .cal-grid and
    .cal-day are declared further down this file, and a media query above them
@@ -659,9 +653,9 @@ body.focus-immersive .vibe-card.open{scroll-margin-block:80px 24px}
 .changelog-title{font-family:var(--font-ui);font-size:13.5px;font-weight:600;margin:6px 0 8px;line-height:1.7}
 .changelog-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
 .changelog-item{display:flex;align-items:center;gap:10px;font-size:12.5px;line-height:1.7;color:var(--text);font-weight:400}
-.changelog-icon{flex-shrink:0;width:26px;height:26px;display:grid;place-items:center;font-size:13px;background:var(--accent-soft);border-radius:var(--radius-sm)}
-.changelog-card .go{margin-top:14px;width:100%;min-height:44px;border:none;background:var(--accent);color:var(--color-text-on-accent);font-family:var(--font-ui);font-size:15px;font-weight:600;padding:12px;border-radius:var(--radius-sm);cursor:pointer;box-shadow:var(--shadow-accent);transition:transform var(--duration-fast),box-shadow var(--duration-fast)}
-.changelog-card .go:active{transform:translateY(3px);box-shadow:0 1px 0 0 rgba(120,55,20,.35)}
+.changelog-icon{flex-shrink:0;width:26px;height:26px;display:grid;place-items:center;font-size:14px;color:var(--accent);background:var(--accent-soft);border-radius:var(--radius-sm)}
+.changelog-card .go{margin-top:14px;width:100%;min-height:44px;border:none;background:var(--accent);color:var(--color-text-on-accent);font-family:var(--font-ui);font-size:15px;font-weight:600;padding:12px;border-radius:var(--radius-sm);cursor:pointer;transition:transform var(--duration-fast),box-shadow var(--duration-fast)}
+.changelog-card .go:active{transform:scale(.97)}
 @media (hover:hover){
   .changelog-card .go:hover{transform:translateY(-2px)}
 }
@@ -682,3 +676,5 @@ body.no-scroll{overflow:hidden}
 @media (prefers-reduced-motion:reduce){
   .changelog-overlay,.changelog-card{animation:none}
 }
+.note-del .ico{width:1em;height:1em;vertical-align:-.15em}
+.chip-pop-check .ico{width:1em;height:1em;vertical-align:-.15em}

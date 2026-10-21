@@ -76,9 +76,9 @@
 .frog-chip{--fc:var(--color-accent-text);font-size:11px;font-weight:600;color:color-mix(in srgb,var(--fc) 65%,var(--color-text-primary));background:var(--accent-soft);border:1px solid color-mix(in srgb,var(--color-accent) 28%,transparent);padding:3px 10px;border-radius:var(--radius-pill);animation:popIn var(--duration-base) var(--ease-out)}
 .rec-reason{margin:0;color:var(--muted);font-size:12px;font-weight:500;line-height:1.7}
 .frog-actions{display:flex;gap:8px;margin-top:6px;flex-wrap:wrap;justify-content:center;align-items:center}
-.frog-start{border:none;background:var(--green);color:var(--color-text-on-success);font-family:var(--font-ui);font-size:13.5px;font-weight:700;padding:9px 22px;border-radius:var(--radius-pill);cursor:pointer;box-shadow:0 3px 0 0 color-mix(in srgb,var(--color-success) 55%,transparent);transition:transform var(--duration-fast),box-shadow var(--duration-fast)}
+.frog-start{border:none;background:var(--green);color:var(--color-text-on-success);font-family:var(--font-ui);font-size:13.5px;font-weight:700;padding:9px 22px;border-radius:var(--radius-pill);cursor:pointer;transition:transform var(--duration-fast),box-shadow var(--duration-fast)}
 .frog-start:hover{transform:translateY(-1px)}
-.frog-start:active{transform:translateY(3px);box-shadow:0 1px 0 0 color-mix(in srgb,var(--color-success) 55%,transparent)}
+.frog-start:active{transform:scale(.97)}
 .frog-next{border:1.5px solid var(--border);background:transparent;color:var(--muted);font-family:var(--font-ui);font-size:12.5px;font-weight:500;padding:9px 16px;border-radius:var(--radius-pill);cursor:pointer;transition:all var(--duration-fast)}
 .frog-next:hover{color:var(--accent);border-color:var(--accent)}
 .frog-toggle{border:none;background:transparent;color:var(--muted);font-family:var(--font-ui);font-size:12px;cursor:pointer;padding:6px 10px;border-radius:var(--radius-pill);transition:color var(--duration-fast)}
@@ -112,7 +112,7 @@ html[data-mode="dark"] .frog-empty-done .frog-empty-title{color:var(--color-succ
 .t-check::after{content:'';position:absolute;inset:-10px;border-radius:var(--radius-sm)}
 .t-check:active{transform:scale(.9)}
 .t-check svg{width:13px;height:13px;stroke:var(--color-text-on-success);stroke-width:3;fill:none;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:24;stroke-dashoffset:24;transition:stroke-dashoffset var(--duration-base) ease}
-.t-row.done .t-check{background:var(--green);border-color:transparent;box-shadow:0 4px 10px -5px var(--green);animation:pop var(--duration-base) var(--ease-out)}
+.t-row.done .t-check{background:var(--green);border-color:transparent;animation:pop var(--duration-base) var(--ease-out)}
 .t-row.done .t-check svg{stroke-dashoffset:0}
 .t-dot{width:8px;height:8px;border-radius:50%;background:var(--pr,var(--color-success));flex-shrink:0;transition:opacity var(--duration-base)}
 .t-row.done .t-dot{opacity:.25}
@@ -191,3 +191,19 @@ html[data-mode="dark"] .frog-empty-done .frog-empty-title{color:var(--color-succ
   .mood-sec .moods button{min-height:44px;height:44px}
   .mood-sec .moods button svg{width:22px;height:22px}
 }
+
+/* ── Reading goal on the Today page ── */
+#todayReading[hidden],.today-dice[hidden]{display:none}
+.today-reading{list-style:none;display:flex;flex-direction:column;gap:8px}
+.tr-row{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:12px 14px;box-shadow:var(--shadow-1)}
+.tr-ico{width:32px;height:32px;border-radius:var(--radius-sm);background:var(--accent-soft);color:var(--accent);display:grid;place-items:center;flex-shrink:0}
+.tr-ico .ico{width:17px;height:17px}
+.tr-row.met .tr-ico{background:color-mix(in srgb,var(--green) 16%,var(--surface));color:var(--green)}
+.tr-body{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.tr-title{font-family:var(--font-ui);font-size:14px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tr-sub{font-size:12px;color:var(--muted)}
+.tr-track{display:block;height:5px;border-radius:var(--radius-pill);background:var(--color-border);overflow:hidden}
+.tr-track b{display:block;height:100%;border-radius:inherit;background:var(--accent);transition:width var(--duration-slow) var(--ease-out)}
+.tr-row.met .tr-track b{background:var(--green)}
+.tr-go{border:none;background:var(--accent);color:var(--color-text-on-accent);font-family:var(--font-ui);font-size:12px;font-weight:600;padding:8px 14px;min-height:36px;border-radius:var(--radius-pill);cursor:pointer;flex-shrink:0}
+.today-dice{height:30px;min-width:0;padding:0 10px}

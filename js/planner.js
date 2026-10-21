@@ -24,11 +24,10 @@ import {
 import { subscribe } from './bus.js';
 import { addTask, setTaskDone, collapse, timeRangeLabel, moveTaskToDay } from './tasks.js';
 import { collectTotals } from './ledger.js';
-import { ICONS, MOODS } from './constants.js';
+import { ICONS, MOODS, LIB_ICONS } from './constants.js';
 import { dateToJalali, JALALI_MONTHS } from './jalali.js';
 import { pickerRow } from './chipgroup.js';
 import { parseQuickAdd, renderQuickAddPreview, stripQuickAddToken } from './quickadd.js';
-import { getLang, t, formatNumber, formatDateI18n, formatClockI18n } from './i18n.js';
 
 /* ── Where the page is looking ──
    One value: the day on screen. The week laid out is the week that day falls
@@ -45,21 +44,11 @@ const shownKey = () => (focusKey ? focusKey : todayKey());
 const shownDate = () => dateFromKey(shownKey());
 
 const weekKeys = () => {
-  const isEn = getLang() === 'en';
-  const d = shownDate();
-  let first;
-  if (isEn) {
-    const x = new Date(d);
-    x.setHours(0, 0, 0, 0);
-    x.setDate(x.getDate() - ((x.getDay() + 6) % 7));
-    first = dayKey(x);
-  } else {
-    first = dayKey(weekStartOf(d));
-  }
+  const first = dayKey(weekStartOf(shownDate()));
   return Array.from({ length: 7 }, (_, i) => shiftKey(first, i));
 };
 
-const dateFmt = (opts, key) => new Intl.DateTimeFormat(getLang() === 'en' ? 'en-US' : 'fa-IR', opts).format(dateFromKey(key));
+const dateFmt = (opts, key) => new Intl.DateTimeFormat('fa-IR', opts).format(dateFromKey(key));
 const fullDate = key => dateFmt({ weekday: 'long', day: 'numeric', month: 'long' }, key);
 const weekdayName = key => dateFmt({ weekday: 'long' }, key);
 
@@ -67,17 +56,6 @@ const weekdayName = key => dateFmt({ weekday: 'long' }, key);
    across a change of month, which in a Jalali calendar is common enough that it
    cannot be left to the day numbers alone. */
 function weekLabel(keys) {
-  const isEn = getLang() === 'en';
-  if (isEn) {
-    const d1 = dateFromKey(keys[0]);
-    const d2 = dateFromKey(keys[6]);
-    const m1 = d1.toLocaleString('en-US', { month: 'short' });
-    const m2 = d2.toLocaleString('en-US', { month: 'short' });
-    if (m1 === m2) {
-      return `${m1} ${d1.getDate()} – ${d2.getDate()}, ${d1.getFullYear()}`;
-    }
-    return `${m1} ${d1.getDate()} – ${m2} ${d2.getDate()}, ${d2.getFullYear()}`;
-  }
   const a = dateToJalali(dateFromKey(keys[0]));
   const b = dateToJalali(dateFromKey(keys[6]));
   const md = m => JALALI_MONTHS[m - 1];
@@ -88,13 +66,12 @@ function weekLabel(keys) {
 
 /* How far the day is from today, in the words a reader would use. */
 function relLabel(key) {
-  const isEn = getLang() === 'en';
   const diff = Math.round((dateFromKey(key) - dateFromKey(todayKey())) / 864e5);
-  if (diff === 0) return { text: isEn ? t('tasks.today') : 'امروز', cls: 'today' };
-  if (diff === -1) return { text: isEn ? 'Yesterday' : 'دیروز', cls: 'past' };
-  if (diff === 1) return { text: isEn ? t('tasks.tomorrow') : 'فردا', cls: 'future' };
-  if (diff < 0) return { text: isEn ? `${-diff} days ago` : `${faNum(-diff)} روز پیش`, cls: 'past' };
-  return { text: isEn ? `In ${diff} days` : `${faNum(diff)} روز دیگه`, cls: 'future' };
+  if (diff === 0) return { text: 'امروز', cls: 'today' };
+  if (diff === -1) return { text: 'دیروز', cls: 'past' };
+  if (diff === 1) return { text: 'فردا', cls: 'future' };
+  if (diff < 0) return { text: `${faNum(-diff)} روز پیش`, cls: 'past' };
+  return { text: `${faNum(diff)} روز دیگه`, cls: 'future' };
 }
 
 /* ── The optional span ──
@@ -113,12 +90,6 @@ const SPAN_SLOTS = [
 
 function hourLabel(min) {
   const h = min / 60;
-  if (getLang() === 'en') {
-    if (h === 0) return '12 AM';
-    if (h < 12) return `${h} AM`;
-    if (h === 12) return '12 PM';
-    return `${h - 12} PM`;
-  }
   if (h === 0) return '۱۲ شب';
   if (h < 5) return `${faNum(h)} شب`;
   if (h < 12) return `${faNum(h)} صبح`;
@@ -307,63 +278,14 @@ function buildShell() {
    it. A plan typed as «۲» and a task row reading «۱۴:۰۰» are then the same hour
    to the reader looking at both. */
 function fillHourPicks() {
-  const isEn = getLang() === 'en';
-  const fromEl = $('#wkFrom');
-  const toEl = $('#wkTo');
-  const fromVal = fromEl?.value || String(14 * 60);
-  const toVal = toEl?.value || String(16 * 60);
   const opts = Array.from({ length: 24 }, (_, h) => {
     const min = h * 60;
-    const clockStr = isEn ? formatClockI18n(min, 'en') : formatClock(min);
-    return `<option value="${min}">${hourLabel(min)} · ${clockStr}</option>`;
+    return `<option value="${min}">${hourLabel(min)} · ${formatClock(min)}</option>`;
   }).join('');
-  if (fromEl) fromEl.innerHTML = opts;
-  if (toEl) toEl.innerHTML = opts;
-  if (fromEl) fromEl.value = fromVal;
-  if (toEl) toEl.value = toVal;
-}
-
-function rebuildSpanPicker() {
-  const host = $('#wkSpanChips');
-  if (!host) return;
-  const isEn = getLang() === 'en';
-  delete host.dataset.built;
-  const slots = SPAN_SLOTS.map(s => {
-    let lbl = s.label;
-    if (isEn) {
-      if (s.key === 'none') lbl = 'None';
-      else if (s.key === 'morning') lbl = 'Morning';
-      else if (s.key === 'noon') lbl = 'Noon';
-      else if (s.key === 'evening') lbl = 'Evening';
-      else if (s.key === 'night') lbl = 'Night';
-      else if (s.key === 'custom') lbl = 'Custom';
-    }
-    return { ...s, label: lbl };
-  });
-  spanPicker = pickerRow(host, slots, { group: 'span', onPick: pickSpan });
-  if (spanPicker) spanPicker.mark(spanSlot);
-}
-
-function syncShellI18n() {
-  const isEn = getLang() === 'en';
-  const spanToggleSpan = $('#wkSpanToggle > span:first-of-type');
-  if (spanToggleSpan) spanToggleSpan.textContent = isEn ? 'Time & Span' : 'ساعت و بازهٔ زمانی';
-  const spanTo = $('.wk-span-to');
-  if (spanTo) spanTo.textContent = isEn ? 'to' : 'تا';
-  const fromSelect = $('#wkFrom');
-  if (fromSelect) fromSelect.setAttribute('aria-label', isEn ? 'Start time' : 'از ساعت');
-  const toSelect = $('#wkTo');
-  if (toSelect) toSelect.setAttribute('aria-label', isEn ? 'End time' : 'تا ساعت');
-  const timelineTitle = $('#wkTimelineSec h3');
-  if (timelineTitle) timelineTitle.textContent = isEn ? t('planner.timelineTitle') : 'تایم‌لاین روز';
-  const untimedTitle = $('#wkUntimedSec h3');
-  if (untimedTitle) untimedTitle.textContent = isEn ? t('planner.untimedTitle') : 'کارهای بدون ساعت (شناور)';
-  const doneTitle = $('#wkDoneSec h3');
-  if (doneTitle) doneTitle.textContent = isEn ? t('planner.doneTitle') : 'انجام‌شده در این روز';
-  const actTitle = $('#wkActSec h3');
-  if (actTitle) actTitle.textContent = isEn ? t('planner.activityTitle') : 'این روز چه‌خبر بود';
-  const addBtn = $('#wkAdd .wk-go');
-  if (addBtn) addBtn.setAttribute('aria-label', isEn ? 'Add' : 'افزودن');
+  $('#wkFrom').innerHTML = opts;
+  $('#wkTo').innerHTML = opts;
+  $('#wkFrom').value = String(14 * 60);
+  $('#wkTo').value = String(16 * 60);
 }
 
 function pickSpan(key) {
@@ -388,18 +310,9 @@ function syncSpan() {
   if (picks) picks.hidden = !custom;
   if (hint) hint.hidden = true;
   const span = currentSpan();
-  const isEn = getLang() === 'en';
-  if (out) {
-    if (span) {
-      const fromStr = isEn ? formatClockI18n(span.from, 'en') : formatClock(span.from);
-      const toStr = isEn ? formatClockI18n(span.to, 'en') : formatClock(span.to);
-      out.textContent = isEn ? `${fromStr} – ${toStr}` : `${fromStr} تا ${toStr}`;
-    } else {
-      out.textContent = '';
-    }
-  }
+  if (out) out.textContent = span ? `${formatClock(span.from)} تا ${formatClock(span.to)}` : '';
   if (custom && !span && hint) {
-    hint.textContent = isEn ? 'End time must be after start time.' : 'پایان باید بعد از شروع باشد.';
+    hint.textContent = 'پایان باید بعد از شروع باشد.';
     hint.hidden = false;
   }
 }
@@ -453,13 +366,12 @@ function onSubmit(e) {
 function renderBar(keys) {
   const bar = $('#wkBar');
   if (!bar) return;
-  const isEn = getLang() === 'en';
   const onToday = shownKey() === todayKey();
   bar.innerHTML = `
-    <button class="wk-nav" type="button" data-move="-7">${isEn ? t('planner.prevWeek') : 'هفتهٔ قبل'}</button>
+    <button class="wk-nav" type="button" data-move="-7">هفتهٔ قبل</button>
     <span class="wk-range">${weekLabel(keys)}</span>
-    <button class="wk-nav" type="button" data-move="7">${isEn ? t('planner.nextWeek') : 'هفتهٔ بعد'}</button>
-    <button class="wk-today" type="button" id="wkTodayBtn"${onToday ? ' hidden' : ''}>${isEn ? t('planner.today') : 'همین امروز'}</button>`;
+    <button class="wk-nav" type="button" data-move="7">هفتهٔ بعد</button>
+    <button class="wk-today" type="button" id="wkTodayBtn"${onToday ? ' hidden' : ''}>همین امروز</button>`;
 }
 
 function buildStrip(keys) {
@@ -467,30 +379,20 @@ function buildStrip(keys) {
   if (!strip) return;
   cells.clear();
   const frag = document.createDocumentFragment();
-  const isEn = getLang() === 'en';
-  const WEEKDAYS_SHORT_EN = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   keys.forEach((key, i) => {
     const cell = document.createElement('button');
     cell.type = 'button';
     cell.className = 'wk-cell';
     cell.dataset.key = key;
     cell.setAttribute('role', 'radio');
-    if (isEn) {
-      const d = dateFromKey(key);
-      cell.innerHTML = `<span class="wk-dow">${WEEKDAYS_SHORT_EN[i]}</span>`
-        + `<span class="wk-num">${d.getDate()}</span>`
-        + '<span class="wk-track" aria-hidden="true"><i></i></span>';
-    } else {
-      const j = dateToJalali(dateFromKey(key));
-      cell.innerHTML = `<span class="wk-dow">${WEEKDAYS_SHORT[i]}</span>`
-        + `<span class="wk-num">${faNum(j.jd)}</span>`
-        + '<span class="wk-track" aria-hidden="true"><i></i></span>';
-    }
+    const j = dateToJalali(dateFromKey(key));
+    cell.innerHTML = `<span class="wk-dow">${WEEKDAYS_SHORT[i]}</span>`
+      + `<span class="wk-num">${faNum(j.jd)}</span>`
+      + '<span class="wk-track" aria-hidden="true"><i></i></span>';
     frag.appendChild(cell);
     cells.set(key, { cell, fill: cell.querySelector('.wk-track i') });
   });
   strip.replaceChildren(frag);
-  strip.dataset.lang = getLang();
 }
 
 /* The bar under each day is the day's plan filling up: no tasks, no bar — a day
@@ -517,10 +419,9 @@ function syncStrip(keys) {
     c.cell.classList.toggle('past', key < today);
     c.cell.setAttribute('aria-checked', String(key === cur));
     c.cell.tabIndex = key === cur ? 0 : -1;
-    const isEn = getLang() === 'en';
     c.cell.setAttribute('aria-label', total
-      ? (isEn ? `${fullDate(key)} — ${done} of ${total} tasks completed` : `${fullDate(key)} — ${faNum(done)} از ${faNum(total)} کار انجام شده`)
-      : (isEn ? `${fullDate(key)} — No tasks` : `${fullDate(key)} — بدون کار`));
+      ? `${fullDate(key)} — ${faNum(done)} از ${faNum(total)} کار انجام شده`
+      : `${fullDate(key)} — بدون کار`);
     c.fill.style.width = total ? Math.round((done / total) * 100) + '%' : '';
     c.fill.parentElement.classList.toggle('has', total > 0);
   }
@@ -540,9 +441,8 @@ function renderDayHead() {
   }
   const input = $('#wkInput');
   if (input) {
-    const isEn = getLang() === 'en';
-    input.placeholder = isEn ? `+ Write a task for ${weekdayName(key)}…` : `+ برای ${weekdayName(key)} یه کار بنویس…`;
-    input.setAttribute('aria-label', isEn ? `Add task to ${fullDate(key)}` : `افزودن کار به ${fullDate(key)}`);
+    input.placeholder = `+ برای ${weekdayName(key)} یه کار بنویس…`;
+    input.setAttribute('aria-label', `افزودن کار به ${fullDate(key)}`);
   }
 }
 
@@ -553,21 +453,20 @@ function renderDayHead() {
    and span chip, so a timed task is ticked, deleted, dragged and arrow-moved
    exactly like a floating one. */
 function rowEl(task, slot) {
-  const isEn = getLang() === 'en';
   const li = document.createElement('li');
   li.className = 'wk-row' + (slot ? ' wk-timeline-slot' : '') + (task.done ? ' done' : '');
   li.dataset.id = task.id;
   li.dataset.p = task.p || 'mid';
-  const span = timeRangeLabel(task) || (task.timeFrom != null ? (isEn ? formatClockI18n(task.timeFrom, 'en') : formatClock(task.timeFrom)) : '');
+  const span = timeRangeLabel(task) || formatClock(task.timeFrom);
   const spanChip = span ? `<span class="wk-span-chip">${span}</span>` : '';
   li.innerHTML = `
-    <span class="wk-grip" aria-hidden="true" title="${isEn ? 'Drag to another day — or move with arrow keys' : 'بکشش روی روز دیگه — یا با کلیدهای چپ و راست ببرش'}">${ICONS.grip}</span>
-    <button class="wk-check" type="button" aria-label="${isEn ? 'Toggle completion' : 'تغییر وضعیت تکمیل'}">${ICONS.check}</button>
+    <span class="wk-grip" aria-hidden="true" title="بکشش روی روز دیگه — یا با کلیدهای چپ و راست ببرش">${ICONS.grip}</span>
+    <button class="wk-check" type="button" aria-label="تغییر وضعیت تکمیل">${ICONS.check}</button>
     <span class="wk-dot" aria-hidden="true"></span>
-    ${slot && span ? `<span class="wk-slot-badge">⏰ ${span}</span>` : ''}
+    ${slot && span ? `<span class="wk-slot-badge">${LIB_ICONS.clock} ${span}</span>` : ''}
     <span class="wk-title"></span>
     ${slot ? '' : spanChip}
-    <button class="wk-del" type="button" aria-label="${isEn ? 'Delete' : 'حذف'}">${ICONS.trash}</button>`;
+    <button class="wk-del" type="button" aria-label="حذف">${ICONS.trash}</button>`;
   li.querySelector('.wk-title').textContent = task.text;
   return li;
 }
@@ -576,20 +475,11 @@ function emptyNote(key) {
   const li = document.createElement('li');
   li.className = 'wk-empty';
   const today = todayKey();
-  const isEn = getLang() === 'en';
-  if (isEn) {
-    li.textContent = key === today
-      ? "You haven't written anything for today — write above."
-      : key > today
-        ? 'No tasks planned for this day.'
-        : 'This day was empty.';
-  } else {
-    li.textContent = key === today
-      ? 'برای امروز چیزی ننوشتی — همون بالا بنویس.'
-      : key > today
-        ? 'برای این روز کاری برنامه‌ریزی نشده.'
-        : 'این روز خالی بود.';
-  }
+  li.textContent = key === today
+    ? 'برای امروز چیزی ننوشتی — همون بالا بنویس.'
+    : key > today
+      ? 'برای این روز کاری برنامه‌ریزی نشده.'
+      : 'این روز خالی بود.';
   return li;
 }
 
@@ -603,19 +493,15 @@ function renderActivity(key) {
   if (!sec || !chips) return;
   if (key > todayKey()) { sec.hidden = true; return; }
 
-  const isEn = getLang() === 'en';
   const day = collectTotals().days.find(d => d.key === key) || null;
   const items = [];
   if (day) {
-    if (day.done) items.push(isEn ? `${day.done} tasks completed` : `${faNum(day.done)} کار جلو رفت`);
-    if (day.focusMin) items.push(isEn ? `${day.focusMin} min focus` : `${faNum(day.focusMin)} دقیقه تمرکز`);
-    if (day.readMin) items.push(isEn ? `${day.readMin} min reading` : `${faNum(day.readMin)} دقیقه مطالعه`);
-    if (day.pages) items.push(isEn ? `${day.pages} pages` : `${faNum(day.pages)} صفحه`);
-    if (day.mood && MOODS[day.mood - 1]) {
-      const moodLabel = isEn ? (t(`moods.m${day.mood}.label`) || MOODS[day.mood - 1].label) : MOODS[day.mood - 1].label;
-      items.push(isEn ? `Mood: ${moodLabel}` : `حال: ${moodLabel}`);
-    }
-    if (day.freeze) items.push(isEn ? 'Streak freeze' : 'مرخصی پیوستگی');
+    if (day.done) items.push(`${faNum(day.done)} کار جلو رفت`);
+    if (day.focusMin) items.push(`${faNum(day.focusMin)} دقیقه تمرکز`);
+    if (day.readMin) items.push(`${faNum(day.readMin)} دقیقه مطالعه`);
+    if (day.pages) items.push(`${faNum(day.pages)} صفحه`);
+    if (day.mood && MOODS[day.mood - 1]) items.push(`حال: ${MOODS[day.mood - 1].label}`);
+    if (day.freeze) items.push('مرخصی پیوستگی');
   }
   sec.hidden = false;
   chips.replaceChildren(...items.map(t => {
@@ -629,16 +515,13 @@ function renderActivity(key) {
   if (note) {
     note.hidden = !quiet;
     note.textContent = quiet
-      ? (key === todayKey()
-          ? (isEn ? 'Nothing recorded for today yet.' : 'امروز هنوز چیزی ثبت نشده.')
-          : (isEn ? 'Nothing was recorded for this day.' : 'از این روز چیزی ثبت نشده.'))
+      ? (key === todayKey() ? 'امروز هنوز چیزی ثبت نشده.' : 'از این روز چیزی ثبت نشده.')
       : '';
   }
 }
 
 function renderLists() {
   const key = shownKey();
-  const isEn = getLang() === 'en';
 
   /* Planned: timed first, in the order of the day; untimed after them, because a
      span is an anchor and the rest of the day hangs off it. Sorted by time
@@ -664,7 +547,7 @@ function renderLists() {
       timelineEl.replaceChildren(...timed.map(t => rowEl(t, true)));
     } else {
       if (timelineSec) timelineSec.hidden = !untimedTasks.length;
-      timelineEl.innerHTML = `<div class="wk-timeline-empty">${isEn ? 'No scheduled tasks; tasks are flexible.' : 'هیچ کار زمان‌بندی‌شده‌ای ثبت نشده؛ کارها شناور هستند.'}</div>`;
+      timelineEl.innerHTML = `<div class="wk-timeline-empty">هیچ کار زمان‌بندی‌شده‌ای ثبت نشده؛ کارها شناور هستند.</div>`;
     }
   }
 
@@ -760,8 +643,7 @@ function moveDrag(e) {
     if (drag.key) cells.get(drag.key)?.cell.classList.remove('drop');
     drag.key = key;
     if (key) cells.get(key).cell.classList.add('drop');
-    const isEn = getLang() === 'en';
-    drag.ghost.to.textContent = key && key !== shownKey() ? (isEn ? `Moves to ${fullDate(key)}` : `میره به ${fullDate(key)}`) : '';
+    drag.ghost.to.textContent = key && key !== shownKey() ? `میره به ${fullDate(key)}` : '';
   }
   /* Placed last, against the width the card has *now*: writing the destination
      makes the card wider, and a wider card in a right-to-left page reaches
@@ -884,17 +766,9 @@ function moveByKey(e) {
 }
 
 export function renderPlanner() {
-  syncShellI18n();
-  fillHourPicks();
-  rebuildSpanPicker();
-  syncSpan();
   const keys = weekKeys();
   renderBar(keys);
-  const strip = $('#wkStrip');
-  if (keys[0] !== builtWeek || (strip && strip.dataset.lang !== getLang())) {
-    buildStrip(keys);
-    builtWeek = keys[0];
-  }
+  if (keys[0] !== builtWeek) { buildStrip(keys); builtWeek = keys[0]; }
   syncStrip(keys);
   renderDayHead();
   renderLists();
@@ -915,9 +789,6 @@ export function initPlanner() {
   syncSpan();
   if (spanPicker) spanPicker.mark(spanSlot);
   subscribe(onData);
-  if (typeof window !== 'undefined') {
-    window.addEventListener('daftarche:lang-changed', () => renderPlanner());
-  }
   /* Painted at boot as well as on entry: the page can be the one the URL hash
      names, and then no navigation has happened yet. */
   renderPlanner();

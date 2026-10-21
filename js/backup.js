@@ -86,42 +86,39 @@ export function collectBackup(storage, { now = new Date(), release = '' } = {}) 
 /* Read a backup file's text and decide whether it can be restored. Never
    throws; answers { ok: true, backup, count } or { ok: false, reason } with a
    reason in the app's own voice so the page can show it as it is. */
-export function parseBackup(text, lang = null) {
-  const isEnglish = lang === 'en';
-  const r = (fa, en) => isEnglish ? en : fa;
-
-  if (typeof text !== 'string' || !text.trim()) return { ok: false, reason: r('فایل خالیه.', 'The file is empty.') };
-  if (text.length > BACKUP_MAX_CHARS) return { ok: false, reason: r('این فایل خیلی بزرگه و پشتیبان دفترچه نیست.', 'This file is too large and is not a valid Daftarche backup.') };
+export function parseBackup(text) {
+  if (typeof text !== 'string' || !text.trim()) return { ok: false, reason: 'فایل خالیه.' };
+  if (text.length > BACKUP_MAX_CHARS) return { ok: false, reason: 'این فایل خیلی بزرگه و پشتیبان دفترچه نیست.' };
 
   let obj;
   try { obj = JSON.parse(text); }
-  catch { return { ok: false, reason: r('این فایل خوانده نشد؛ پشتیبان دفترچه نیست یا خراب شده.', 'Failed to parse file; it is either corrupted or not a Daftarche backup.') }; }
+  catch { return { ok: false, reason: 'این فایل خوانده نشد؛ پشتیبان دفترچه نیست یا خراب شده.' }; }
 
   if (!isPlainObject(obj) || obj.app !== BACKUP_APP) {
-    return { ok: false, reason: r('این فایل پشتیبان دفترچه نیست.', 'This file is not a valid Daftarche backup.') };
+    return { ok: false, reason: 'این فایل پشتیبان دفترچه نیست.' };
   }
   if (!Number.isInteger(obj.format) || obj.format < 1) {
-    return { ok: false, reason: r('قالب این پشتیبان شناخته نشد.', 'Unrecognized backup format.') };
+    return { ok: false, reason: 'قالب این پشتیبان شناخته نشد.' };
   }
   if (obj.format > BACKUP_FORMAT) {
-    return { ok: false, reason: r('این پشتیبان با نسخهٔ جدیدتری از دفترچه ساخته شده؛ اول برنامه رو به‌روز کن.', 'This backup was created with a newer version of Daftarche; please update first.') };
+    return { ok: false, reason: 'این پشتیبان با نسخهٔ جدیدتری از دفترچه ساخته شده؛ اول برنامه رو به‌روز کن.' };
   }
-  if (!isPlainObject(obj.data)) return { ok: false, reason: r('داده‌ای داخل این پشتیبان نیست.', 'No data found in this backup.') };
+  if (!isPlainObject(obj.data)) return { ok: false, reason: 'داده‌ای داخل این پشتیبان نیست.' };
 
   const keys = Object.keys(obj.data);
-  if (!keys.length) return { ok: false, reason: r('داده‌ای داخل این پشتیبان نیست.', 'No data found in this backup.') };
+  if (!keys.length) return { ok: false, reason: 'داده‌ای داخل این پشتیبان نیست.' };
 
   for (const k of keys) {
-    if (!isBackupKey(k)) return { ok: false, reason: r('این پشتیبان کلیدهای ناشناخته دارد و رد شد.', 'This backup contains unknown keys and was rejected.') };
+    if (!isBackupKey(k)) return { ok: false, reason: 'این پشتیبان کلیدهای ناشناخته دارد و رد شد.' };
     const v = obj.data[k];
-    if (typeof v !== 'string') return { ok: false, reason: r('ساختار این پشتیبان درست نیست.', 'Invalid backup structure.') };
+    if (typeof v !== 'string') return { ok: false, reason: 'ساختار این پشتیبان درست نیست.' };
     const shape = SHAPES[k];
     if (shape) {
       let parsed;
       try { parsed = JSON.parse(v); }
-      catch { return { ok: false, reason: r('بخشی از این پشتیبان خراب است و رد شد.', 'Corrupted data found in this backup; import rejected.') }; }
+      catch { return { ok: false, reason: 'بخشی از این پشتیبان خراب است و رد شد.' }; }
       const good = shape === 'array' ? Array.isArray(parsed) : isPlainObject(parsed);
-      if (!good) return { ok: false, reason: r('بخشی از این پشتیبان خراب است و رد شد.', 'Corrupted data found in this backup; import rejected.') };
+      if (!good) return { ok: false, reason: 'بخشی از این پشتیبان خراب است و رد شد.' };
     }
   }
 
@@ -133,8 +130,7 @@ export function parseBackup(text, lang = null) {
    storage, say) the old values are put back, so a failed restore leaves the
    person exactly where they were. Answers { ok: true, restored } or
    { ok: false, reason }. */
-export function applyBackup(storage, backup, lang = null) {
-  const isEnglish = lang === 'en';
+export function applyBackup(storage, backup) {
   const before = {};
   for (const k of backupKeysOf(storage)) before[k] = storage.getItem(k);
 
@@ -150,7 +146,7 @@ export function applyBackup(storage, backup, lang = null) {
     for (const [k, v] of Object.entries(backup.data)) storage.setItem(k, v);
   } catch {
     rollback();
-    return { ok: false, reason: isEnglish ? 'Not enough storage to restore data; nothing was changed.' : 'جا برای بازگرداندن کافی نبود؛ چیزی عوض نشد.' };
+    return { ok: false, reason: 'جا برای بازگرداندن کافی نبود؛ چیزی عوض نشد.' };
   }
   return { ok: true, restored: Object.keys(backup.data).length };
 }
@@ -497,18 +493,15 @@ const MERGERS = {
    before the first write, and a write that fails puts every key back, so a
    failed merge leaves the person exactly where they were. Answers
    { ok: true, written } or { ok: false, reason }. */
-export function mergeBackup(storage, backup, lang = null) {
-  const isEnglish = lang === 'en';
-  const r = (fa, en) => isEnglish ? en : fa;
-
+export function mergeBackup(storage, backup) {
   if (!backup || !isPlainObject(backup.data)) {
-    return { ok: false, reason: r('ساختار این پشتیبان درست نیست.', 'Invalid backup structure.') };
+    return { ok: false, reason: 'ساختار این پشتیبان درست نیست.' };
   }
 
   const writes = {};
   for (const [k, v] of Object.entries(backup.data)) {
-    if (!isBackupKey(k)) return { ok: false, reason: r('این پشتیبان کلیدهای ناشناخته دارد و رد شد.', 'This backup contains unknown keys and was rejected.') };
-    if (typeof v !== 'string') return { ok: false, reason: r('ساختار این پشتیبان درست نیست.', 'Invalid backup structure.') };
+    if (!isBackupKey(k)) return { ok: false, reason: 'این پشتیبان کلیدهای ناشناخته دارد و رد شد.' };
+    if (typeof v !== 'string') return { ok: false, reason: 'ساختار این پشتیبان درست نیست.' };
     const local = storage.getItem(k);
     const merged = MERGERS[k] ? MERGERS[k](local, v) : (local ?? v);
     if (merged === null || merged === undefined) continue;   // the file adds nothing here
@@ -521,7 +514,7 @@ export function mergeBackup(storage, backup, lang = null) {
     if (!shape) continue;
     const parsed = readJSONSafely(v);
     const good = shape === 'array' ? Array.isArray(parsed) : isPlainObject(parsed);
-    if (!good) return { ok: false, reason: r('بخشی از این پشتیبان خراب است و رد شد.', 'Corrupted data found in this backup; import rejected.') };
+    if (!good) return { ok: false, reason: 'بخشی از این پشتیبان خراب است و رد شد.' };
   }
 
   if (!Object.keys(writes).length) return { ok: true, written: 0 };
@@ -541,7 +534,7 @@ export function mergeBackup(storage, backup, lang = null) {
     for (const [k, v] of Object.entries(writes)) storage.setItem(k, v);
   } catch {
     rollback();
-    return { ok: false, reason: r('جا برای ادغام کافی نبود؛ چیزی عوض نشد.', 'Not enough storage to merge data; nothing was changed.') };
+    return { ok: false, reason: 'جا برای ادغام کافی نبود؛ چیزی عوض نشد.' };
   }
   return { ok: true, written: Object.keys(writes).length };
 }

@@ -1,7 +1,7 @@
 import { state, getTask } from './state.js';
-import { saveTasks, tryPersistStorage } from './store.js';
-import { $, faNum, startOfToday, dueKeyFromOffset, normalizeFa, parseDurationMin, formatDuration, formatClock, parseTimeRange } from './utils.js';
-import { P_CYCLE, P_LABEL, CATS, ICONS } from './constants.js';
+import { saveTasks, requestPersistentStorage } from './store.js';
+import { $, faNum, startOfToday, dueKeyFromOffset, normalizeFa, parseDurationMin, formatDuration, formatClock, parseTimeRange, reorderSubset, isOverdueTask, stepOrder } from './utils.js';
+import { P_LABEL, CATS, ICONS, PRI_ICONS } from './constants.js';
 import { notify } from './bus.js';
 import { bellHtml, refreshBell, setTaskNotify, notificationsSupported, bindPersistence } from './notifications.js';
 import { confetti } from './confetti.js';
@@ -10,8 +10,8 @@ import { openFocus, clearFocus } from './focus.js';
 import { openDuePicker } from './duepicker.js';
 import { formatJalaliDate } from './jalali.js';
 import { rememberDone } from './ledger.js';
+import { openChipPicker, closeChipPicker, openTaskEditor, initTaskEditor, catOptions, priOptions, durOptions } from './taskedit.js';
 import { parseQuickAdd, renderQuickAddPreview, stripQuickAddToken } from './quickadd.js';
-import { getLang, t, formatNumber, formatDurationI18n, formatClockI18n } from './i18n.js';
 
 const listEl = $('#taskList');
 const save = () => saveTasks(state.tasks);
@@ -20,18 +20,19 @@ const save = () => saveTasks(state.tasks);
    the task list's internals directly. */
 bindPersistence({ save, notify });
 
+/* Status is one question (what state is it in?) and «بدون مهلت» is another (does
+   it have a date?). They used to share one row of pills, so «بدون مهلت» silently
+   hid every finished task and could not be combined with a category. Status
+   decides here; the no-deadline flag narrows whatever status is chosen. */
 export const matches = t => {
-  /* A deadline is stored as a bare YYYY-MM-DD, so it orders itself: anything
-     earlier than today's key has passed, and a finished task is never late.
-     The key is read per call, not once at boot, so a list left open overnight
-     answers with the new day. */
-  if (state.filter === 'overdue') return !t.done && !!t.dueDate && t.dueDate < dueKeyFromOffset(0);
+  if (state.filter === 'overdue') return isOverdueTask(t, dueKeyFromOffset(0));
   if (state.filter === 'active') return !t.done;
   if (state.filter === 'done') return t.done;
   return true;
 };
 export const visible = () => state.tasks.filter(t =>
   matches(t) &&
+  (!state.noDue || !t.dueDate) &&
   (state.catFilter === 'all' || (t.cat || 'misc') === state.catFilter) &&
   (!state.query || normalizeFa(t.text).includes(normalizeFa(state.query)))
 );
@@ -67,41 +68,26 @@ function animateChipFlip(chip) {
 }
 
 /* ── Estimated Duration ── */
-const DUR_CYCLE = [null, 5, 15, 30, 60, 90];
-function nextDur(cur) {
-  const i = DUR_CYCLE.indexOf(cur);
-  return DUR_CYCLE[(i + 1) % DUR_CYCLE.length];
-}
 function refreshDurChip(li, task) {
   const btn = li.querySelector('.dur-chip');
   if (!btn) return;
-  const isEn = getLang() === 'en';
   if (!task.durationMin) {
     btn.className = 'dur-chip none';
-    btn.textContent = isEn ? '+ Time' : '+ زمان';
-    btn.title = isEn ? 'Add estimated duration' : 'افزودن زمان تقریبی';
+    btn.textContent = '+ زمان';
+    btn.title = 'افزودن زمان تقریبی';
     return;
   }
-  const label = isEn ? formatDurationI18n(task.durationMin, 'en') : formatDuration(task.durationMin);
+  const label = formatDuration(task.durationMin);
   btn.className = 'dur-chip';
   btn.textContent = label;
-  btn.title = isEn ? `Est. duration: ${label} — click to change` : `زمان تقریبی: ${label} — کلیک برای تغییر`;
+  btn.title = `زمان تقریبی: ${label} — کلیک برای تغییر`;
 }
 
-/* ── Due Date (Jalali & Gregorian) ── */
+/* ── Due Date (Jalali) ── */
 export function dueLabel(key) {
   if (!key) return null;
   const d = new Date(key + 'T00:00:00');
   const diff = Math.round((d - startOfToday()) / 864e5);
-  if (getLang() === 'en') {
-    const enDate = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(d);
-    if (diff < 0) return { cls: 'late', text: t('tasks.overdue'), date: enDate, ltr: true };
-    if (diff === 0) return { cls: 'today', text: t('tasks.today'), date: enDate, ltr: true };
-    if (diff === 1) return { cls: 'soon', text: t('tasks.tomorrow'), date: enDate, ltr: true };
-    if (diff === 2) return { cls: 'soon', text: t('tasks.dayAfter'), date: enDate, ltr: true };
-    if (diff <= 7) return { cls: 'soon', text: t('tasks.daysLeft', { n: diff }), date: enDate, ltr: true };
-    return { cls: 'far', text: enDate, date: enDate, ltr: true };
-  }
   const date = formatJalaliDate(d);
   if (diff < 0) return { cls: 'late', text: 'گذشته از مهلت', date };
   if (diff === 0) return { cls: 'today', text: 'امروز', date };
@@ -113,19 +99,13 @@ export function dueLabel(key) {
 function refreshDueChip(li, task) {
   const btn = li.querySelector('.due-chip');
   if (!btn) return;
-  const isEn = getLang() === 'en';
-  if (!task.dueDate) {
-    btn.className = 'due-chip none';
-    btn.innerHTML = isEn ? '+ Due' : '+ مهلت';
-    btn.title = isEn ? 'Add due date' : 'افزودن مهلت';
-    return;
-  }
+  if (!task.dueDate) { btn.className = 'due-chip none'; btn.innerHTML = '+ مهلت'; btn.title = 'افزودن مهلت'; return; }
   const dl = dueLabel(task.dueDate);
   // A completed task never reads as overdue — show its date neutrally instead
   const doneLate = task.done && dl.cls === 'late';
   btn.className = `due-chip ${doneLate ? 'far' : dl.cls}`;
   btn.innerHTML = doneLate || dl.ltr ? `<span dir="ltr">${doneLate ? dl.date : dl.text}</span>` : dl.text;
-  btn.title = isEn ? `Due date: ${dl.date} — click to change` : `مهلت — ${dl.date} — کلیک برای تغییر`;
+  btn.title = `مهلت — ${dl.date} — کلیک برای تغییر`;
 }
 
 /* ── Planned span ──
@@ -134,86 +114,64 @@ function refreshDueChip(li, task) {
    list, today): a span that read differently in each would be a bug in two of
    them. It is a plan, not an alarm — nothing rings from it. */
 export function timeRangeLabel(task) {
-  if (getLang() === 'en') {
-    const from = formatClockI18n(task && task.timeFrom, 'en');
-    const to = formatClockI18n(task && task.timeTo, 'en');
-    return from && to ? `${from} – ${to}` : null;
-  }
   const from = formatClock(task && task.timeFrom);
   const to = formatClock(task && task.timeTo);
   return from && to ? `${from} تا ${to}` : null;
 }
 
 /* ── Build Item ── */
-const BUILTIN_CAT_ALIASES = {
-  'خانه': 'home', 'خونه': 'home', 'منزل': 'home',
-  'درس': 'study', 'دانشگاه': 'study', 'مدرسه': 'study', 'مطالعه': 'study', 'کتاب': 'study',
-  'کار': 'project', 'پروژه': 'project', 'شغل': 'project', 'شرکت': 'project', 'وظیفه': 'project',
-  'خرید': 'shopping', 'بازار': 'shopping',
-  'سلامت': 'health', 'ورزش': 'health', 'باشگاه': 'health', 'دکتر': 'health', 'پزشک': 'health', 'دارو': 'health',
-  'متفرقه': 'misc', 'شخصی': 'misc', 'سایر': 'misc',
-};
-
 function createTaskEl(task, delay = 0) {
-  const isEn = getLang() === 'en';
   const li = document.createElement('li');
   li.className = 'task' + (task.done ? ' done' : '');
   li.dataset.id = task.id; li.dataset.p = task.p || 'mid';
   li.draggable = true; li.style.animationDelay = delay + 'ms';
-  const rawCat = task.cat || 'misc';
-  const canonicalCatKey = BUILTIN_CAT_ALIASES[rawCat] || rawCat;
-  const cat = CATS.find(c => c.key === canonicalCatKey);
-  const catLabel = cat
-    ? (isEn ? t(`categories.${cat.key}`) : cat.label)
-    : rawCat;
-  const catColor = cat ? cat.color : '#a79c8a';
+  const cat = CATS.find(c => c.key === (task.cat || 'misc')) || CATS[5];
   const dl = dueLabel(task.dueDate);
   const doneLate = dl && task.done && dl.cls === 'late';
   const dueText = dl && (doneLate || dl.ltr) ? `<span dir="ltr">${doneLate ? dl.date : dl.text}</span>` : dl ? dl.text : '';
   const dueHtml = dl
-    ? `<button class="due-chip ${doneLate ? 'far' : dl.cls}" title="${isEn ? `Due date: ${dl.date} — click to change` : `مهلت — ${dl.date} — کلیک برای تغییر`}">${dueText}</button>`
-    : `<button class="due-chip none" title="${isEn ? 'Add due date' : 'افزودن مهلت'}">${isEn ? '+ Due' : '+ مهلت'}</button>`;
-  const durLabel = isEn ? formatDurationI18n(task.durationMin, 'en') : formatDuration(task.durationMin);
+    ? `<button class="due-chip ${doneLate ? 'far' : dl.cls}" title="مهلت — ${dl.date} — کلیک برای تغییر">${dueText}</button>`
+    : `<button class="due-chip none" title="افزودن مهلت">+ مهلت</button>`;
+  const durLabel = formatDuration(task.durationMin);
   const durHtml = durLabel
-    ? `<button class="dur-chip" title="${isEn ? `Est. duration: ${durLabel} — click to change` : `زمان تقریبی: ${durLabel} — کلیک برای تغییر`}">${durLabel}</button>`
-    : `<button class="dur-chip none" title="${isEn ? 'Add estimated duration' : 'افزودن زمان تقریبی'}">${isEn ? '+ Time' : '+ زمان'}</button>`;
+    ? `<button class="dur-chip" title="زمان تقریبی: ${durLabel} — کلیک برای تغییر" aria-haspopup="menu">${durLabel}</button>`
+    : `<button class="dur-chip none" title="افزودن زمان تقریبی" aria-haspopup="menu">+ زمان</button>`;
   const spanLabel = timeRangeLabel(task);
-  const spanHtml = spanLabel ? `<span class="span-chip" title="${isEn ? 'Scheduled time of day' : 'بازهٔ این کار در روز'}">${spanLabel}</span>` : '';
-  const pKey = li.dataset.p || 'mid';
-  const priTitle = isEn
-    ? t('tasks.priorityLabel', { p: t('tasks.priority' + (pKey === 'high' ? 'High' : pKey === 'low' ? 'Low' : 'Mid')) }) + ' — click to change'
-    : `اولویت: ${P_LABEL[li.dataset.p]} — کلیک برای تغییر`;
-  /* The grip is decorative, so the keys that do the same thing are written on
-     the tick beside it — the row's existing tab stop — rather than as a second
-     stop of their own. */
-  const gripTitle = isEn
-    ? 'Drag to reorder — or hold Alt and press ↑ / ↓'
-    : 'بکش و جابه‌جا کن — یا Alt را نگه دار و ↑ / ↓ را بزن';
+  const spanHtml = spanLabel ? `<span class="span-chip" title="بازهٔ این کار در روز">${spanLabel}</span>` : '';
   li.innerHTML = `
-    <span class="grip" aria-hidden="true" title="${gripTitle}">${ICONS.grip}</span>
-    <button class="pri-dot" title="${priTitle}" aria-label="${isEn ? 'Change priority' : 'تغییر اولویت'}"></button>
-    <button class="check" aria-label="${isEn ? 'Complete task' : 'تکمیل'}" aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown">${ICONS.check}</button>
+    <span class="grip" aria-hidden="true">${ICONS.grip}</span>
+    <button class="pri-dot" title="اولویت: ${P_LABEL[li.dataset.p]} — کلیک برای تغییر" aria-label="اولویت: ${P_LABEL[li.dataset.p]} — تغییر" aria-haspopup="menu">${PRI_ICONS[li.dataset.p]}</button>
+    <button class="check" aria-label="تکمیل">${ICONS.check}</button>
     <span class="title"></span>
-    <button class="task-edit-btn" type="button" aria-label="${isEn ? 'Edit title' : 'ویرایش عنوان'}" title="${isEn ? 'Edit title' : 'ویرایش عنوان'}">
-      <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg>
-    </button>
-    <button class="cat-tag" style="--cc:${catColor}" title="${isEn ? `Category: ${catLabel} — click to change` : `دسته: ${catLabel} — کلیک برای تغییر`}">${catLabel}</button>
+    <button class="cat-tag" style="--cc:${cat.color}" title="دسته: ${cat.label} — کلیک برای تغییر" aria-haspopup="menu">${cat.label}</button>
     ${spanHtml}
     ${durHtml}
     ${dueHtml}
     ${notificationsSupported() ? bellHtml(task) : ''}
     <div class="task-menu-wrap">
-      <button class="task-more-btn" type="button" aria-label="${isEn ? 'Task actions' : 'عملیات کار'}" title="${isEn ? 'More actions' : 'عملیات بیشتر'}" aria-haspopup="menu" aria-expanded="false">
+      <button class="task-more-btn" type="button" aria-label="عملیات کار" title="عملیات بیشتر" aria-haspopup="menu" aria-expanded="false">
         <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><circle cx="12" cy="5" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="12" cy="19" r="1.8"/></svg>
       </button>
       <div class="task-menu" role="menu" hidden>
+        <button type="button" class="task-menu-item item-edit" role="menuitem">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/></svg>
+          <span>ویرایش</span>
+        </button>
+        <button type="button" class="task-menu-item item-up" role="menuitem">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg>
+          <span>بردن بالا</span>
+        </button>
+        <button type="button" class="task-menu-item item-down" role="menuitem">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14"/><path d="M19 12l-7 7-7-7"/></svg>
+          <span>بردن پایین</span>
+        </button>
         <button type="button" class="task-menu-item item-focus" role="menuitem">
           ${ICONS.clock}
-          <span>${isEn ? 'Start Focus' : 'شروع تمرکز'}</span>
+          <span>شروع تمرکز</span>
         </button>
         <button type="button" class="task-menu-item item-del danger" role="menuitem">
           ${ICONS.trash}
-          <span>${isEn ? 'Delete' : 'حذف'}</span>
+          <span>حذف</span>
         </button>
       </div>
     </div>`;
@@ -246,35 +204,24 @@ export function updateEmpty() {
   $('#emptyAddBtn')?.remove();
   if (anyVisible) return;
   const allDone = state.tasks.length && state.tasks.every(t => t.done);
-  const isEn = getLang() === 'en';
-  if (isEn) {
-    const voc = state.userName ? `${state.userName}, ` : '';
-    $('#emptyMsg').textContent =
-      state.query ? 'No matching tasks found. Try a different search.'
-      : !state.tasks.length ? 'No tasks on the table right now.'
-      : state.catFilter !== 'all' ? `No tasks in “${t(`categories.${state.catFilter}`)}”.`
-      : state.filter === 'overdue' ? 'Nothing is overdue.'
-      : state.filter === 'done' ? 'You haven’t completed any tasks yet.'
-      : allDone ? 'All your tasks are done!'
-      : voc + 'Your task list is empty. Add your first task!';
-  } else {
-    const voc = state.userName ? `${state.userName} جان، ` : '';
-    $('#emptyMsg').textContent =
-      state.query ? 'چیزی پیدا نشد. عبارت دیگری را امتحان کن.'
-      : !state.tasks.length ? 'فعلاً کاری روی میز نیست.'
-      : state.catFilter !== 'all' ? `توی دستهٔ «${CATS.find(c => c.key === state.catFilter)?.label}» کاری نیست.`
-      : state.filter === 'overdue' ? 'کاری از مهلت نگذشته.'
-      : state.filter === 'done' ? 'هنوز کاری را تمام نکرده‌ای.'
-      : allDone ? 'همهٔ کارهات انجام شده.'
-      : voc + 'لیستت خالیه. اولین کارت رو اضافه کن.';
-  }
+  $('#artDone').hidden = !allDone; $('#artEmpty').hidden = allDone;
+  const voc = state.userName ? `${state.userName} جان، ` : '';
+  $('#emptyMsg').textContent =
+    state.query ? 'چیزی پیدا نشد. عبارت دیگری را امتحان کن.'
+    : !state.tasks.length ? 'فعلاً کاری روی میز نیست.'
+    : state.catFilter !== 'all' ? `توی دستهٔ «${CATS.find(c => c.key === state.catFilter)?.label}» کاری نیست.`
+    : state.noDue ? 'کار بدون مهلتی پیدا نشد.'
+    : state.filter === 'overdue' ? 'هیچ کاری عقب نیفتاده. آفرین.'
+    : state.filter === 'done' ? 'هنوز کاری را تمام نکرده‌ای.'
+    : allDone ? 'همهٔ کارهات انجام شده.'
+    : voc + 'لیستت خالیه. اولین کارت رو اضافه کن.';
   // A single calm CTA when the shelf is truly empty — no pressure copy
   if (!state.tasks.length || allDone) {
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'empty-add';
     btn.id = 'emptyAddBtn';
-    btn.textContent = allDone ? (isEn ? 'Add new task' : 'افزودن کار جدید') : (isEn ? 'Add task' : 'افزودن کار');
+    btn.textContent = allDone ? 'افزودن کار جدید' : 'افزودن کار';
     btn.addEventListener('click', () => $('#taskInput')?.focus());
     $('#empty').appendChild(btn);
   }
@@ -295,28 +242,18 @@ export function setTaskDone(id, done) {
     rememberDone();
   } else task.doneAt = null;
   save(); notify();
-  if (done) {
-    /* Completing one task used to be silent unless it happened to be the last
-       one, so a single tick felt unacknowledged. The row that was just ticked
-       answers with a short pulse; confetti stays reserved for finishing the
-       whole list. */
-    /* Escaped, because an id that arrived in an imported backup is not
-       guaranteed to be the hex string this app writes itself. */
-    const safeId = typeof CSS !== 'undefined' && CSS.escape ? CSS.escape(id) : id;
-    document.querySelectorAll(`.task[data-id="${safeId}"], .t-row[data-id="${safeId}"], .wk-row[data-id="${safeId}"]`)
-      .forEach(row => {
-        row.classList.remove('task-done-pulse');
-        void row.offsetWidth; // restart the animation on a repeat completion
-        row.classList.add('task-done-pulse');
-        setTimeout(() => row.classList.remove('task-done-pulse'), 400);
-      });
-  }
   if (done && state.tasks.every(t => t.done)) confetti();
 }
 
 function toggleTask(li, task) {
   setTaskDone(task.id, !task.done);
   li.classList.toggle('done', task.done);
+  /* A small answer to every tick, not just to the last one: the box pops, and the
+     «امروز N کار» line in the footer bumps (js/progress.js writes it). */
+  if (task.done) {
+    li.classList.add('just-done'); setTimeout(() => li.classList.remove('just-done'), 700);
+    const c = $('#counter'); if (c) { c.classList.remove('bump'); void c.offsetWidth; c.classList.add('bump'); }
+  }
   if (!matches(task)) setTimeout(() => hideFromView(li), 650);
 }
 
@@ -338,6 +275,10 @@ export function addTask(text, p = 'mid', cat = 'misc', dueDate, durationMin = nu
   save(); notify();
   tryPersistStorage();
   return task;
+}
+
+function tryPersistStorage() {
+  requestPersistentStorage();
 }
 
 /* ── Moving a task to another day ──
@@ -367,21 +308,14 @@ export function moveTaskToDay(id, key) {
 let undoTimer = null, undoQueue = [];
 function showUndo(task, index) {
   undoQueue.push({ task, index });
+  /* The toast names the task that was just deleted, not the first of the run. */
   const toast = $('#undoToast');
-  const isEn = getLang() === 'en';
-  const fallbackTitle = isEn ? 'Task' : 'کار';
-  const title = task && task.text ? (task.text.length > 25 ? task.text.slice(0, 24).trim() + '…' : task.text) : fallbackTitle;
+  const title = task && task.text ? (task.text.length > 25 ? task.text.slice(0, 24).trim() + '…' : task.text) : 'کار';
   const label = toast?.querySelector('.toast-text');
   if (label) {
-    if (isEn) {
-      label.textContent = undoQueue.length > 1
-        ? `${undoQueue.length} tasks deleted`
-        : `${title} deleted`;
-    } else {
-      label.textContent = undoQueue.length > 1
-        ? `${faNum(undoQueue.length)} کار حذف شد`
-        : `${title} حذف شد`;
-    }
+    label.textContent = undoQueue.length > 1
+      ? `${faNum(undoQueue.length)} کار حذف شد`
+      : `${title} حذف شد`;
   }
   // Reset the toast bar animation
   const bar = toast.querySelector('.toast-bar');
@@ -494,246 +428,96 @@ export function flashTask(id) {
 }
 
 /* ── Drag and Drop ── */
-
-/* Write the order that is on screen back into the list.
-
-   Only the rows on screen may be reordered. Taking the hidden ones along — as
-   this used to — moved every task the filter had put away to the end of the
-   array, so tidying up inside «انجام شده» quietly undid the order of the whole
-   list. Instead the visible rows are restored into the slots they already
-   occupied and every other task keeps its place.
-
-   The ids are read off the DOM, so a row that is still animating out (and is
-   already gone from the data) is simply not part of the shuffle. */
 function syncOrder() {
-  const byId = new Map(state.tasks.map(t => [t.id, t]));
-  const order = [...listEl.querySelectorAll('.task')]
-    .map(el => el.dataset.id)
-    .filter(id => byId.has(id));
-  const onScreen = new Set(order);
-  const slots = [];
-  state.tasks.forEach((t, i) => { if (onScreen.has(t.id)) slots.push(i); });
-
-  const next = state.tasks.slice();
-  slots.forEach((slot, i) => { next[slot] = byId.get(order[i]); });
-  if (next.every((t, i) => t === state.tasks[i])) return;
-  state.tasks = next;
+  /* Only the rows on screen were reordered. Tasks a filter or a search hides keep
+     the slots they held — they used to be appended after the visible ones, so
+     dragging inside «انجام شده» silently re-sorted the whole list. */
+  const order = [...listEl.querySelectorAll('.task')].map(el => el.dataset.id);
+  state.tasks = reorderSubset(state.tasks, order);
   save();
 }
 
-/* Put a held row where the pointer is, easing the rows it displaces into their
-   new place. Shared by the browser's own drag and by the finger gesture below,
-   so the two can never disagree about where a row lands. */
-function placeRow(row, clientY) {
-  const siblings = [...listEl.querySelectorAll('.task')]
-    .filter(el => el !== row && !el.classList.contains('removing'));
-  const after = siblings.find(el => clientY < el.getBoundingClientRect().top + el.offsetHeight / 2);
-  const target = after || null;
+/* ── Edits from the pickers and the sheet ── */
+function setPriority(li, task, p) {
+  if (!P_LABEL[p] || p === (task.p || 'mid')) return;
+  task.p = p; save();
+  li.dataset.p = p;
+  const dot = li.querySelector('.pri-dot');
+  if (dot) {
+    dot.innerHTML = PRI_ICONS[p];
+    dot.title = `اولویت: ${P_LABEL[p]} — کلیک برای تغییر`;
+    dot.setAttribute('aria-label', `اولویت: ${P_LABEL[p]} — تغییر`);
+    animatePriDotChange(dot);
+  }
+  notify();
+}
 
-  if (target === row.nextElementSibling) return;
-  if (!target && row === listEl.lastElementChild) return;
+function applyEdits(task, c) {
+  task.text = c.text;
+  task.p = P_LABEL[c.p] ? c.p : (task.p || 'mid');
+  task.cat = CATS.some(x => x.key === c.cat) ? c.cat : (task.cat || 'misc');
+  const dateChanged = (task.dueDate || null) !== (c.dueDate || null);
+  task.dueDate = c.dueDate || null;
+  // A new deadline re-arms the reminder so nothing fires twice for one date
+  if (dateChanged && task.notifiedStatus) task.notifiedStatus = 'none';
+  task.durationMin = parseDurationMin(c.durationMin);
+  save(); notify(); renderList();
+  const row = listEl.querySelector(`[data-id="${task.id}"]`);
+  if (row) { row.classList.add('flash'); setTimeout(() => row.classList.remove('flash'), 1200); }
+}
 
-  // Capture initial positions of all siblings for smooth animated swap
+/* ── Reordering without a mouse ──
+   One step up or down among the rows on screen: the ⋯ menu's «بردن بالا/پایین»
+   and Alt+↑/↓ on a focused row both land here. The DOM is swapped and the
+   saved order follows through syncOrder, the same path a drag uses. */
+const liveNote = msg => { const n = $('#taskLive'); if (n) { n.textContent = ''; n.textContent = msg; } };
+export function moveTask(id, step) {
+  const rows = [...listEl.querySelectorAll('.task:not(.removing)')];
+  const ids = rows.map(r => r.dataset.id);
+  const next = stepOrder(ids, id, step);
+  if (next === ids) { liveNote(step < 0 ? 'این کار بالاترین است.' : 'این کار پایین‌ترین است.'); return false; }
+  const li = rows[ids.indexOf(id)], other = rows[ids.indexOf(id) + step];
+  const hadFocus = li.contains(document.activeElement);
+  const first = li.getBoundingClientRect().top;
+  if (step < 0) listEl.insertBefore(li, other); else listEl.insertBefore(other, li);
+  syncOrder();
+  if (hadFocus) { li.setAttribute('tabindex', '-1'); li.focus({ preventScroll: true }); }
+  li.scrollIntoView({ block: 'nearest' });
+  const dy = first - li.getBoundingClientRect().top;
+  if (dy && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    li.style.transition = 'none'; li.style.transform = `translateY(${dy}px)`;
+    requestAnimationFrame(() => { li.style.transition = 'transform 200ms cubic-bezier(.2,0,0,1)'; li.style.transform = ''; });
+  }
+  liveNote(`به جایگاه ${faNum(ids.indexOf(id) + step + 1)} از ${faNum(ids.length)} رفت.`);
+  return true;
+}
+
+/* Re-seats `dragging` among its siblings for a pointer at `clientY`. Shared by the
+   mouse drag (dragover) and the touch drag (the grip), so the two cannot differ. */
+function placeRow(dragging, clientY) {
+  const siblings = [...listEl.querySelectorAll('.task')].filter(el => el !== dragging);
+  const target = siblings.find(el => clientY < el.getBoundingClientRect().top + el.offsetHeight / 2) || null;
+  if (target === dragging.nextElementSibling) return;
+  if (!target && dragging === listEl.lastElementChild) return;
   const rects = new Map();
   siblings.forEach(el => rects.set(el, el.getBoundingClientRect().top));
-
-  if (target) {
-    listEl.insertBefore(row, target);
-  } else {
-    listEl.appendChild(row);
-  }
-
-  // Animate displaced siblings smoothly into their new positions
+  if (target) listEl.insertBefore(dragging, target); else listEl.appendChild(dragging);
   siblings.forEach(el => {
-    const oldTop = rects.get(el);
-    if (oldTop !== undefined) {
-      const newTop = el.getBoundingClientRect().top;
-      const delta = oldTop - newTop;
-      if (delta !== 0) {
-        el.style.transition = 'none';
-        el.style.transform = `translateY(${delta}px)`;
-        requestAnimationFrame(() => {
-          el.style.transition = 'transform 220ms cubic-bezier(.2,0,0,1)';
-          el.style.transform = '';
-        });
-      }
+    const delta = rects.get(el) - el.getBoundingClientRect().top;
+    if (delta !== 0) {
+      el.style.transition = 'none';
+      el.style.transform = `translateY(${delta}px)`;
+      requestAnimationFrame(() => {
+        el.style.transition = 'transform 220ms cubic-bezier(.2,0,0,1)';
+        el.style.transform = '';
+      });
     }
   });
 }
 
-/* ── Carrying a row with a finger ──
-   The browser's drag API needs a mouse: on a phone there is no dragstart, so
-   the row could not be moved at all — and below 480px the grip that says so was
-   hidden as well. This is the same reorder written on pointer events, lifted
-   from the grip only. Which row is aimed at never depends on how far the finger
-   has travelled: it is the row whose middle the finger has crossed, so passing
-   one row moves the held row one place.
-
-   The held row stays in the flow, faded and dashed, because it is the place the
-   row will land; a small card with its title follows the finger instead, since a
-   thumb covers whatever is directly underneath it. */
-const DRAG_SLOP = 8;     // how far a press may wander before it counts as a drag
-const DRAG_EDGE = 88;    // how close to the edge the page starts scrolling itself
-let fingerDrag = null;   // { row, pointerId, sx, sy, x, y, on, ghost, raf }
-
-function pressGrip(e) {
-  if (!e.isPrimary || e.pointerType === 'mouse') return; // a mouse keeps the browser's drag
-  const grip = e.target.closest('.grip');
-  const row = grip && grip.closest('.task');
-  if (!row || row.classList.contains('removing')) return;
-  fingerDrag = {
-    row, pointerId: e.pointerId,
-    sx: e.clientX, sy: e.clientY, x: e.clientX, y: e.clientY,
-    on: false, ghost: null, raf: 0,
-  };
-}
-
-function liftFingerDrag(d) {
-  d.on = true;
-  d.row.classList.add('finger-dragging');
-  document.documentElement.classList.add('task-dragging');
-  d.ghost = ghostFor(d.row);
-  d.raf = requestAnimationFrame(() => autoScroll(d));
-}
-
-function moveFingerDrag(e) {
-  const d = fingerDrag;
-  if (!d || e.pointerId !== d.pointerId) return;
-  d.x = e.clientX; d.y = e.clientY;
-  if (!d.on) {
-    if (Math.hypot(d.x - d.sx, d.y - d.sy) < DRAG_SLOP) return;
-    liftFingerDrag(d);
-  }
-  if (e.cancelable) e.preventDefault();
-  placeRow(d.row, d.y);
-  moveGhost(d, d.x, d.y);
-}
-
-function releaseFingerDrag(e) {
-  const d = fingerDrag;
-  if (!d || e.pointerId !== d.pointerId) return;
-  fingerDrag = null;
-  if (!d.on) return;               // never travelled: a press, not a drag
-  endFingerDrag(d);
-  syncOrder();
-}
-
-function cancelFingerDrag(e) {
-  const d = fingerDrag;
-  if (!d || (e && e.pointerId !== undefined && e.pointerId !== d.pointerId)) return;
-  fingerDrag = null;
-  if (!d.on) return;
-  endFingerDrag(d);
-  /* The list was rearranged live while the row was held; a gesture nobody
-     finished puts it back rather than leaving a reorder nobody asked for. */
-  renderList();
-}
-
-function endFingerDrag(d) {
-  cancelAnimationFrame(d.raf);
-  d.row.classList.remove('finger-dragging');
-  document.documentElement.classList.remove('task-dragging');
-  if (d.ghost) d.ghost.remove();
-}
-
-/* A list longer than the screen cannot be reordered by a thumb alone: the row at
-   the top is unreachable from the bottom. While a row is held, the page follows
-   the finger to the edge of the screen, and the row follows the page. */
-function autoScroll(d) {
-  if (fingerDrag !== d || !d.on) return;
-  const h = innerHeight;
-  const dy = d.y < DRAG_EDGE ? -Math.ceil((DRAG_EDGE - d.y) / 6)
-    : d.y > h - DRAG_EDGE ? Math.ceil((d.y - (h - DRAG_EDGE)) / 6)
-    : 0;
-  if (dy) {
-    const before = scrollY;
-    scrollBy(0, dy);
-    if (scrollY !== before) placeRow(d.row, d.y);
-  }
-  d.raf = requestAnimationFrame(() => autoScroll(d));
-}
-
-/* What the reader is holding: the task and its deadline, in one line. Built for
-   a thumb resting beside it, because the row itself is under that thumb. */
-function ghostFor(row) {
-  const el = document.createElement('div');
-  el.className = 'task-ghost';
-  el.setAttribute('aria-hidden', 'true');
-  const title = document.createElement('span');
-  title.className = 'task-ghost-t';
-  title.textContent = row.querySelector('.title')?.textContent || '';
-  el.append(title);
-  const due = row.querySelector('.due-chip');
-  if (due && due.textContent.trim()) {
-    const chip = document.createElement('span');
-    chip.className = 'task-ghost-chip';
-    chip.textContent = due.textContent.trim();
-    el.append(chip);
-  }
-  document.body.append(el);
-  return el;
-}
-
-/* Centred over the finger, above it where there is room and under it where there
-   is not, and never half off the glass. Where the card starts from is read off
-   the element (`offsetWidth`/`offsetLeft` ignore transforms) rather than
-   remembered: the page is right-to-left, so the card hangs off the right edge,
-   and a wider card hangs further left. */
-function moveGhost(d, x, y) {
-  const el = d.ghost;
-  const w = el.offsetWidth;
-  const room = document.documentElement.clientWidth;
-  const left = Math.min(Math.max(x - w / 2, 8), Math.max(room - w - 8, 8));
-  const top = y < 96 ? y + 26 : y - 62;
-  el.style.transform = `translate(${Math.round(left - el.offsetLeft)}px, ${top}px)`;
-}
-
-/* ── Moving a row with the keyboard ──
-   Alt + ↑ / ↓ on the row that holds focus. Hanging it off the row rather than a
-   new control keeps the tab order as it was; the tick already carries
-   aria-keyshortcuts so the keys are not a secret. The move happens in the order
-   the reader sees, not in DOM order: completed rows are painted below the rest
-   by CSS, so "one up" has to mean one row up on screen or the row would jump
-   somewhere the eye was not. */
-function moveRowByKey(e) {
-  if (!e.altKey || (e.key !== 'ArrowUp' && e.key !== 'ArrowDown')) return;
-  /* A title or duration being edited is a text field first: the arrows belong
-     to the cursor there, and moving the row out from under them would end the
-     edit. */
-  const tag = e.target.tagName;
-  if (tag === 'INPUT' || tag === 'TEXTAREA' || e.target.isContentEditable) return;
-  const row = e.target.closest('.task');
-  if (!row || row.classList.contains('removing')) return;
-  const rows = [...listEl.querySelectorAll('.task:not(.removing)')]
-    .sort((a, b) => a.getBoundingClientRect().top - b.getBoundingClientRect().top);
-  const at = rows.indexOf(row);
-  const to = at + (e.key === 'ArrowUp' ? -1 : 1);
-  if (at < 0 || to < 0 || to >= rows.length) return;
-  e.preventDefault();
-
-  const target = rows[to];
-  const active = document.activeElement;
-  if (e.key === 'ArrowUp') listEl.insertBefore(row, target);
-  else listEl.insertBefore(row, target.nextSibling);
-  syncOrder();
-  /* Taking a node out of the document and putting it back drops the focus in
-     Chrome, and a key that silently loses its place after one press is a key
-     nobody presses twice. The row is still the one the reader is on. */
-  if (active && active.isConnected && row.contains(active)) active.focus();
-  announceMove(row, to, rows.length);
-}
-
-function announceMove(row, at, total) {
-  const live = $('#taskLive');
-  if (!live) return;
-  const title = (row.querySelector('.title')?.textContent || '').trim();
-  live.textContent = getLang() === 'en'
-    ? `“${title}” moved to position ${at + 1} of ${total}`
-    : `«${title}» به جای ${faNum(at + 1)} از ${faNum(total)} رفت`;
-}
-
 /* ── Events ── */
 export function initTasks() {
+  initTaskEditor();
   listEl.addEventListener('click', async e => {
     const li = e.target.closest('.task'); if (!li) return;
     const task = getTask(li.dataset.id); if (!task) return;
@@ -751,12 +535,17 @@ export function initTasks() {
         openMenuAboveNav(menu);
       }
     }
-    /* Editing has one door: the pencil on the row. It opens the same editor a
-       double-click does, with one tap, so the menu's copy of it was a second
-       name for the same thing. */
-    else if (e.target.closest('.task-edit-btn')) {
-      const titleEl = li.querySelector('.title');
-      if (titleEl) startEditTitle(titleEl, task);
+    else if (e.target.closest('.item-edit')) {
+      const menu = li.querySelector('.task-menu');
+      if (menu) menu.hidden = true;
+      openTaskEditor(task, changes => applyEdits(task, changes), li.querySelector('.task-more-btn'));
+    }
+    else if (e.target.closest('.item-up') || e.target.closest('.item-down')) {
+      const up = !!e.target.closest('.item-up');
+      const menu = li.querySelector('.task-menu');
+      if (menu) menu.hidden = true;
+      li.querySelector('.task-more-btn')?.setAttribute('aria-expanded', 'false');
+      moveTask(task.id, up ? -1 : 1);
     }
     else if (e.target.closest('.item-focus') || e.target.closest('.focus-btn')) {
       const menu = li.querySelector('.task-menu');
@@ -770,27 +559,25 @@ export function initTasks() {
     }
     else if (e.target.closest('.pri-dot')) {
       const dot = e.target.closest('.pri-dot');
-      task.p = P_CYCLE[task.p || 'mid']; save(); li.dataset.p = task.p;
-      const isEn = getLang() === 'en';
-      const pKey = task.p || 'mid';
-      dot.title = isEn
-        ? t('tasks.priorityLabel', { p: t('tasks.priority' + (pKey === 'high' ? 'High' : pKey === 'low' ? 'Low' : 'Mid')) }) + ' — click to change'
-        : `اولویت: ${P_LABEL[task.p]} — کلیک برای تغییر`;
-      animatePriDotChange(dot);
+      openChipPicker(dot, {
+        label: 'اولویت', options: priOptions(), current: task.p || 'mid',
+        onPick: v => { setPriority(li, task, v); dot.isConnected && dot.focus({ preventScroll: true }); },
+      });
     }
     else if (e.target.closest('.cat-tag')) {
       const btn = e.target.closest('.cat-tag');
-      const rawCat = task.cat || 'misc';
-      const canonicalKey = BUILTIN_CAT_ALIASES[rawCat] || rawCat;
-      const idx = CATS.findIndex(c => c.key === canonicalKey);
-      const nxt = CATS[(idx >= 0 ? idx + 1 : 0) % CATS.length];
-      task.cat = nxt.key; save();
-      const isEn = getLang() === 'en';
-      const nxtLabel = isEn ? t(`categories.${nxt.key}`) : nxt.label;
-      btn.style.setProperty('--cc', nxt.color); btn.textContent = nxtLabel;
-      btn.title = isEn ? `Category: ${nxtLabel} — click to change` : `دسته: ${nxt.label} — کلیک برای تغییر`;
-      animateChipFlip(btn); notify();
-      if (state.catFilter !== 'all' && state.catFilter !== nxt.key) setTimeout(() => hideFromView(li), 500);
+      openChipPicker(btn, {
+        label: 'دسته', options: catOptions(), current: task.cat || 'misc',
+        onPick: v => {
+          const nxt = CATS.find(c => c.key === v); if (!nxt || nxt.key === (task.cat || 'misc')) { btn.focus({ preventScroll: true }); return; }
+          task.cat = nxt.key; save();
+          btn.style.setProperty('--cc', nxt.color); btn.textContent = nxt.label;
+          btn.title = `دسته: ${nxt.label} — کلیک برای تغییر`;
+          animateChipFlip(btn); notify();
+          if (state.catFilter !== 'all' && state.catFilter !== nxt.key) setTimeout(() => hideFromView(li), 500);
+          else btn.focus({ preventScroll: true });
+        },
+      });
     }
     else if (e.target.closest('.due-chip')) {
       // Open the Jalali date picker to add / change / remove the deadline
@@ -818,12 +605,17 @@ export function initTasks() {
       }
     }
     else if (e.target.closest('.dur-chip')) {
-      /* The chip answers on the click itself. It used to wait 240 ms in case a
-         second click was coming, which made a single tap on the one control that
-         sets a duration feel like it had not registered. */
       const btn = e.target.closest('.dur-chip');
-      task.durationMin = nextDur(task.durationMin); save();
-      refreshDurChip(li, task); animateChipFlip(btn); notify();
+      openChipPicker(btn, {
+        label: 'زمان تقریبی', options: durOptions(), current: task.durationMin || null,
+        custom: { label: 'یا زمان دلخواه (دقیقه)' },
+        onPick: v => {
+          task.durationMin = parseDurationMin(v); save();
+          refreshDurChip(li, task); const chip = li.querySelector('.dur-chip');
+          if (chip) { animateChipFlip(chip); chip.focus({ preventScroll: true }); }
+          notify();
+        },
+      });
     }
   });
 
@@ -841,7 +633,7 @@ export function initTasks() {
     }
   });
 
-  /* Single-click cycles chips; double-click opens a title / duration editor */
+  /* Double-click on a title renames it in place; every other field has its picker. */
   listEl.addEventListener('dblclick', e => {
     const li = e.target.closest('.task'); if (!li) return;
     const task = getTask(li.dataset.id); if (!task) return;
@@ -849,25 +641,6 @@ export function initTasks() {
     if (titleEl) {
       startEditTitle(titleEl, task);
       return;
-    }
-    const durEl = e.target.closest('.dur-chip');
-    if (durEl) {
-      const isEn = getLang() === 'en';
-      const inp = document.createElement('input');
-      inp.className = 'dur-input'; inp.type = 'number'; inp.min = '1'; inp.max = '480';
-      inp.placeholder = isEn ? 'min' : 'دقیقه';
-      inp.value = task.durationMin || '';
-      inp.setAttribute('aria-label', isEn ? 'Estimated duration in minutes' : 'مدت زمان تقریبی به دقیقه');
-      durEl.replaceWith(inp); inp.focus(); inp.select();
-      let doneE = false;
-      const commit = () => {
-        if (doneE) return; doneE = true;
-        const v = parseDurationMin(inp.value);
-        if (v !== null) { task.durationMin = v; save(); }
-        renderList();
-      };
-      inp.addEventListener('blur', commit);
-      inp.addEventListener('keydown', ev => { if (ev.key === 'Enter') commit(); if (ev.key === 'Escape') { doneE = true; renderList(); } });
     }
   });
 
@@ -911,6 +684,29 @@ export function initTasks() {
     placeRow(dragging, e.clientY);
   });
 
+  /* Touch / pen: the grip is the handle. Native drag-and-drop does not start from
+     a finger on most phones, so the grip follows the pointer itself. */
+  listEl.addEventListener('pointerdown', e => {
+    const grip = e.target.closest('.grip');
+    if (!grip || e.pointerType === 'mouse' || e.button > 0) return;
+    const li = grip.closest('.task'); if (!li) return;
+    e.preventDefault();
+    li.classList.add('dragging', 'touch-drag');
+    try { grip.setPointerCapture(e.pointerId); } catch { /* the pointer is already gone */ }
+    const move = ev => { placeRow(li, ev.clientY); const r = li.getBoundingClientRect();
+      if (ev.clientY < 90) scrollBy(0, -12); else if (ev.clientY > innerHeight - 140) scrollBy(0, 12); void r; };
+    const end = () => {
+      grip.removeEventListener('pointermove', move);
+      grip.removeEventListener('pointerup', end);
+      grip.removeEventListener('pointercancel', end);
+      li.classList.remove('dragging', 'touch-drag');
+      clearDragVisuals(); syncOrder();
+    };
+    grip.addEventListener('pointermove', move);
+    grip.addEventListener('pointerup', end);
+    grip.addEventListener('pointercancel', end);
+  });
+
   /* Cross-section drag: Category chips (#cats) */
   const catsBar = $('#cats');
   if (catsBar) {
@@ -938,6 +734,11 @@ export function initTasks() {
       const id = e.dataTransfer.getData('text/plain') || activeDragId;
       const task = getTask(id);
       if (!task) return;
+      /* Dropping on «بدون مهلت» takes the deadline off (it used to be a pill). */
+      if (chip.dataset.flag === 'nodue') {
+        if (task.dueDate) { task.dueDate = undefined; save(); notify(); renderList(); }
+        return;
+      }
       const targetCat = chip.dataset.cat;
       if (task.cat !== targetCat) {
         task.cat = targetCat;
@@ -1029,17 +830,6 @@ export function initTasks() {
 
   window.addEventListener('dragend', clearDragVisuals);
 
-  /* Reordering by hand, on the devices that have no mouse to do it with. The
-     press is on the list (the grip is inside it); the rest of the gesture is on
-     the window, because a finger that leaves the list — over the filter bar, off
-     the bottom of the screen — must still be able to put the row down. */
-  listEl.addEventListener('pointerdown', pressGrip);
-  listEl.addEventListener('keydown', moveRowByKey);
-  addEventListener('pointermove', moveFingerDrag);
-  addEventListener('pointerup', releaseFingerDrag);
-  addEventListener('pointercancel', cancelFingerDrag);
-  addEventListener('keydown', e => { if (e.key === 'Escape' && fingerDrag) cancelFingerDrag(); });
-
   /* Clear-search button */
   const searchInput = $('#searchInput'), searchClear = $('#searchClear');
   if (searchInput && searchClear) {
@@ -1056,53 +846,68 @@ export function initTasks() {
 }
 
 /* ── Add Form ── */
-function buildCatRow() {
-  const row = $('#catRow .cat-scroll');
-  if (!row) return;
-  row.innerHTML = '';
-  const isEn = getLang() === 'en';
-  CATS.forEach(c => {
-    const b = document.createElement('button'); b.type = 'button'; b.dataset.cat = c.key;
-    b.style.setProperty('--cc', c.color);
-    const label = isEn ? t(`categories.${c.key}`) : c.label;
-    b.innerHTML = `<span class="dot"></span>${label}`;
-    if (c.key === state.selCat) b.classList.add('sel');
-    row.appendChild(b);
-  });
-}
-
 export function initAddForm() {
+  /* The four option rows live behind «جزئیات». The text box alone is the fast
+     path (the parser fills the rest from the sentence); the dot on the toggle says
+     that something other than the defaults is already chosen, so a collapsed form
+     never hides a setting that is about to be applied. */
+  const more = $('#addMore'), moreBtn = $('#addMoreToggle'), addErr = $('#addError');
+  const hasDetails = () => state.selPri !== 'mid' || state.selDue !== 'none' || state.selDur != null;
+  const syncMoreBtn = () => { if (moreBtn) moreBtn.classList.toggle('has-values', hasDetails()); };
+  /* Details that came from the typed sentence, as opposed to a chip the person
+     tapped. Only these are given back when the sentence stops saying them, and
+     when the task is saved — otherwise «فردا ۳۰ دقیقه #خرید» left tomorrow, thirty
+     minutes and the shopping category on every task typed afterwards, and with
+     the rows folded away nothing on screen said so. A tapped chip stays sticky. */
+  const fromText = { due: false, dur: false };
+  const resetDetail = key => {
+    fromText[key] = false;
+    if (key === 'due') {
+      state.selDue = 'none';
+      if (typeof renderDueRow === 'function') renderDueRow();
+    } else if (key === 'dur') {
+      state.selDur = null;
+      $('#durRow .sel')?.classList.remove('sel');
+      $('#durRow button[data-dur="none"]')?.classList.add('sel');
+    }
+    syncMoreBtn();
+  };
+  if (more && moreBtn) {
+    moreBtn.addEventListener('click', () => {
+      const open = more.hidden;
+      more.hidden = !open;
+      moreBtn.setAttribute('aria-expanded', String(open));
+    });
+  }
+
   $('#priRow').addEventListener('click', e => {
     const b = e.target.closest('button[data-p]'); if (!b) return;
     document.querySelector('.pri-row .sel')?.classList.remove('sel');
     b.classList.add('sel'); state.selPri = b.dataset.p;
   });
-  buildCatRow();
-  $('#catRow').addEventListener('click', e => {
-    const b = e.target.closest('button[data-cat]'); if (!b) return;
-    $('#catRow .sel')?.classList.remove('sel');
-    b.classList.add('sel'); state.selCat = b.dataset.cat;
-  });
+  /* The category is no longer chosen in this form: the chips bar above the list is
+     the one place that holds it. A task is filed under the category chip that is
+     open (or under #tag from the sentence), and the row's chip or the edit sheet
+     changes it afterwards. */
   /* Due date row: quick options امروز/فردا/پس‌فردا + Jalali picker for a custom date */
   const dueRow = $('#dueRow');
   const dueCustomBtn = $('#dueCustom');
   const renderDueRow = () => {
     if (!dueRow || !dueCustomBtn) return;
-    const isEn = getLang() === 'en';
+    syncMoreBtn();
     dueRow.querySelectorAll('button[data-due]').forEach(b => b.classList.remove('sel'));
     if (/^\d{4}-\d{2}-\d{2}$/.test(state.selDue)) {
       dueCustomBtn.classList.add('sel');
-      dueCustomBtn.textContent = isEn
-        ? new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(new Date(state.selDue + 'T00:00:00'))
-        : formatJalaliDate(new Date(state.selDue + 'T00:00:00'));
+      dueCustomBtn.textContent = formatJalaliDate(new Date(state.selDue + 'T00:00:00'));
     } else {
       const q = dueRow.querySelector(`button[data-due="${state.selDue}"]`);
       if (q) q.classList.add('sel');
-      dueCustomBtn.textContent = isEn ? 'Date…' : 'تاریخ…';
+      dueCustomBtn.textContent = 'تاریخ…';
     }
   };
   dueRow.addEventListener('click', e => {
     const b = e.target.closest('button[data-due]'); if (!b) return;
+    fromText.due = false;
     if (b.dataset.due === 'custom') {
       openDuePicker({
         current: /^\d{4}-\d{2}-\d{2}$/.test(state.selDue) ? state.selDue : null,
@@ -1115,25 +920,18 @@ export function initAddForm() {
   });
   renderDueRow();
 
-  window.addEventListener('daftarche:lang-changed', () => {
-    buildCatRow();
-    renderDueRow();
-    renderList();
-  });
-
   /* Duration row: presets, plus a custom minute input with validation */
   const durInput = $('#durCustom');
   const durHint = $('#durHint');
   const showDurHint = show => {
     if (durHint) {
-      durHint.textContent = getLang() === 'en'
-        ? 'Duration must be an integer between 1 and 480 minutes'
-        : 'زمان باید عددی صحیح بین ۱ تا ۴۸۰ دقیقه باشه';
+      durHint.textContent = 'زمان باید عددی صحیح بین ۱ تا ۴۸۰ دقیقه باشه';
       durHint.hidden = !show;
     }
   };
   $('#durRow').addEventListener('click', e => {
     const b = e.target.closest('button[data-dur]'); if (!b) return;
+    fromText.dur = false;
     $('#durRow .sel')?.classList.remove('sel');
     b.classList.add('sel');
     const v = b.dataset.dur;
@@ -1176,7 +974,6 @@ const taskInput = $('#taskInput');
       for (const token of dismissed) if (!raw.includes(token)) dismissed.delete(token);
       renderQuickAddPreview(taskPreview, parsed, key => {
         if (key === 'due') state.selDue = 'none';
-        if (key === 'cat') state.selCat = 'misc';
         if (key === 'dur') state.selDur = null;
         if (key === 'ignored') {
           (parsed.ignored || []).forEach(t => {
@@ -1196,32 +993,44 @@ const taskInput = $('#taskInput');
           if (!taskPreview.children.length) taskPreview.hidden = true;
         }
       });
-      if (parsed.cat) {
-        state.selCat = parsed.cat;
-        $('#catRow .sel')?.classList.remove('sel');
-        $(`#catRow button[data-cat="${parsed.cat}"]`)?.classList.add('sel');
-      }
       if (parsed.dueDate) {
-        state.selDue = parsed.dueDate;
+        state.selDue = parsed.dueDate; fromText.due = true;
         renderDueRow();
-      }
+      } else if (fromText.due) resetDetail('due');
       if (parsed.durationMin) {
-        state.selDur = parsed.durationMin;
+        state.selDur = parsed.durationMin; fromText.dur = true;
         $('#durRow .sel')?.classList.remove('sel');
         $(`#durRow button[data-dur="${parsed.durationMin}"]`)?.classList.add('sel');
-      }
+      } else if (fromText.dur) resetDetail('dur');
     });
   }
 
+  /* Every chip, picker and parsed token ends up in `state`; one listener per kind
+     of event on the form keeps the toggle's dot and the empty-submit message in
+     step with it, instead of a call in each of those handlers. */
+  $('#addForm').addEventListener('click', syncMoreBtn);
+  $('#addForm').addEventListener('input', () => { syncMoreBtn(); if (addErr) addErr.hidden = true; });
+
   $('#addForm').addEventListener('submit', e => {
     e.preventDefault();
+    /* `e.currentTarget` is null once the handler has returned, so the timeout
+       below must hold the form itself — reading it there threw, and the red
+       shake border was never taken off again. */
+    const form = e.currentTarget;
     const input = $('#taskInput'), raw = input ? input.value.trim() : '';
-    if (!raw) { e.currentTarget.classList.add('shake'); setTimeout(() => e.currentTarget.classList.remove('shake'), 350); return; }
+    if (!raw) {
+      form.classList.add('shake'); setTimeout(() => form.classList.remove('shake'), 350);
+      /* A shake alone says «no» without saying why. */
+      if (addErr) addErr.hidden = false;
+      if (input) input.focus();
+      return;
+    }
+    if (addErr) addErr.hidden = true;
     const parsed = parseQuickAdd(raw);
     const text = parsed.text || raw;
     const dueVal = parsed.dueDate || (state.selDue === 'none' ? undefined
       : /^\d{4}-\d{2}-\d{2}$/.test(state.selDue) ? state.selDue : dueKeyFromOffset(Number(state.selDue)));
-    const catVal = parsed.cat || state.selCat;
+    const catVal = parsed.cat || (state.catFilter !== 'all' ? state.catFilter : 'misc');
     const durVal = parsed.durationMin !== null ? parsed.durationMin : state.selDur;
     const timeSpan = (parsed.timeFrom !== null && parsed.timeTo !== null) ? { from: parsed.timeFrom, to: parsed.timeTo } : null;
     const task = addTask(text, state.selPri, catVal, dueVal, durVal, timeSpan);
@@ -1232,7 +1041,7 @@ const taskInput = $('#taskInput');
       addBtn.classList.add('add-pop');
       setTimeout(() => addBtn.classList.remove('add-pop'), 340);
     }
-    if (matches(task) && (state.catFilter === 'all' || state.catFilter === state.selCat) && !state.query) {
+    if (matches(task) && (state.catFilter === 'all' || state.catFilter === catVal) && (!state.noDue || !task.dueDate) && !state.query) {
       const el = createTaskEl(task);
       listEl.prepend(el);
       // Glow highlight on the newly added task
@@ -1242,6 +1051,7 @@ const taskInput = $('#taskInput');
     }
     if (taskPreview) { taskPreview.hidden = true; taskPreview.innerHTML = ''; }
     input.value = ''; input.focus();
+    for (const key of ['due', 'dur']) if (fromText[key]) resetDetail(key);
     // Hide the clear-search button
     const sc = $('#searchClear'); if (sc) sc.hidden = true;
   });

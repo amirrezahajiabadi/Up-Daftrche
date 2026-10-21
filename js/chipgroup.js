@@ -19,7 +19,6 @@
    visible, because it belongs to neither half. */
 
 import { faDigits, esc } from './utils.js';
-import { isEn, t } from './i18n.js';
 
 export function pickerRow(host, items, { group, onPick }) {
   if (!host || !items.length) return { mark() {}, setMode() {} };
@@ -141,21 +140,11 @@ export function toggleRow(host, items, { group, onToggle }) {
    are learned once. */
 
 const SEG_LABELS = { light: 'روشن', dark: 'تیره' };
-const SEG_LABELS_EN = { light: 'Light', dark: 'Dark' };
 
 export function modeSwitch(host, { modes = ['light', 'dark'], onPick }) {
   if (!host) return { mark() {} };
 
-  const updateLabels = () => {
-    const en = isEn();
-    host.querySelectorAll('.seg-btn').forEach(b => {
-      const m = b.dataset.key;
-      b.textContent = en ? (SEG_LABELS_EN[m] || m) : (SEG_LABELS[m] || m);
-    });
-  };
-
   const mark = key => {
-    updateLabels();
     host.querySelectorAll('.seg-btn').forEach(b => {
       const on = b.dataset.key === key;
       b.classList.toggle('sel', on);
@@ -170,7 +159,7 @@ export function modeSwitch(host, { modes = ['light', 'dark'], onPick }) {
     host.setAttribute('role', 'radiogroup');
     host.innerHTML = modes.map(m =>
       `<button type="button" class="seg-btn" role="radio" data-key="${m}"`
-      + ` aria-checked="false" tabindex="-1">${(isEn() ? SEG_LABELS_EN[m] : SEG_LABELS[m]) || m}</button>`
+      + ` aria-checked="false" tabindex="-1">${SEG_LABELS[m] || m}</button>`
     ).join('');
 
     host.addEventListener('click', e => {
@@ -187,10 +176,6 @@ export function modeSwitch(host, { modes = ['light', 'dark'], onPick }) {
       onPick(next);
       host.querySelector(`[data-key="${next}"]`)?.focus();
     });
-
-    if (typeof window !== 'undefined') {
-      window.addEventListener('daftarche:lang-changed', updateLabels);
-    }
   }
 
   return { mark };
@@ -211,19 +196,6 @@ export function modeSwitch(host, { modes = ['light', 'dark'], onPick }) {
 export function swatchRow(host, items, { group, onPick, isLocked = null }) {
   if (!host || !items.length) return { mark() {}, setMode() {} };
 
-  const updateSwatchNames = () => {
-    host.querySelectorAll('.swatch').forEach(b => {
-      const key = b.dataset.key;
-      const item = items.find(it => it.key === key);
-      const themeLabel = t('themes.' + key) || item?.label || key;
-      const nameEl = b.querySelector('.swatch-name');
-      if (nameEl) nameEl.textContent = themeLabel;
-      const locked = isLocked ? isLocked(key) : Boolean(item?.locked);
-      b.setAttribute('aria-label', locked && item?.lockText
-        ? `${themeLabel}، ${item.lockText} ${item.lockCondition || ''}` : themeLabel);
-    });
-  };
-
   const mark = key => {
     host.querySelectorAll('.swatch').forEach(b => {
       const on = b.dataset.key === key;
@@ -236,11 +208,8 @@ export function swatchRow(host, items, { group, onPick, isLocked = null }) {
       if (lock) lock.hidden = !locked;
       b.disabled = locked;
       b.setAttribute('aria-disabled', String(locked));
-      const themeLabel = t('themes.' + (item?.key || b.dataset.key)) || item?.label || b.dataset.key;
-      const nameEl = b.querySelector('.swatch-name');
-      if (nameEl) nameEl.textContent = themeLabel;
       b.setAttribute('aria-label', locked && item?.lockText
-        ? `${themeLabel}، ${item.lockText} ${item.lockCondition || ''}` : themeLabel);
+        ? `${item.label}، ${item.lockText} ${item.lockCondition || ''}` : (item?.label || b.dataset.key));
       b.setAttribute('aria-checked', String(on));
       b.tabIndex = locked ? -1 : (on ? 0 : -1);
     });
@@ -248,26 +217,21 @@ export function swatchRow(host, items, { group, onPick, isLocked = null }) {
 
   if (!host.dataset.built) {
     host.dataset.built = '1';
-    host.innerHTML = items.map(it => {
-      const themeLabel = t('themes.' + it.key) || it.label;
-      return `<button type="button" class="swatch" role="radio" data-group="${esc(group)}"`
-        + ` data-key="${esc(it.key)}" data-mode="${esc(it.mode)}" data-palette="${esc(it.palette)}"`
-        + ` aria-checked="false" tabindex="-1">`
-        + `<i class="swatch-preview" aria-hidden="true"><i></i><i></i><i></i></i>`
-        + `<span class="swatch-name">${esc(themeLabel)}</span>`
-        + (it.rewardId ? '<svg class="swatch-lock-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="10" width="14" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>' : '')
-        + (it.locked || it.lockText ? `<small class="swatch-lock">${esc(it.lockText || 'قفل')}<span>${esc(it.lockCondition || '')}</span></small>` : '')
-        + `</button>`;
-    }).join('');
+    host.innerHTML = items.map(it =>
+      `<button type="button" class="swatch" role="radio" data-group="${esc(group)}"`
+      + ` data-key="${esc(it.key)}" data-mode="${esc(it.mode)}" data-palette="${esc(it.palette)}"`
+      + ` aria-checked="false" tabindex="-1">`
+      + `<i class="swatch-preview" aria-hidden="true"><i></i><i></i><i></i></i>`
+      + `<span class="swatch-name">${esc(it.label)}</span>`
+      + (it.rewardId ? '<svg class="swatch-lock-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="10" width="14" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>' : '')
+      + (it.locked || it.lockText ? `<small class="swatch-lock">${esc(it.lockText || 'قفل')}<span>${esc(it.lockCondition || '')}</span></small>` : '')
+      + `</button>`
+    ).join('');
 
     host.addEventListener('click', e => {
       const b = e.target.closest('.swatch');
       if (b && !b.disabled) onPick(b.dataset.key);
     });
-
-    if (typeof window !== 'undefined') {
-      window.addEventListener('daftarche:lang-changed', updateSwatchNames);
-    }
 
     /* Only the half on screen is walkable: the arrow keys step through the three
        swatches the reader can actually see, never into a hidden one. */
