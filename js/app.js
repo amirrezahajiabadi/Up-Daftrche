@@ -25,6 +25,7 @@ import { initDuePicker } from './duepicker.js';
 import { initBirthday } from './birthday.js';
 import { initChangelogCheck } from './changelog.js';
 import { offerTour } from './tour.js';
+import { startOnboarding } from './onboarding.js';
 import { initModalContainment } from './modal.js';
 import { initPWA } from './pwa.js';
 import { initStorageWarning } from './storagewarn.js';
@@ -692,6 +693,8 @@ function openNameModal(edit = false, done = null) {
   t.textContent = edit ? 'اسمت رو عوض کن' : 'سلام! اسمت چیه؟';
   i.value = edit ? state.userName : '';
   nameFlowDone = done;
+  const stepsEl = $('#nameSteps');
+  if (stepsEl) stepsEl.hidden = !done;   // «۱ از ۳» only while the first visit is under way
   o.hidden = false;
   setTimeout(() => i.focus(), 350);
 }
@@ -837,7 +840,10 @@ if (state.userName) {
   safe('تور راهنما', offerTour);
 } else {
   safe('اولین بازدید', () => openNameModal(false, () => {
-    safe('تور راهنما', offerTour);
-    safe('چی خبر', initChangelogCheck);
+    /* name → goal → first task → tour → release notes */
+    safe('ورود', () => startOnboarding(() => {
+      safe('تور راهنما', offerTour);
+      safe('چی خبر', initChangelogCheck);
+    }));
   }));
 }

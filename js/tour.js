@@ -19,8 +19,11 @@
    carry the target into view — then reopened on the new station. */
 
 import { faNum } from './utils.js';
-import { loadTourDone, saveTourDone, saveTourAwarded } from './store.js';
+import { loadTourDone, saveTourDone, saveTourAwarded, loadName, loadGoal } from './store.js';
 import { notify } from './bus.js';
+import { qorqoriMarkup } from './qorqori.js';
+import { haptic } from './motion.js';
+import { LIB_ICONS } from './constants.js';
 
 /* ═══ The stations ═══
    `sel` is what the spotlight cuts its hole around; `wrap` lifts the hole to
@@ -30,29 +33,48 @@ import { notify } from './bus.js';
    (tests/tour.test.mjs) — the walk is data before it is behaviour. */
 export const STEPS = [
   {
-    page: 'today', sel: null,
+    page: 'today', sel: null, mood: 'happy',
     title: 'خوش اومدی به دفتَرچه!',
-    text: 'این‌جا دفترچهٔ کارهاته: کارهای روزمره، تمرکز و یادداشت‌ها. یه آشنایی کوتاه سه مرحله‌ای داشته باشیم؟',
+    text: 'این‌جا کارهات، تمرکزت و کتاب‌هات کنار هم هستن. فقط پنج ایستگاه، کمتر از یه دقیقه.',
   },
   {
-    page: 'today', sel: '#todayAddForm',
-    title: 'اولین کارت رو بنویس!',
-    text: 'کارت رو طبیعی بنویس، مثلاً: «فردا ساعت ۵ عصر خرید نان #خانه». پردازشگر فارسی دفتَرچه خودش مهلت، ساعت و دسته‌بندی رو تنظیم می‌کنه.',
+    page: 'today', sel: '#todayList', mood: 'determined', action: 'tick',
+    title: 'کار اولت این‌جاست',
+    text: 'هر چی بنویسی همین‌جا می‌شینه. تیکش رو بزن تا حس تموم‌شدنش رو ببینی.',
   },
   {
-    page: 'today', sel: '#todayFrog',
-    title: 'همدم و پیشنهاد هوشمند',
-    text: 'هر وقت ندونی الان چه کاری اولویت داره، همدمت از بین لیست بهت کار متناسب رو پیشنهاد می‌ده.',
+    page: 'today', sel: '#todayFrog', mood: 'thinking',
+    title: 'همدم برات انتخاب می‌کنه',
+    text: 'نمی‌دونی از کجا شروع کنی؟ همدمت با نگاه به مهلت و حال امروزت، یه کار پیشنهاد می‌ده.',
   },
   {
-    page: 'settings', sel: '#profTour',
-    title: 'حالا دفترچه مال خودته!',
-    text: 'هر وقت خواستی این راهنما رو دوباره مرور کنی، از همین دکمه توی تنظیمات در دسترسه. موفق باشی!',
+    page: 'today', sel: '.nav-tab[data-page="focus"]', mood: 'default',
+    title: 'تمرکز، یه تایمر ساده',
+    text: 'یه کار انتخاب کن، تایمر رو بزن و فقط همون رو انجام بده. آمارش خودکار ثبت می‌شه.',
+  },
+  {
+    page: 'settings', sel: '#profTour', mood: 'celebrating',
+    title: 'همه‌چیز مال خودته',
+    text: 'تم، حرکت‌ها، پشتیبان‌گیری و همین راهنما توی تنظیمات هستن. هر وقت خواستی برگرد.',
   },
 ];
 
+/* The fourth station follows what the reader said they came for: someone here
+   for books is shown the shelf, not the timer. Everyone else sees the default. */
+const GOAL_STATION = {
+  books: {
+    sel: '.nav-tab[data-page="library"]', mood: 'happy',
+    title: 'کتاب‌هات یه قفسه دارن',
+    text: 'PDF‌هات رو اضافه کن؛ دفترچه صفحه‌ای که بودی رو یادش می‌مونه و هدف مطالعه هم می‌ذاره.',
+  },
+};
+export function stepsFor(goal = '') {
+  const swap = GOAL_STATION[goal];
+  return STEPS.map((s, i) => (i === 3 && swap ? { ...s, ...swap } : s));
+}
+
 /* The station letters, the way the notebook would number them. */
-export const LETTERS = ['الف', 'ب', 'پ', 'ت'];
+export const LETTERS = ['الف', 'ب', 'پ', 'ت', 'ث'];
 
 /* ═══ The geometry — pure, no DOM ═══
    Given the target's rect, the viewport, the measured card and the band the
@@ -164,6 +186,8 @@ let kickerEl = null, titleEl = null, textEl = null;
 let dotsEl = null, countEl = null, prevBtn = null, nextBtn = null, skipBtn = null;
 let cardObserver = null;
 let idx = 0;
+let steps = STEPS;
+let mascotEl = null, actionBtn = null, ticked = false, advanceTimer = 0;
 let active = false;
 let offerTimer = 0;
 
@@ -244,8 +268,17 @@ function ensureRoot() {
   titleEl = el('h2', 'tour-title');
   textEl = el('p', 'tour-text');
   textEl.setAttribute('aria-live', 'polite');
+  /* The companion stands beside the words, the way a guide would. */
+  mascotEl = el('span', 'tour-mascot');
+  mascotEl.setAttribute('aria-hidden', 'true');
+  /* A station can ask the reader to do the thing it is talking about. */
+  actionBtn = el('button', 'tour-try');
+  actionBtn.type = 'button';
+  actionBtn.hidden = true;
+  const words = el('div', 'tour-words');
+  words.append(titleEl, textEl, actionBtn);
   const copy = el('div', 'tour-copy');
-  copy.append(titleEl, textEl);
+  copy.append(mascotEl, words);
 
   const dotsRow = el('div', 'tour-dots-row');
   dotsEl = el('div', 'tour-dots');
@@ -283,27 +316,74 @@ function ensureRoot() {
     });
   }
 
-  prevBtn.addEventListener('click', () => show(idx - 1));
-  nextBtn.addEventListener('click', () => (idx === STEPS.length - 1 ? finish(true, true) : show(idx + 1)));
+  prevBtn.addEventListener('click', () => { haptic('step'); show(idx - 1); });
+  nextBtn.addEventListener('click', () => { haptic('step'); idx === steps.length - 1 ? finish(true, true) : show(idx + 1); });
   skipBtn.addEventListener('click', () => finish(true, false));
+  actionBtn.addEventListener('click', doAction);
+
+  /* A swipe on the card turns the page: toward the left is forward, because the
+     notebook reads right to left. Touch only — a mouse has the buttons. */
+  let sx = 0, sy = 0, tracking = false;
+  card.addEventListener('pointerdown', e => {
+    if (e.pointerType !== 'touch' || e.target.closest('button')) return;
+    sx = e.clientX; sy = e.clientY; tracking = true;
+  });
+  card.addEventListener('pointerup', e => {
+    if (!tracking) return;
+    tracking = false;
+    const dx = e.clientX - sx, dy = e.clientY - sy;
+    if (Math.abs(dx) < 48 || Math.abs(dy) > Math.abs(dx) * .6) return;
+    if (dx < 0 && idx < steps.length - 1) { haptic('step'); show(idx + 1); }
+    else if (dx > 0 && idx > 0) { haptic('step'); show(idx - 1); }
+  });
+  card.addEventListener('pointercancel', () => { tracking = false; });
+}
+
+/* «Try it»: the tick station really ticks the reader's first task — through the
+   row's own check button, so the page reacts exactly as it would to a tap. */
+function doAction() {
+  if (ticked) return;
+  const row = document.querySelector('#todayList .t-row:not(.done) .t-check');
+  if (!row) return;
+  ticked = true;
+  row.click();
+  haptic('done');
+  paintAction();
+  mascotEl.innerHTML = qorqoriMarkup('celebrating');
+  mascotEl.classList.remove('hop'); void mascotEl.offsetWidth; mascotEl.classList.add('hop');
+  clearTimeout(advanceTimer);
+  advanceTimer = setTimeout(() => { if (active && idx === 1 && steps[idx].action === 'tick') show(idx + 1); }, 1100);
+}
+
+function paintAction() {
+  const s = steps[idx];
+  const has = s.action === 'tick' && (ticked || document.querySelector('#todayList .t-row:not(.done) .t-check'));
+  actionBtn.hidden = !has;
+  if (!has) return;
+  actionBtn.disabled = ticked;
+  actionBtn.innerHTML = ticked ? `${LIB_ICONS.check} انجام شد` : 'تیکش رو بزن';
+  actionBtn.classList.toggle('is-done', ticked);
 }
 
 function render() {
-  const s = STEPS[idx];
+  const s = steps[idx];
   card.querySelector('.tour-copy').scrollTop = 0;
   kickerEl.textContent = `ایستگاه ${LETTERS[idx]}`;
-  titleEl.textContent = s.title;
+  const who = loadName();
+  titleEl.textContent = idx === 0 && who ? `${who}، خوش اومدی!` : s.title;
   textEl.textContent = s.text;
+  mascotEl.innerHTML = qorqoriMarkup(s.mood || 'default');
+  paintAction();
 
-  countEl.textContent = `${faNum(idx + 1)} از ${faNum(STEPS.length)}`;
-  dotsEl.replaceChildren(...STEPS.map((_, i) => {
+  countEl.textContent = `${faNum(idx + 1)} از ${faNum(steps.length)}`;
+  dotsEl.replaceChildren(...steps.map((_, i) => {
     const d = el('i', 'tour-dot' + (i === idx ? ' on' : ''));
     d.textContent = '';
     return d;
   }));
 
   prevBtn.hidden = idx === 0;
-  nextBtn.textContent = idx === 0 ? 'بریم!' : idx === STEPS.length - 1 ? 'تمومش کن' : 'بعدی';
+  nextBtn.textContent = idx === 0 ? 'بریم!' : idx === steps.length - 1 ? 'شروع کنیم' : 'بعدی';
 }
 
 function position() {
@@ -313,7 +393,7 @@ function position() {
   const vh = window.innerHeight;
   const bw = card.offsetWidth;
   const bh = card.offsetHeight;
-  const step = STEPS[idx];
+  const step = steps[idx];
 
   let placement = null;
   const target = step.sel && resolveTarget(step);
@@ -411,8 +491,8 @@ function position() {
    for the page to scroll the target into view — and reopens once the page has
    settled under the new station. */
 async function show(i) {
-  idx = Math.max(0, Math.min(STEPS.length - 1, i));
-  const step = STEPS[idx];
+  idx = Math.max(0, Math.min(steps.length - 1, i));
+  const step = steps[idx];
 
   if (root) root.hidden = true;
   ensureRoot();
@@ -428,10 +508,14 @@ async function show(i) {
   render();
   root.hidden = false;
   position();
+  /* Each station arrives: the card rises into place and the dim eases in.
+     Removing and re-adding the class restarts the animation for every step. */
+  root.classList.remove('tour-in'); void root.offsetWidth; root.classList.add('tour-in');
 }
 
 function finish(markDone, award = false) {
   active = false;
+  clearTimeout(advanceTimer);
   if (root) root.hidden = true;
   if (repositionFrame) {
     cancelAnimationFrame(repositionFrame);
@@ -457,7 +541,7 @@ function finish(markDone, award = false) {
 
 function onKey(e) {
   if (e.key === 'Escape') finish(false);
-  else if (e.key === 'ArrowLeft' && idx < STEPS.length - 1) show(idx + 1);   // RTL: forward is leftward
+  else if (e.key === 'ArrowLeft' && idx < steps.length - 1) show(idx + 1);   // RTL: forward is leftward
   else if (e.key === 'ArrowRight' && idx > 0) show(idx - 1);
 }
 
@@ -496,6 +580,8 @@ export function offerTour() {
 export function startTour() {
   if (active) return;
   active = true;
+  steps = stepsFor(loadGoal());
+  ticked = false;
   ensureRoot();
   cardObserver?.observe(card);
   document.fonts?.ready.then(() => { if (active && mobileViewport()) scheduleReposition(); });

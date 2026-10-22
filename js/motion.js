@@ -26,6 +26,18 @@ export function setUserReducedMotion(on) {
   applyMotionPref();
 }
 
+/* A light tap on phones that can vibrate: one short pulse for a step forward,
+   a small double for something finished. Silent everywhere else, and silent
+   whenever the reader asked for less motion — it is the same family of
+   feedback, and the same switch quiets it. */
+const PULSES = { step: 8, done: [10, 40, 16], pick: 6 };
+export function haptic(kind = 'step') {
+  try {
+    if (prefersReducedMotion()) return;
+    navigator.vibrate?.(PULSES[kind] ?? 8);
+  } catch { /* vibration is a courtesy, never a requirement */ }
+}
+
 export function initMotion() {
   applyMotionPref();
   mql()?.addEventListener?.('change', applyMotionPref);

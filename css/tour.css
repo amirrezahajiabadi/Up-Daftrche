@@ -31,8 +31,7 @@ html[data-mode="dark"] .tour-overlay{
   border-radius:18px;
   border:1.5px solid var(--color-accent);
   box-shadow:0 0 0 200vmax color-mix(in srgb,var(--color-text-primary) 50%,transparent);
-  animation:fadeIn var(--duration-base) ease;
-  transition:inset-block-start var(--duration-move) ease,inset-inline-start var(--duration-move) ease,width var(--duration-move) ease,height var(--duration-move) ease}
+  animation:tourSpotIn var(--duration-slow) var(--ease-out)}
 html[data-mode="dark"] .tour-spot{box-shadow:0 0 0 200vmax color-mix(in srgb,var(--color-bg) 68%,transparent)}
 
 /* The arrow: one diamond, half of it tucked under the card's edge, always
@@ -43,8 +42,7 @@ html[data-mode="dark"] .tour-spot{box-shadow:0 0 0 200vmax color-mix(in srgb,var
   background:var(--color-surface);
   border:1px solid var(--color-border);
   transform:rotate(45deg);
-  animation:fadeIn var(--duration-base) ease;
-  transition:inset-block-start var(--duration-move) ease,inset-inline-start var(--duration-move) ease}
+  animation:tourArrowIn var(--duration-base) var(--ease-out) .12s backwards}
 
 /* The card: a page of the notebook, small enough to sit beside what it talks
    about. Width is fixed rather than content-driven so the station texts all
@@ -58,11 +56,44 @@ html[data-mode="dark"] .tour-spot{box-shadow:0 0 0 200vmax color-mix(in srgb,var
   border-radius:var(--radius-lg);
   padding:20px 16px 14px;
   box-shadow:var(--shadow-2);
-  animation:popCard var(--duration-base) var(--ease-out)}
+  /* Vertical drags still scroll the text; horizontal ones are the page-turn swipe. */
+  touch-action:pan-y;
+  animation:tourCardIn var(--duration-slow) var(--ease-out)}
 /* Over the dark half the page behind the spotlight is already near-black, and
    the shadow is black too — the card needs its own edge to stay a sheet rather
    than a hole in the dim. The strong border token is exactly that edge. */
 html[data-mode="dark"] .tour-card{border-color:var(--color-border-strong)}
+
+/* Arrival. The dim and its ring ease open from a slightly larger hole, the card
+   rises and settles a beat later, the arrow follows. Each station hides and
+   re-shows the root, so every one of them plays this again from the start. */
+@keyframes tourSpotIn{from{opacity:0;transform:scale(1.06)}}
+@keyframes tourCardIn{0%{opacity:0;transform:translateY(18px) scale(.97)}60%{opacity:1}100%{transform:none}}
+@keyframes tourArrowIn{from{opacity:0}}
+@keyframes tourHop{0%{transform:translateY(0)}35%{transform:translateY(-7px) rotate(-6deg)}70%{transform:translateY(0) rotate(3deg)}100%{transform:none}}
+
+/* The guide: the companion stands beside the words and changes face with the
+   station. Decorative — the words say everything it does. */
+.tour-copy{display:flex;align-items:flex-start;gap:10px}
+.tour-words{min-width:0;flex:1}
+.tour-mascot{flex:none;width:46px;height:46px;display:grid;place-items:center;
+  border-radius:50%;background:var(--color-accent-soft)}
+.tour-mascot svg,.tour-mascot .qorqori{width:34px;height:34px}
+.tour-mascot.hop{animation:tourHop .6s var(--ease-out)}
+
+/* «Try it»: a soft outlined button inside the words — flat like every button
+   here, it fills with the accent once the reader has done the thing. */
+.tour-try{display:inline-flex;align-items:center;gap:6px;margin-top:8px;
+  min-height:40px;padding:0 16px;cursor:pointer;
+  border:1.5px solid var(--color-accent);border-radius:var(--radius-pill);
+  background:var(--color-accent-soft);color:var(--color-accent-strong);
+  font-family:var(--font-ui);font-size:13px;font-weight:700;
+  transition:transform var(--duration-fast) var(--ease-out),background var(--duration-fast)}
+.tour-try[hidden]{display:none}
+.tour-try:active{transform:scale(.96)}
+.tour-try .ico{width:16px;height:16px}
+.tour-try.is-done{background:var(--color-accent);color:var(--color-text-on-accent);cursor:default}
+.tour-try:focus-visible{outline:2px solid var(--color-accent);outline-offset:2px}
 
 .tour-kicker{display:inline-block;margin-bottom:6px;padding:3px 12px;
   border-radius:var(--radius-pill);
@@ -77,9 +108,10 @@ html[data-mode="dark"] .tour-card{border-color:var(--color-border-strong)}
 
 .tour-dots-row{display:flex;align-items:center;gap:10px;margin-top:12px}
 .tour-dots{display:flex;align-items:center;gap:4px;flex-wrap:wrap}
-.tour-dot{width:6px;height:6px;border-radius:50%;
-  background:var(--color-border-strong);transition:background var(--duration-fast)}
-.tour-dot.on{background:var(--color-accent)}
+.tour-dot{width:6px;height:6px;border-radius:var(--radius-pill);
+  background:var(--color-border-strong);
+  transition:background var(--duration-fast),width var(--duration-base) var(--ease-out)}
+.tour-dot.on{background:var(--color-accent);width:16px}
 .tour-count{margin-inline-start:auto;color:var(--color-text-muted);
   font-size:11px;font-weight:600}
 
@@ -138,7 +170,6 @@ html[data-mode="dark"] .tour-card{border-color:var(--color-border-strong)}
     padding:12px;
     border-radius:var(--radius-lg);
     box-shadow:var(--shadow-1);
-    animation:none;
   }
   .tour-kicker{grid-column:1;grid-row:1;justify-self:start;
     margin:0;padding:2px 9px;font-size:11px}
@@ -148,14 +179,16 @@ html[data-mode="dark"] .tour-card{border-color:var(--color-border-strong)}
   .tour-title{font-size:16px;line-height:1.5}
   .tour-text{font-size:12.5px;line-height:1.75}
   .tour-dots-row{display:contents}
-  .tour-dots{display:none}
-  .tour-count{grid-column:2;grid-row:1;align-self:center;white-space:nowrap;font-size:11px}
+  .tour-dots{display:flex;grid-column:2;grid-row:1;align-self:center;justify-self:end;gap:5px;flex-wrap:nowrap}
+  .tour-dot{width:7px;height:7px}
+  .tour-count{display:none}
+  .tour-mascot{width:40px;height:40px}
+  .tour-mascot svg,.tour-mascot .qorqori{width:30px;height:30px}
   .tour-actions{grid-column:1 / -1;grid-row:3;margin:4px 0 0}
   .tour-btn{min-height:44px;font-size:13px}
   .tour-skip{grid-column:1 / -1;grid-row:4;min-height:40px;margin:0;padding:0;font-size:11.5px}
   .tour-skip-label{display:none}
   .tour-skip-mobile{display:inline}
-  .tour-spot,.tour-arrow{transition:none;animation:none}
 
   @media (orientation:landscape) and (max-height:600px){
     .tour-card{
@@ -171,6 +204,11 @@ html[data-mode="dark"] .tour-card{border-color:var(--color-border-strong)}
 }
 
 @media (prefers-reduced-motion:reduce){
-  .tour-spot,.tour-arrow{transition:none;animation:none}
-  .tour-card{animation:none}
+  .tour-spot,.tour-arrow,.tour-card,.tour-mascot.hop{animation:none}
+  .tour-dot,.tour-try{transition:none}
 }
+/* The in-app «less motion» switch sets the same attribute the system query maps to. */
+html[data-motion="reduced"] .tour-spot,
+html[data-motion="reduced"] .tour-arrow,
+html[data-motion="reduced"] .tour-card,
+html[data-motion="reduced"] .tour-mascot.hop{animation:none}

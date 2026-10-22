@@ -108,6 +108,7 @@
 <link rel="stylesheet" href="css/khabalo.css">
 <link rel="stylesheet" href="css/fekrbaz.css">
 <link rel="stylesheet" href="css/jingool.css">
+<link rel="stylesheet" href="css/onboarding.css">
 <link rel="stylesheet" href="css/states.css">
 </head>
 <body>
@@ -133,6 +134,7 @@
     <span class="badge">
       <svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.4 7.6L22 12l-7.6 2.4L12 22l-2.4-7.6L2 12l7.6-2.4z"/></svg>
     </span>
+    <p class="ob-steps" id="nameSteps" hidden>۱ از ۳</p>
     <h2 id="nameTitle">سلام! اسمت چیه؟</h2>
     <p>دفتَرچه دوست داره با اسم خودت صدات کنه</p>
     <form id="nameForm" autocomplete="off">
@@ -140,6 +142,24 @@
       <button class="go" type="submit">بزن بریم</button>
     </form>
     <button class="skip" id="skipName">بعداً می‌گم</button>
+  </div>
+</div>
+
+<!-- ═══ Onboarding (steps 2 and 3 of the first visit) ═══
+     Same modal contract as every dialog; js/onboarding.js fills it. -->
+<div class="overlay" id="onboardOverlay" hidden>
+  <div class="name-card sheet-paper ob-card" id="onboardCard" role="dialog" aria-modal="true" aria-labelledby="obTitle">
+    <p class="ob-steps" id="obSteps" aria-live="polite"></p>
+    <h2 id="obTitle"></h2>
+    <p class="ob-sub" id="obSub"></p>
+    <div class="ob-goals" id="obGoals" role="radiogroup" aria-labelledby="obTitle"></div>
+    <form id="obTaskForm" autocomplete="off" hidden>
+      <input id="obTaskInput" type="text" maxlength="120" placeholder="مثلاً: فردا ساعت ۵ عصر خرید نان #خانه" aria-label="اولین کار"/>
+      <div class="ob-preview quickadd-preview" id="obPreview" hidden></div>
+      <div class="ob-suggest" id="obSuggest" aria-label="مثال‌ها"></div>
+      <button class="go" type="submit">اضافه کن و بریم</button>
+    </form>
+    <button class="skip" id="obSkip" type="button">فعلاً رد کن</button>
   </div>
 </div>
 

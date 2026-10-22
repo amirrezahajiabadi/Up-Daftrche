@@ -1,0 +1,36 @@
+/* ═══ Onboarding (steps 2 and 3) ═══
+   Built from the name card's own pieces (css/overlays.css .name-card), so the
+   three steps read as one card changing its mind rather than three dialogs. */
+.ob-steps{display:inline-block;margin:0 auto 4px;padding:2px 10px;border-radius:var(--radius-pill);
+  background:var(--accent-soft);color:var(--accent-text);font-family:var(--font-ui);font-size:11px;font-weight:600}
+.ob-card .ob-sub{color:var(--muted);font-size:13px;line-height:1.7;margin:0 0 16px;font-weight:400}
+.ob-card{animation:popCard var(--duration-base) var(--ease-out)}
+.ob-card.ob-swap h2,.ob-card.ob-swap .ob-sub,.ob-card.ob-swap .ob-goals,.ob-card.ob-swap form{
+  animation:obIn var(--duration-move) var(--ease-out) both}
+.ob-card.ob-swap .ob-sub{animation-delay:40ms}
+.ob-card.ob-swap .ob-goals,.ob-card.ob-swap form{animation-delay:80ms}
+@keyframes obIn{from{opacity:0;transform:translateX(-14px)}}
+
+.ob-goals{display:flex;flex-direction:column;gap:8px;margin-bottom:6px;text-align:start}
+.ob-goal{display:flex;align-items:center;gap:12px;width:100%;min-height:60px;padding:10px 14px;
+  border:1.5px solid var(--border);background:var(--bg);color:var(--text);border-radius:var(--radius-md);
+  font-family:var(--font-ui);cursor:pointer;text-align:start;
+  transition:border-color var(--duration-fast),background-color var(--duration-fast),transform var(--duration-press) var(--ease-out)}
+.ob-goal:active{transform:scale(var(--press-scale))}
+@media (hover:hover){.ob-goal:hover{border-color:var(--accent);background:var(--accent-soft)}}
+.ob-goal[aria-checked="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.ob-goal-ico{flex:0 0 auto;width:38px;height:38px;border-radius:var(--radius-sm);display:grid;place-items:center;
+  background:var(--surface);color:var(--accent);font-size:20px}
+.ob-goal-text{display:flex;flex-direction:column;gap:1px;min-width:0}
+.ob-goal-text b{font-size:14.5px;font-weight:600}
+.ob-goal-text small{font-size:12px;color:var(--muted);font-weight:400}
+
+.ob-preview{margin-top:8px;text-align:start}
+.ob-suggest{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:10px}
+.ob-chip{border:1px solid var(--border);background:var(--surface);color:var(--color-text-secondary);
+  font-family:var(--font-ui);font-size:12px;padding:6px 12px;min-height:34px;border-radius:var(--radius-pill);cursor:pointer;
+  transition:border-color var(--duration-fast),color var(--duration-fast),transform var(--duration-press) var(--ease-out)}
+.ob-chip:active{transform:scale(var(--press-scale))}
+@media (hover:hover){.ob-chip:hover{border-color:var(--accent);color:var(--accent-text)}}
+#obTaskForm.shake{animation:shake .38s}
+.ob-steps[hidden],.ob-preview[hidden],.ob-goals[hidden]{display:none}

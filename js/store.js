@@ -153,6 +153,11 @@ export const saveBirthdaySeen = key   => safeSet(STORAGE_KEYS.birthdaySeen, key 
    `daftarche-tour-done` key belongs to the previous tour and must not suppress
    this release's required first visit. «Done» means the reader either walked
    it to the end or skipped it; leaving mid-tour (Escape) writes nothing. */
+/* What the reader said they mostly came for («tasks», «books» or «focus»).
+   Only ever one of those three; anything else reads as «no answer». */
+export const GOALS = ['tasks', 'books', 'focus'];
+export const loadGoal = () => { const g = readString(STORAGE_KEYS.goal); return GOALS.includes(g) ? g : ''; };
+export const saveGoal = g => (GOALS.includes(g) ? safeSet(STORAGE_KEYS.goal, g) : safeRemove(STORAGE_KEYS.goal));
 export const loadTourDone = ()    => readString(STORAGE_KEYS.tourDone) === 'yes';
 export const saveTourDone   = ()    => safeSet(STORAGE_KEYS.tourDone, 'yes');
 /* A separate marker is essential: dismissing the automatic offer must never
