@@ -881,10 +881,10 @@ body.focus-immersive::before{display:none}
 .doodle{position:fixed;z-index:0;pointer-events:none;color:var(--accent);opacity:.12}
 @media (max-height:680px){.doodle{display:none}}
 /* Ambient decorative doodles: very slow, very low character (motion budget) */
-.d-sun{top:5%;inset-inline-start:4%;opacity:.2;animation:spin 90s linear infinite}
-.d-star1{top:22%;inset-inline-end:7%;opacity:.25;animation:twinkle 5s ease-in-out infinite}
+.d-sun{top:5%;inset-inline-start:4%;opacity:.2}
+.d-star1{top:22%;inset-inline-end:7%;opacity:.25}
 .d-star2{bottom:16%;inset-inline-start:6%;opacity:.2}
-.d-squig{bottom:calc(var(--nav-height) + 6%);inset-inline-end:5%;opacity:.2;animation:drift 7s ease-in-out infinite}
+.d-squig{bottom:calc(var(--nav-height) + 6%);inset-inline-end:5%;opacity:.2}
 
 /* ═══ Page System ═══ */
 /* Page transition: very subtle opacity + small transform (Priority 8.3) */
@@ -895,6 +895,12 @@ body.focus-immersive::before{display:none}
    which closes the gesture with a pointercancel. */
 .page.active{display:block}
 @keyframes pageIn{from{opacity:0;transform:translateY(8px)}}
+/* Bar order is read right-to-left: the next tab is on the left, so a forward step
+   brings the page in from the left and a step back brings it from the right. */
+@keyframes pageInFwd{from{opacity:0;transform:translateX(-18px)}}
+@keyframes pageInBack{from{opacity:0;transform:translateX(18px)}}
+.page[data-enter="fwd"]{animation-name:pageInFwd}
+.page[data-enter="back"]{animation-name:pageInBack}
 
 /* The way back — one step of the trail, shown only while there is one. It sits
    above the header so it never fights the title for the top corner, and hugs

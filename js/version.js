@@ -19,4 +19,4 @@
 
    Both values live here and nowhere else. */
 self.DAFTARCHE_RELEASE = '3.2.0';
-self.DAFTARCHE_BUILD = 'v130';
+self.DAFTARCHE_BUILD = 'v132';

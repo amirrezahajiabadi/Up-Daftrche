@@ -20,6 +20,8 @@
 - **تست‌ها:** `isOverdueTask`، `stepOrder` و پک PDF (`tests/pdfpack.test.mjs`).
 
 ### Changed
+- Fixed the keyboard-shortcuts dialog never appearing (a missing closing tag had trapped it inside the hidden share dialog); a structure test now guards the page.
+- Motion with a purpose: pages arrive from the side the tab bar moves toward, dialogs and sheets now leave with a short fade or slide instead of vanishing, the companion hops once when a task is finished, the celebration jump settles after three jumps, and purely decorative loops (spinning sun, twinkling stars) are gone.
 - In-app «کاهش انیمیشن‌ها» switch (honours the system setting too), undo for deleted reader notes and profile photo, colour-contrast fixes (WCAG AA, light and dark), forced-colours styles, a real heading order on Today.
 - Flat-button state layer (css/states.css): one hover/pressed definition for filled, outlined and text buttons; new motion tokens (press / move durations); wider touch areas on small remove buttons; colour-coded session mood faces and tone-coded changelog icons.
 - Buttons are flat: no coloured glow, halo ring or hard drop-shadow under primary buttons, chips, tabs and the nav indicator; pressed state is a small scale instead.

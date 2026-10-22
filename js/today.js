@@ -139,7 +139,27 @@ let lastFrogSig = '';
 /* `force` is for the moves the user asked for directly (skip, picking an
    alternative): those must redraw even when the suggestion comes out the same,
    because a tap with no visible response reads as a broken button. */
+/* A finished task gets a small answer from the companion: one hop, no more.
+   The hop is tied to the number of tasks done today going up — not to a
+   re-render — so a redraw for any other reason stays still, and the first paint
+   never hops at someone who only opened the page. */
+let seenDone = null;
+function hopOnProgress() {
+  const wrap = $('#todayFrog');
+  const n = todayDone().length;
+  const rose = seenDone !== null && n > seenDone;
+  seenDone = n;
+  const el = rose && wrap?.querySelector('.frog-emoji');
+  if (!el) return;
+  el.classList.remove('hop'); void el.offsetWidth; el.classList.add('hop');
+}
+
 function renderFrog(force) {
+  renderFrogInner(force);
+  hopOnProgress();
+}
+
+function renderFrogInner(force) {
   const wrap = $('#todayFrog');
   if (!wrap) return;
   const rec = currentRec();
@@ -167,7 +187,7 @@ function renderFrog(force) {
       <div class="frog-hero sheet-paper frog-empty frog-empty-${kind}">
         <span class="frog-emoji" aria-hidden="true">${qorqoriMarkup(expr)}</span>
         <span class="frog-kicker">الان چی کار کنیم؟</span>
-        <h3 class="frog-empty-title"></h3>
+        <h2 class="frog-empty-title"></h2>
         <p class="frog-none"></p>
         ${nothing ? '<button class="frog-add" type="button" id="frogAddBtn">+ افزودن کار</button>' : ''}
       </div>`;

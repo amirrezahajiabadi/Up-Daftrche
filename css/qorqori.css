@@ -19,8 +19,12 @@
    animation to disable, and pausing it while the tab is hidden sits with the
    other ambient loops in css/base.css. */
 @media (prefers-reduced-motion:no-preference){
-  .qorqori--celebrating .qorqori-art{animation:qorqoriJump 1.4s var(--ease-out,ease-in-out) infinite}
+  /* A few jumps, then rest: a celebration that never ends stops meaning anything. */
+  .qorqori--celebrating .qorqori-art{animation:qorqoriJump 1.4s var(--ease-out,ease-in-out) 3}
 }
+/* One hop when a task is finished: up with a stretch, down with a squash. */
+.frog-emoji.hop .qorqori-art{transform-origin:50% 100%;animation:qorqoriHop .62s var(--ease-spring) 1}
+@keyframes qorqoriHop{0%{transform:translateY(0) scale(1,1)}30%{transform:translateY(-12px) scale(.95,1.06)}62%{transform:translateY(0) scale(1.07,.93)}100%{transform:translateY(0) scale(1,1)}}
 @keyframes qorqoriJump{0%,60%,100%{transform:translateY(0)}28%{transform:translateY(-7px)}}
 
 /* ── Today hero ── */

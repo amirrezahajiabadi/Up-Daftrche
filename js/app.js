@@ -93,9 +93,17 @@ function initNavigation() {
 
   /* Painting one page — no history, no bookkeeping, just the screen. */
   const reflect = page => {
-    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    /* The page arrives from the side the move points to. Between the four bar
+       homes the bar has an order, so a step toward the next tab brings the page
+       in from that direction and a step back reverses it — the screen answers
+       the tap in the same spatial language as the bar's glider. Every other
+       move (a page behind «more», the first paint) keeps the plain settle-in. */
+    const from = document.querySelector('.page.active')?.id.replace(/^page-/, '');
+    const a = PRIMARY_PAGES.indexOf(from), b = PRIMARY_PAGES.indexOf(page);
+    const enter = a >= 0 && b >= 0 && a !== b ? (b > a ? 'fwd' : 'back') : '';
+    document.querySelectorAll('.page').forEach(p => { p.classList.remove('active'); delete p.dataset.enter; });
     const pg = $(`#page-${page}`);
-    if (pg) pg.classList.add('active');
+    if (pg) { if (enter) pg.dataset.enter = enter; pg.classList.add('active'); }
     document.querySelectorAll('.bottom-nav .nav-tab, .side-rail .nav-tab').forEach(t => {
       /* The more button is never the current page: it opens a sheet, and its
          own five destinations set aria-current on the sheet's rows instead. */

@@ -680,3 +680,18 @@ body.no-scroll{overflow:hidden}
 .changelog-icon[data-tone="content"]{color:var(--color-success);background:color-mix(in srgb,var(--color-success) 13%,transparent)}
 .changelog-icon[data-tone="time"]{color:var(--color-warning);background:color-mix(in srgb,var(--color-warning) 13%,transparent)}
 .changelog-icon[data-tone="device"]{color:var(--muted);background:color-mix(in srgb,var(--muted) 14%,transparent)}
+
+/* ═══ Leaving is motion too ═══
+   Dialogs and sheets used to vanish the instant they were dismissed, which reads
+   as a glitch next to the soft way they arrive. Where the browser can transition
+   `display` (it can in current Chrome, Safari and Firefox), the closing mirrors
+   the opening: a dialog fades, a sheet slides back down the way it came, a little
+   faster than it arrived — leaving should never keep anyone waiting. Browsers
+   without support keep the old instant close. A closing dialog ignores the
+   pointer so the tap that closed it cannot land on what is underneath twice. */
+@supports (transition-behavior:allow-discrete){
+  .overlay{transition:opacity var(--duration-fast) var(--ease-in),display var(--duration-fast) allow-discrete}
+  .overlay[hidden]{opacity:0;pointer-events:none}
+  .sheet{transition:transform var(--duration-base) var(--ease-in),display var(--duration-base) allow-discrete}
+  .sheet[hidden]{transform:translateY(100%);pointer-events:none}
+}
