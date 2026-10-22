@@ -25,6 +25,7 @@ export const STORAGE_KEYS = {
   tourDone: 'daftarche-tour-complete',
   tourAwarded: 'daftarche-tour-awarded',
   themeAuto: 'daftarche-theme-auto',
+  motion: 'daftarche-motion',
 };
 
 /* ═══ Themes ═══

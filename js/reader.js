@@ -2103,12 +2103,28 @@ function buildNotes() {
       <button class="note-del" aria-label="حذف">${LIB_ICONS.close}</button>`;
     el.addEventListener('click', e => {
       if (e.target.closest('.note-del')) {
-        if (it.source === 'highlights') curBook.highlights = (curBook.highlights || []).filter(x => x.id !== it.id);
-        else curBook.notes = (curBook.notes || []).filter(x => x.id !== it.id);
-        updateBook(curBook.id, { highlights: curBook.highlights, notes: curBook.notes });
+        const bookId = curBook.id;
+        const field = it.source === 'highlights' ? 'highlights' : 'notes';
+        const before = (curBook[field] || []).slice();
+        curBook[field] = before.filter(x => x.id !== it.id);
+        updateBook(bookId, { highlights: curBook.highlights, notes: curBook.notes });
         paintHighlights();
         updatePageUI();
         buildNotes();
+        /* Deleting is one tap on a small ✕ inside a list, so it carries the
+           same way back the rest of the app's deletions do. The undo restores
+           the list as it was, and only while the same book is still open. */
+        showNotice(it.free ? 'نشان قلمی حذف شد.' : 'یادداشت حذف شد.', {
+          actionLabel: 'برگردون',
+          onAction: () => {
+            if (!curBook || curBook.id !== bookId) return;
+            curBook[field] = before;
+            updateBook(bookId, { highlights: curBook.highlights, notes: curBook.notes });
+            paintHighlights();
+            updatePageUI();
+            if (!$('#notesSheet').hidden) buildNotes();
+          },
+        });
         return;
       }
       $('#notesSheet').hidden = true;

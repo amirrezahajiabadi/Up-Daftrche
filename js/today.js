@@ -183,7 +183,7 @@ function renderFrog(force) {
         <span class="frog-emoji" aria-hidden="true">${qorqoriMarkup(frogExpr())}</span>
         <div class="frog-info">
           <span class="frog-kicker">الان چی کار کنیم؟</span>
-          <h3 class="frog-name"></h3>
+          <h2 class="frog-name"></h2>
           <div class="frog-meta">${recChips(frog)}</div>
         </div>
       </div>

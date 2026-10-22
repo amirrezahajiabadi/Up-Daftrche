@@ -92,6 +92,7 @@ const SHELL = [
   'js/focushistory.js',
   'js/insights.js',
   'js/jalali.js',
+  'js/motion.js',
   'js/jalalical.js',
   'js/jingool.js',
   'js/khabalo.js',

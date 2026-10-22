@@ -135,7 +135,7 @@ html[data-mode="dark"] .frog-empty-done .frog-empty-title{color:var(--color-succ
 @media (hover:none){.t-del{opacity:.55;transform:none}}
 .t-empty{list-style:none;text-align:center;padding:20px 12px;color:var(--muted);font-size:13px;line-height:1.9;font-weight:400;background:color-mix(in srgb,var(--surface) 55%,transparent);border:1.5px dashed var(--border);border-radius:var(--radius-lg)}
 /* Navigation to the full list stays quieter than the Decision Hero CTA */
-.today-all{display:flex;margin:12px auto 0;align-items:center;gap:6px;border:none;background:transparent;color:var(--accent);font-family:var(--font-ui);font-size:12.5px;font-weight:600;padding:8px 14px;border-radius:var(--radius-pill);cursor:pointer;transition:transform var(--duration-fast)}
+.today-all{display:flex;margin:12px auto 0;align-items:center;gap:6px;border:none;background:transparent;color:var(--accent-text);font-family:var(--font-ui);font-size:12.5px;font-weight:600;padding:8px 14px;border-radius:var(--radius-pill);cursor:pointer;transition:transform var(--duration-fast)}
 .today-all:hover{text-decoration:underline}
 .today-all:active{transform:scale(.96)}
 

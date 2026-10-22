@@ -78,8 +78,8 @@
 .title{text-decoration:line-through transparent 1.6px;text-underline-offset:-.38em;transition:color var(--duration-base),text-decoration-color var(--duration-base) var(--ease-out) 50ms}
 /* Completed: visibly quieter group — recessed surface, lighter shadow,
    still fully readable and interactive (no over-fading) */
-.task.done{background:var(--color-bg);box-shadow:var(--shadow-0);opacity:.75}
-.task.done .title{color:var(--muted);font-weight:400}
+.task.done{background:var(--color-bg);box-shadow:var(--shadow-0);opacity:.9}
+.task.done .title{color:var(--color-text-secondary);font-weight:400}
 .task.done .title{text-decoration-color:var(--muted)}
 .title-input{flex:1;min-width:0;font-family:var(--font-ui);font-size:15px;font-weight:500;border:none;outline:none;background:var(--accent-soft);border-radius:var(--radius-xs);padding:5px 10px;color:var(--text)}
 

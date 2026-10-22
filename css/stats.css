@@ -27,7 +27,7 @@
 /* ── The card the reader can take away ──
    A labelled door rather than a bare icon: nobody looks for a share button on a
    page they have never seen. */
-.stats-share{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:46px;  border:1.5px dashed var(--color-border-strong);background:var(--surface);color:var(--accent);  border-radius:var(--radius-md);font-family:var(--font-ui);font-size:13.5px;font-weight:600;cursor:pointer;transition:transform var(--duration-fast) var(--ease-out),border-color var(--duration-fast),box-shadow var(--duration-fast)}
+.stats-share{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;min-height:46px;  border:1.5px dashed var(--color-border-strong);background:var(--surface);color:var(--accent-text);  border-radius:var(--radius-md);font-family:var(--font-ui);font-size:13.5px;font-weight:600;cursor:pointer;transition:transform var(--duration-fast) var(--ease-out),border-color var(--duration-fast),box-shadow var(--duration-fast)}
 @media (hover:hover){.stats-share:hover{transform:translateY(-1px);border-color:var(--accent)}}
 .stats-share:active{transform:translateY(1px)}
 .stats-share:focus-visible{outline:2px solid var(--color-focus);outline-offset:2px}

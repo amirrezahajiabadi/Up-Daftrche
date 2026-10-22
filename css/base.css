@@ -1400,7 +1400,7 @@ body.has-focus-pill .page{padding-bottom:calc(var(--nav-height) + env(safe-area-
 .settings-label{font-size:14px;font-weight:500}
 .settings-value{display:flex;align-items:center;gap:10px}
 .settings-value span{font-size:13px;color:var(--muted);font-weight:400}
-.settings-btn{position:relative;border:1.5px solid var(--border);background:transparent;color:var(--accent);font-family:var(--font-ui);font-size:12px;font-weight:600;padding:5px 14px;border-radius:var(--radius-pill);cursor:pointer;transition:all var(--duration-fast)}
+.settings-btn{position:relative;border:1.5px solid var(--border);background:transparent;color:var(--accent-text);font-family:var(--font-ui);font-size:12px;font-weight:600;padding:5px 14px;border-radius:var(--radius-pill);cursor:pointer;transition:all var(--duration-fast)}
 /* The pill stays compact, but the area that accepts a finger is 44px tall and
    wide enough for a thumb — a tap just above or below the border still lands
    on the button instead of falling through to the row. */
@@ -1484,6 +1484,43 @@ button:disabled,.switch:disabled{opacity:.45;cursor:not-allowed}
   /* Decorative transforms off; state/feedback transforms still apply instantly */
   .task:hover,.frog:hover,.lastread:hover,.book-card:hover,.progress-card:hover,.header-avatar:hover,
   .moods button:hover,.t-row:hover,.note-item:hover,.cat-chip:hover{transform:none!important}
+}
+
+/* The in-app switch (Settings → «کاهش انیمیشن‌ها»): the same calm as the system
+   setting, written once more because a media query cannot read a saved choice. */
+html[data-motion="reduced"] *,html[data-motion="reduced"] *::before,html[data-motion="reduced"] *::after{
+  animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+html[data-motion="reduced"]{scroll-behavior:auto!important}
+html[data-motion="reduced"] .doodle,html[data-motion="reduced"] .frog-emoji,html[data-motion="reduced"] .frog-ico svg,
+html[data-motion="reduced"] .empty .art,html[data-motion="reduced"] .spark,html[data-motion="reduced"] .frog-hero::before,
+html[data-motion="reduced"] .frog-hero::after,html[data-motion="reduced"] .rain-drops i,html[data-motion="reduced"] .flies i,
+html[data-motion="reduced"] .waves svg,html[data-motion="reduced"] .ring-wrap.complete,html[data-motion="reduced"] .ring-wrap.complete::after,
+html[data-motion="reduced"] .streak.hot svg,html[data-motion="reduced"] .focus-pill.running::after,
+html[data-motion="reduced"] .reader-timer.on{animation:none!important}
+html[data-motion="reduced"] .task:hover,html[data-motion="reduced"] .frog:hover,html[data-motion="reduced"] .lastread:hover,
+html[data-motion="reduced"] .book-card:hover,html[data-motion="reduced"] .progress-card:hover,html[data-motion="reduced"] .header-avatar:hover,
+html[data-motion="reduced"] .moods button:hover,html[data-motion="reduced"] .t-row:hover,html[data-motion="reduced"] .note-item:hover,
+html[data-motion="reduced"] .cat-chip:hover{transform:none!important}
+
+/* ═══ Forced colours (Windows high contrast and similar) ═══
+   Backgrounds and shadows are dropped by the system, so anything that relied on
+   a fill to look like a button, a switch or a selection needs an edge, and the
+   states that were told apart by colour need a system colour to stand on. */
+@media (forced-colors:active){
+  button,.switch,.go,.ghost,.skip,.btn,.pick-chip,.seg-btn{border:1px solid ButtonText}
+  .go,.btn-primary,.import-btn,.empty-cta,.lr-btn,.b-go,.frog-go,.frog-start,.share-go,.tour-btn.is-next{border-width:2px}
+  .switch.on,[aria-checked="true"].switch{background:Highlight;border-color:Highlight}
+  .sel,.on[role="switch"],[aria-pressed="true"],[aria-selected="true"],.nav-tab.active,.nav-tab[aria-current="page"]{
+    background:Highlight;color:HighlightText;forced-color-adjust:none;border-color:Highlight}
+  button.active,.filters button.active,.cat-chip.active,.stat-range-btn.sel,.achv-tab.sel{
+    background:Highlight!important;color:HighlightText!important;forced-color-adjust:none;border-color:Highlight}
+  .sel .ico,[aria-pressed="true"] .ico,[aria-selected="true"] .ico{stroke:HighlightText}
+  .active .ico{stroke:HighlightText}
+  .nav-glider{border:2px solid Highlight;background:transparent}
+  .ring-wrap.complete .ring-inner::after,.avatar-opt.sel::after,.avatar-big.has-photo::after,.badge.locked::after{
+    background:Canvas;border:2px solid Highlight;forced-color-adjust:none}
+  .task.done .check,.t-row.done .t-check{background:Highlight;color:HighlightText;forced-color-adjust:none}
+  :focus-visible{outline:3px solid Highlight}
 }
 
 /* ═══ Responsive ═══ */

@@ -1,11 +1,12 @@
 /* ═══ Confetti + Chime ═══ */
 
 import { $ } from './utils.js';
+import { prefersReducedMotion } from './motion.js';
 
 export function confetti() {
   /* Reduced motion: essential feedback (state change, character reaction) stays;
      the decorative burst is skipped entirely */
-  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  if (prefersReducedMotion()) return;
   const c = $('#confetti'), ctx = c.getContext('2d');
   c.width = innerWidth; c.height = innerHeight;
   const colors = ['#f4703a', '#ffb45c', '#7fb069', '#ffd97d', '#e4584f'];

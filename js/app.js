@@ -1,6 +1,7 @@
 import { state } from './state.js';
 import { PRIMARY_PAGES, MORE_PAGES } from './constants.js';
 import { $ } from './utils.js';
+import { initMotion, prefersReducedMotion } from './motion.js';
 import { saveName, safeSet, readString } from './store.js';
 import { initTheme } from './theme.js';
 import { notify } from './bus.js';
@@ -440,7 +441,7 @@ const TAB_ORDER = [...PRIMARY_PAGES];
    Readers who ask the system for reduced motion skip the live follow and get
    the same threshold landing without the theatre. */
 function initSwipeNavigation(curPage, go) {
-  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const reduced = () => prefersReducedMotion();
   const rtl = () => document.documentElement.dir === 'rtl';
   const IGNORE = 'input, textarea, select, button, a, label, iframe, canvas, '
     + '[contenteditable], [data-no-swipe], .task, .tasks, .wk-row, [draggable="true"]';
@@ -519,7 +520,7 @@ function initSwipeNavigation(curPage, go) {
        pointer armed, or the same release could land the very swipe it was
        meant to cancel. */
     drag = null;
-    if (reduced) {                          // no staging happened; just land
+    if (reduced()) {                        // no staging happened; just land
       if (commit && d.j >= 0) go(TAB_ORDER[d.j]);
       return;
     }
@@ -575,7 +576,7 @@ function initSwipeNavigation(curPage, go) {
          dragging, so its path is untouched. */
       if (e.pointerType === 'mouse') getSelection()?.removeAllRanges();
       drag.j = neighbor(dx);
-      if (reduced) return;                 // threshold landing, no live follow
+      if (reduced()) return;               // threshold landing, no live follow
       enter();
       if (!drag) return;
       try { document.documentElement.setPointerCapture(e.pointerId); } catch (err) {}
@@ -752,6 +753,7 @@ function initKeyboard() {
 }
 
 /* ═══ Startup ═══ */
+safe('حرکت', initMotion);
 safe('تم', initTheme);
 safe('وضعیت نمایش', initVisibility);
 /* Keeps focus inside whichever dialog is open and freezes the page behind it —

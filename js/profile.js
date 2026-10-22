@@ -6,6 +6,7 @@
 import { safeSet, safeRemove, readString, readJSON } from './store.js';
 import { $, dayKey } from './utils.js';
 import { state } from './state.js';
+import { showNotice } from './dialog.js';
 import { QORQORI_AVATAR, qorqoriMarkup } from './qorqori.js';
 import { RIZOLO_AVATAR, rizoloMarkup } from './rizolo.js';
 import { KHABALO_AVATAR, khabaloMarkup } from './khabalo.js';
@@ -449,7 +450,14 @@ export function initProfile() {
       say('این عکس خونده نشد؛ یه عکس دیگه امتحان کن.');
     }
   });
-  $('#photoRemove')?.addEventListener('click', () => { setPhoto(''); say(''); });
+  $('#photoRemove')?.addEventListener('click', () => {
+    const previous = photoCache;
+    setPhoto(''); say('');
+    if (previous) showNotice('عکس پروفایل حذف شد.', {
+      actionLabel: 'برگردون',
+      onAction: () => { setPhoto(previous); say(''); },
+    });
+  });
 
   /* ═══ Character picker ═══
      Opened from the identity card — a different door than the photo's, and it

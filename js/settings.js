@@ -23,6 +23,7 @@ import { openShortcuts } from './shortcuts.js';
 import { collectBackup, parseBackup, applyBackup, mergeBackup, backupFileName, BACKUP_MAX_CHARS } from './backup.js';
 import { confirmDialog, showNotice } from './dialog.js';
 import { clearAll } from './store.js';
+import { systemReducedMotion, userReducedMotion, setUserReducedMotion } from './motion.js';
 
 /* What the page says about itself, painted on entry. The picker is marked here
    as well as by js/theme.js because the two halves of the table are remembered
@@ -54,6 +55,22 @@ function renderThemeAutoRow() {
   btn.setAttribute('aria-checked', String(on));
   btn.classList.toggle('on', on);
   text.textContent = on ? 'فعال' : 'غیرفعال';
+}
+
+/* The app's own «reduce motion» switch. When the phone already asks for less
+   motion the switch reads «on» and is locked: the app never argues with it. */
+function renderMotionRow() {
+  const btn = $('#motionBtn'), text = $('#motionText'), hint = $('#motionHint');
+  if (!btn || !text) return;
+  const system = systemReducedMotion();
+  const on = system || userReducedMotion();
+  btn.setAttribute('aria-checked', String(on));
+  btn.classList.toggle('on', on);
+  btn.disabled = system;
+  text.textContent = on ? 'روشن' : 'خاموش';
+  if (hint) hint.textContent = system
+    ? 'گوشی‌ت از قبل کاهش حرکت رو خواسته؛ دفترچه هم همون رو رعایت می‌کنه.'
+    : 'حرکت‌های تزیینی و پرش‌ها کم می‌شن؛ بازخورد لازم (مثل تیک‌خوردن) می‌مونه.';
 }
 
 function renderPersistRow() {
@@ -101,6 +118,21 @@ export function initSettings() {
   }
   window.addEventListener('theme-auto-changed', renderThemeAutoRow);
   renderThemeAutoRow();
+
+  const motionBtn = $('#motionBtn');
+  if (motionBtn) {
+    motionBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      if (systemReducedMotion()) return;
+      setUserReducedMotion(!userReducedMotion());
+      renderMotionRow();
+    });
+    motionBtn.closest('.settings-row')?.addEventListener('click', e => {
+      if (e.target.closest('#motionBtn')) return;
+      motionBtn.click();
+    });
+  }
+  renderMotionRow();
 
   /* ── Backup ──
      Export writes every daftarche-* key to one JSON file; import validates a

@@ -1,5 +1,6 @@
 import { state, getTask } from './state.js';
 import { saveTasks, requestPersistentStorage } from './store.js';
+import { prefersReducedMotion } from './motion.js';
 import { $, faNum, startOfToday, dueKeyFromOffset, normalizeFa, parseDurationMin, formatDuration, formatClock, parseTimeRange, reorderSubset, isOverdueTask, stepOrder } from './utils.js';
 import { P_LABEL, CATS, ICONS, PRI_ICONS } from './constants.js';
 import { notify } from './bus.js';
@@ -484,7 +485,7 @@ export function moveTask(id, step) {
   if (hadFocus) { li.setAttribute('tabindex', '-1'); li.focus({ preventScroll: true }); }
   li.scrollIntoView({ block: 'nearest' });
   const dy = first - li.getBoundingClientRect().top;
-  if (dy && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  if (dy && !prefersReducedMotion()) {
     li.style.transition = 'none'; li.style.transform = `translateY(${dy}px)`;
     requestAnimationFrame(() => { li.style.transition = 'transform 200ms cubic-bezier(.2,0,0,1)'; li.style.transform = ''; });
   }
