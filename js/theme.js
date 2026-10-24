@@ -64,7 +64,10 @@ export const isThemeUnlocked = key => {
   return !reward || hasReward(normalizeState(loadAchv()), reward.id);
 };
 
-const allowedTheme = key => isThemeUnlocked(key) ? key : DEFAULT_THEME;
+/* A locked theme falls back inside its own half of the table, the same way the
+   boot script in index.html does — someone who left in the dark must not wake
+   up in the light just because a backup carried a theme they have not earned. */
+const allowedTheme = key => isThemeUnlocked(key) ? key : (modeOf(key) === 'dark' ? NIGHT_THEME : DEFAULT_THEME);
 
 /* The last theme used in each half, cleaned on the way in: a key that no longer
    exists, or one whose mode has changed under it, is dropped rather than used. */
@@ -139,6 +142,7 @@ export function applyTheme(key, { remember = true } = {}) {
   }
   syncThemeColor();
   markThemePicker();
+  window.dispatchEvent(new CustomEvent('theme-applied', { detail: next }));
   return true;
 }
 

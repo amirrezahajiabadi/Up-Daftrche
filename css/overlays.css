@@ -14,11 +14,11 @@ html[data-mode="dark"] .overlay{background:rgba(0,0,0,.5)}
 @keyframes popCard{from{opacity:0;transform:translateY(14px)}}
 
 .name-card,.roll-card,.focus-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-xl);padding:32px 28px 24px;width:100%;max-width:360px;text-align:center;box-shadow:var(--shadow-2);animation:popCard var(--duration-base) var(--ease-out)}
-.name-card .badge{width:54px;height:54px;border-radius:var(--radius-lg);background:var(--accent-soft);display:grid;place-items:center;margin:0 auto;color:var(--accent)}
+.name-card .badge{width:54px;height:54px;border-radius:var(--radius-lg);background:var(--accent-soft);display:grid;place-items:center;margin:0 auto;color:var(--accent-text)}
 .name-card h2{font-family:var(--font-personality);font-size:22px;font-weight:700;margin:14px 0 6px}
 .name-card>p{color:var(--muted);font-size:13px;margin-bottom:18px;line-height:1.7;font-weight:400}
 .name-card input{width:100%;border:1.5px solid var(--border);background:var(--bg);border-radius:var(--radius-sm);padding:var(--space-3) var(--space-4);font-family:var(--font-ui);font-size:16px;font-weight:400;text-align:center;color:var(--text);outline:none;transition:border-color var(--duration-base),box-shadow var(--duration-base)}
-.name-card input:focus{border-color:var(--accent);box-shadow:0 0 0 4px var(--accent-soft)}
+.name-card input:focus{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
 .name-card .go{margin-top:var(--space-3);width:100%;border:none;background:var(--accent);color:var(--color-text-on-accent);font-family:var(--font-ui);font-size:15px;font-weight:600;padding:12px;border-radius:var(--radius-sm);cursor:pointer;transition:transform var(--duration-fast),box-shadow var(--duration-fast)}
 .name-card .go:active{transform:scale(.97)}
 /* The themed confirm's destructive choice: the same .go button, filled with the
@@ -651,7 +651,7 @@ body.focus-immersive .vibe-card.open{scroll-margin-block:80px 24px}
 .changelog-title{font-family:var(--font-ui);font-size:13.5px;font-weight:600;margin:6px 0 8px;line-height:1.7}
 .changelog-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
 .changelog-item{display:flex;align-items:center;gap:10px;font-size:12.5px;line-height:1.7;color:var(--text);font-weight:400}
-.changelog-icon{flex-shrink:0;width:26px;height:26px;display:grid;place-items:center;font-size:14px;color:var(--accent);background:var(--accent-soft);border-radius:var(--radius-sm)}
+.changelog-icon{flex-shrink:0;width:26px;height:26px;display:grid;place-items:center;font-size:14px;color:var(--accent-text);background:var(--accent-soft);border-radius:var(--radius-sm)}
 .changelog-card .go{margin-top:14px;width:100%;min-height:44px;border:none;background:var(--accent);color:var(--color-text-on-accent);font-family:var(--font-ui);font-size:15px;font-weight:600;padding:12px;border-radius:var(--radius-sm);cursor:pointer;transition:transform var(--duration-fast),box-shadow var(--duration-fast)}
 .changelog-card .go:active{transform:scale(.97)}
 /* Clear the notch at the top and the home bar at the bottom: the dialog is

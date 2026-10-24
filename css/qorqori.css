@@ -49,7 +49,7 @@
 .char-change{margin-inline-start:auto;flex-shrink:0;border:1.5px solid var(--border);color:var(--accent);font-size:11.5px;font-weight:600;line-height:1.5;padding:5px 13px;border-radius:var(--radius-pill);transition:background var(--duration-fast),border-color var(--duration-fast),color var(--duration-fast)}
 @media (hover:hover){
   .char-identity:hover{background:var(--accent-soft);border-color:color-mix(in srgb,var(--accent) 30%,transparent)}
-  .char-identity:hover .char-change{background:var(--accent);border-color:var(--accent);color:#fff}
+  .char-identity:hover .char-change{background:var(--accent);border-color:var(--accent);color:var(--color-text-on-accent)}
 }
 
 @media (max-width:480px){

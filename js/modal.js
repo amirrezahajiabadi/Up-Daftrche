@@ -121,5 +121,14 @@ export function initModalContainment() {
     attributes: true, attributeFilter: ['hidden'], childList: true, subtree: true,
   });
   document.addEventListener('keydown', onKeydown, true);
+  /* A field inside a dialog scrolls itself into view once the on-screen keyboard
+     has finished opening. Safari keeps the layout viewport unchanged under the
+     keyboard, so without this a lower field can end up hidden behind it. */
+  document.addEventListener('focusin', e => {
+    const f = e.target;
+    if (!f?.matches?.('input:not([type=checkbox]):not([type=radio]):not([type=range]),textarea,select')) return;
+    if (!f.closest('.overlay:not([hidden]) .sheet, .overlay:not([hidden]) .name-card')) return;
+    setTimeout(() => { try { f.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch { /* old engines */ } }, 320);
+  });
   apply();
 }

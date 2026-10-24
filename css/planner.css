@@ -51,9 +51,9 @@
 .wk-panel-head h2{font-family:var(--font-personality);font-size:18px;font-weight:700;margin:0}
 .wk-rel{font-size:11px;font-weight:600;padding:3px 10px;border-radius:var(--radius-pill);
   color:var(--muted);background:var(--bg)}
-.wk-rel.today{color:var(--accent);background:var(--accent-soft)}
+.wk-rel.today{color:var(--accent-text);background:var(--accent-soft)}
 .wk-rel.past{color:var(--muted)}
-.wk-rel.future{color:var(--accent)}
+.wk-rel.future{color:var(--accent-text)}
 
 /* The quick add is the same pill the Today page already has — same border, same
    surface-fill, same six pixels of breathing room around a 44px button. Those
@@ -66,7 +66,7 @@
   transition:border-color var(--duration-base),box-shadow var(--duration-base),background var(--duration-slow)}
 /* One ring, and it belongs to the row: the field inside never draws its own, so
    a focused reader sees a single outline rather than two sharing the same box. */
-.wk-add:focus-within{border-color:var(--accent);box-shadow:0 0 0 4px var(--accent-soft),var(--shadow-sm)}
+.wk-add:focus-within{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
 .wk-add.shake{animation:shake var(--duration-base) ease;border-color:var(--danger)!important}
 /* The field paints nothing at all — no box of its own, no focus ring, no UA
    field look. The app has a global :focus-visible outline, so a bare input would
@@ -131,7 +131,7 @@
 /* The span: the reason this row is on this day at this hour, so it is set in the
    accent rather than in a chip grey — it is the planner's own signal. */
 .wk-span-chip{flex-shrink:0;font-size:11px;font-weight:700;padding:2px 9px;border-radius:var(--radius-pill);
-  color:var(--accent);background:var(--accent-soft);white-space:nowrap}
+  color:var(--accent-text);background:var(--accent-soft);white-space:nowrap}
 .wk-del{position:relative;border:none;background:transparent;color:var(--muted);width:28px;height:28px;border-radius:var(--radius-xs);
   cursor:pointer;display:grid;place-items:center;flex-shrink:0;opacity:0;transform:scale(.8);
   transition:opacity var(--duration-fast),transform var(--duration-fast),color var(--duration-fast),background var(--duration-fast)}
@@ -170,7 +170,7 @@ html.wk-dragging .wk-grip{cursor:grabbing}
    as pickable at the moment the finger is already looking for a place to drop.
    transform/opacity and one border colour only, so the cue costs no layout. */
 .wk-strip.armed{border-color:color-mix(in srgb,var(--accent) 45%,var(--border));
-  box-shadow:0 10px 26px -14px color-mix(in srgb,var(--accent) 60%,transparent),var(--shadow-1)}
+  box-shadow:var(--shadow-1)}
 .wk-strip.armed .wk-cell{transform:scale(1.01)}
 .wk-strip.armed .wk-cell:not(.drop):not(.sel){border-color:color-mix(in srgb,var(--accent) 22%,transparent)}
 .wk-cell.drop{border-color:var(--accent);background:var(--accent-soft)}

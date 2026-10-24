@@ -321,7 +321,16 @@ test('keys an older build wrote down still resolve to a real theme', () => {
     assert.equal(normalizeTheme(legacy), expected, `the boot script maps «${legacy}» to «${expected}»`);
     assert.ok(THEME_KEYS.includes(expected), `«${legacy}» maps to «${expected}», which is not a theme`);
   }
-  assert.equal(normalizeTheme('night'), 'night', 'a stored key whose meaning has not changed must pass through');
+  for (const k of THEME_KEYS) assert.equal(normalizeTheme(k), k, 'a current key must pass through');
+  /* Every key any earlier build ever wrote must land on a theme of the same half
+     — someone who read in the dark must not wake up in the light. */
+  const OLD = { paper: 'light', lilac: 'light', blush: 'light', sage: 'light', ink: 'light', light: 'light', cream: 'light', forest: 'light',
+                night: 'dark', gold: 'dark', ocean: 'dark', plum: 'dark', dark: 'dark' };
+  for (const [old, half] of Object.entries(OLD)) {
+    assert.ok(THEME_KEYS.includes(normalizeTheme(old)), `«${old}» resolves to nothing`);
+    assert.equal(modeOf(old), half, `«${old}» changes half of the table`);
+    assert.ok(old in BOOT_ALIAS, `the boot script does not know the old key «${old}»`);
+  }
   assert.equal(normalizeTheme('nonsense'), '', 'an unknown key must come back empty, not as itself');
   assert.equal(normalizeTheme(''), '');
   assert.equal(modeOf('nonsense'), modeOf(DEFAULT_THEME), 'an unknown key still needs a mode');
@@ -391,5 +400,19 @@ test('the picker hides the other half of the table by CSS, in both directions', 
       assert.ok(rule.includes(`[data-mode="${hidden}"]`) && rule.includes('display:none'),
         `${needle} does not hide its [data-mode="${hidden}"] children`);
     }
+  }
+});
+
+
+test('the boot script\'s lock table matches the rewards in js/achievements.js', async () => {
+  const A = await import('../js/achievements.js');
+  const m = /var LOCK = \{([^}]*)\}/.exec(HTML);
+  assert.ok(m, 'index.html boot script has no LOCK table');
+  const boot = Object.fromEntries([...m[1].matchAll(/(\w+)\s*:\s*\['([\w-]+)',\s*(\d+)\]/g)].map(x => [x[1], [x[2], Number(x[3])]]));
+  const rewarded = THEMES.filter(t => A.rewardFor('theme', t.key));
+  assert.deepEqual(Object.keys(boot).sort(), rewarded.map(t => t.key).sort());
+  for (const t of rewarded) {
+    const reqs = A.rewardRequirements(A.rewardFor('theme', t.key).id);
+    assert.deepEqual(boot[t.key], [reqs[0].achievement.id, reqs[0].tier], t.key);
   }
 });

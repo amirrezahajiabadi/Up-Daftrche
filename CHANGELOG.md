@@ -6,6 +6,37 @@
 
 هر انتشار، بالای همین فایل می‌نشیند؛ تغییرها زیر شمارهٔ نسخهٔ تازه و در دسته‌های Added/Changed/Fixed نوشته می‌شوند؛ همزمان با آن، RELEASE و در صورت تغییر فایل‌های پوسته BUILD جلو می‌رود.
 
+## 3.3.0
+
+### Added
+
+- **هویت بصری تازه.** نُه تم قدیمی کنار رفت و شش تم در سه خانواده آمد: «فیروزه» و «لاجورد» (کاشی: عاج، فیروزه و لاجورد با الگوی بسیار کم‌رنگ ستارهٔ هشت‌پر)، «کبالت» و «گرافیت» (تمیز) و «آرورا» و «شب‌شیشه» (شیشه‌ای، روی آرورای نرم). شیشه فقط یک افزونه است: مرورگر بدون `backdrop-filter` و کاربری که «کاهش شفافیت» را روشن کرده همان رنگ جامد را می‌بیند. تم ذخیره‌شدهٔ قدیمی به نزدیک‌ترین تم جدید در همان نیمهٔ روشن/تیره می‌رود.
+- **پنج دنیای ویژه** که با نشان باز می‌شوند و هرکدام یک کارت و یک قابلیت در صفحهٔ امروز دارند:
+  - «شب‌گرد» (سه بار تمرکز بعد از نیمه‌شب): گشت شبانه که کارهای نیمه‌کار را به فردا می‌برد و برگرداندنش هم هست.
+  - «تارنما» (هفت روز پیاپی): تار هفته، نمودار تار عنکبوتی هفت روز اخیر.
+  - «فضانورد» (۱۰ ساعت تمرکز): دفتر پرواز و مدار امروز.
+  - «باغچه» (۳۰ روز فعال): گیاهی که با تیک‌های امروز در پنج مرحله رشد می‌کند.
+  - «دریانورد» (۱۰۰ صفحه): هدف هفتگی و کشتی‌ای که به بندر می‌رود.
+
+  هنر دنیاها فقط با CSS ساخته شده، با «کاهش حرکت» می‌ایستد و تم قفل‌شده به تم پیش‌فرض همان نیمه برمی‌گردد.
+- **ورود تازه.** سه گام کوتاه: نام ← برای چی آمده‌ای (کارها، کتاب‌ها یا تمرکز) ← اولین کار واقعی. بعدش تور پنج‌ایستگاهی عملی با راهنمای حرف‌زن، ایستگاه «تیکش بزن» که کار خودت را کامل می‌کند، ورق‌زدن با کشیدن انگشت و لرزش سبک (هرگز صدا؛ با کاهش حرکت بی‌صدا). کسی که تور را قبلاً دیده دوباره نمی‌بیندش.
+- **اندازهٔ متن** (عادی / بزرگ / خیلی بزرگ) در تنظیمات، فقط برای صفحه‌ها.
+- **یادآور پشتیبان**: ماهی یک‌بار، یک کارت آرام در امروز؛ فقط وقتی دادهٔ ارزشمندی هست، با «بعداً» که دو هفته ساکتش می‌کند.
+- **سوئیچ «کاهش انیمیشن‌ها»** داخل برنامه (تنظیم سیستم هم همیشه رعایت می‌شود)، و «برگردون» برای یادداشت حذف‌شدهٔ خواننده و عکس پروفایل.
+
+### Changed
+
+- حرکت با هدف: صفحه‌ها از سویی می‌آیند که نوار پایین به آن می‌رود، دیالوگ‌ها و شیت‌ها با محو یا لغزش کوتاه می‌روند، همراه بعد از تمام شدن کار یک‌بار می‌پرد و پرش جشن بعد از سه بار آرام می‌شود. حلقه‌های صرفاً تزئینی (خورشید چرخان، ستارهٔ چشمک‌زن) حذف شدند.
+- لایهٔ حالت دکمه‌ها (`css/states.css`): یک تعریف hover/pressed برای دکمه‌های پر، خط‌دار و متنی؛ توکن‌های تازهٔ حرکت؛ ناحیهٔ لمس بزرگ‌تر برای دکمه‌های حذف کوچک؛ چهرهٔ حال جلسه‌ها و آیکن‌های تازه‌ها با رنگ نقش.
+- هاله‌ی رنگی دور باکس‌ها برداشته شد: نوار افزودن، جست‌وجو، فیلدها و نوار قفسه فوکوس را با یک خط ۱ پیکسلی داخل لبه نشان می‌دهند، نه سایهٔ نرم ۴ پیکسلی. پرش «برو به کار» و نوار هفتهٔ آمادهٔ رها کردن هم درخشش ندارند.
+- موبایل: همهٔ صفحه‌ها و دیالوگ‌ها در ۳۶۰، ۳۹۰ و ۴۳۰ پیکسل و حالت افقی بازبینی شد (بدون اسکرول افقی، بدون برش)؛ دکمه‌های کوچک روی لمس به ۴۴ پیکسل می‌رسند و فیلد داخل دیالوگ از زیر کیبورد بیرون می‌آید.
+- کنتراست (WCAG AA) در همهٔ تم‌ها اندازه‌گیری شد: متن لهجه‌ای روی زمینهٔ ملایم از رنگ متن لهجه می‌آید، و متن روی دکمهٔ لهجه‌ای از رنگ مخصوص خودش. چیپ‌های بدون مقدار دیگر کم‌رنگ نمی‌شوند.
+- ترتیب سرتیترها در امروز درست شد و سبک‌های `forced-colors` اضافه شد.
+
+### Fixed
+
+- پنجرهٔ میانبرهای کیبورد هرگز دیده نمی‌شد (یک تگ بسته‌نشده آن را داخل دیالوگ پنهانِ اشتراک گیر انداخته بود)؛ حالا یک تست ساختار صفحه جلویش را می‌گیرد.
+
 ## 3.2.0
 
 ### Added
@@ -20,14 +51,9 @@
 - **تست‌ها:** `isOverdueTask`، `stepOrder` و پک PDF (`tests/pdfpack.test.mjs`).
 
 ### Changed
-- Fixed the keyboard-shortcuts dialog never appearing (a missing closing tag had trapped it inside the hidden share dialog); a structure test now guards the page.
-- Motion with a purpose: pages arrive from the side the tab bar moves toward, dialogs and sheets now leave with a short fade or slide instead of vanishing, the companion hops once when a task is finished, the celebration jump settles after three jumps, and purely decorative loops (spinning sun, twinkling stars) are gone.
-- In-app «کاهش انیمیشن‌ها» switch (honours the system setting too), undo for deleted reader notes and profile photo, colour-contrast fixes (WCAG AA, light and dark), forced-colours styles, a real heading order on Today.
-- Flat-button state layer (css/states.css): one hover/pressed definition for filled, outlined and text buttons; new motion tokens (press / move durations); wider touch areas on small remove buttons; colour-coded session mood faces and tone-coded changelog icons.
-- First run and tour rebuilt: name → what you came for (tasks / books / focus) → write your first real task → a five-station hands-on tour with a talking companion beside the card, a «tick it» station that completes your own task, soft arrival animations (also on phones), compact progress dots, swipe to turn pages and light haptics (never sound; silent under reduced motion). The fourth station follows the goal you chose. Existing readers who already finished the tour are not shown it again.
-- Buttons are flat: no coloured glow, halo ring or hard drop-shadow under primary buttons, chips, tabs and the nav indicator; pressed state is a small scale instead.
-- All emoji and text glyphs (✕ ✓ ← → ▲ ▼ 😊😐😵 🎉 …) replaced by one line-icon set, including the changelog history, CSS badges and focus/stats screens; sizing and colour now follow the surrounding text.
 
+- دکمه‌ها تخت شدند: زیر دکمهٔ اصلی، چیپ‌ها، تب‌ها و نشانگر ناوبری دیگر درخشش رنگی، حلقهٔ هاله یا سایهٔ سخت نیست؛ حالت فشرده یک مقیاس کوچک است.
+- همهٔ ایموجی‌ها و نمادهای متنی (✕ ✓ ← → ▲ ▼ 😊😐😵 🎉 …) با یک مجموعهٔ آیکن خطی عوض شدند، از جمله تاریخچهٔ تازه‌ها، نشان‌های CSS و صفحه‌های تمرکز و آمار؛ اندازه و رنگ آیکن‌ها از متن کنارشان می‌آید.
 - ایموجی‌های کتابخانه، خواننده، چیپ‌های افزودن سریع، نشان ساعت برنامه‌ریز و راهنمای iOS با آیکن خطی (`LIB_ICONS`) جایگزین شدند.
 - سه دکمهٔ گردِ کارت کتاب (هدف، تغییر نام، حذف) یک منوی ⋯ شد؛ حذف آخر و قرمز است و هنوز با «برگردون» قابل‌بازگشت.
 - اولویت با آیکن (برگ، رعد، شعله) نشان داده می‌شود، نه فقط رنگ.

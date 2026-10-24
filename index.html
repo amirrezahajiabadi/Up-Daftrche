@@ -13,9 +13,9 @@
      · blob: is for what the person made on this device: PDF files for the
        browser viewer, uploaded music, the share-card image.
      · Not expressible in a <meta>: frame-ancestors / report-uri. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-aQ5I4yJcQwtrp7t3FO1C3mDdaYVKbtLTctIwEiv3jhc=' https://cdn.jsdelivr.net; worker-src 'self' blob: https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' https://cdn.jsdelivr.net; media-src 'self' blob: data:; connect-src 'self' https://cdn.jsdelivr.net; frame-src blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'"/>
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/>
-<meta name="theme-color" content="#f6efe3"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-dwGJ1IHIc9/aEAjwyuKDCZnje0ODUdP4hbmq9HMY0ZY=' https://cdn.jsdelivr.net; worker-src 'self' blob: https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' https://cdn.jsdelivr.net; media-src 'self' blob: data:; connect-src 'self' https://cdn.jsdelivr.net; frame-src blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content"/>
+<meta name="theme-color" content="#f6f2e8"/>
 <!-- The browser paints its own chrome (page canvas, scrollbars, form controls)
      from color-scheme. Declaring both keeps the dark theme from flashing a
      white canvas before the first stylesheet lands. -->
@@ -33,31 +33,33 @@
     /* The theme keys, written out again rather than imported: this runs before
        any module has been fetched, and a theme that arrives one frame late is a
        flash of the wrong colour. They must match js/constants.js — and the light
-       default is «کاغذ», the notebook's own paper, which is also what :root in
+       default is «فیروزه», the tile-and-ivory identity, which is also what :root in
        css/base.css points at.
        Two attributes are written, not one: the theme the reader chose, and the
        half of the table it belongs to. The second is what every dark-only rule
        in the CSS hangs off, so it has to be on the root before the first paint
        too — data-mode is to the dark rules what data-theme is to the colours. */
-    var KEYS = ['paper', 'lilac', 'blush', 'sage', 'ink', 'night', 'gold', 'ocean', 'plum'];
-    var DARK = ['night', 'gold', 'ocean', 'plum'];
+    var KEYS = ['kashi', 'cobalt', 'aurora', 'lajvard', 'graphite', 'nightglass', 'tarnama', 'baghche', 'daryanavard', 'shabgard', 'fazanavard'];
+    var DARK = ['lajvard', 'graphite', 'nightglass', 'shabgard', 'fazanavard'];
     /* Keys older builds wrote down, mapped to the theme that replaced each.
        «cream» is the most recent of them: «شیری» was a shade away from «کاغذ»
        and was retired for exactly that reason (js/constants.js). */
-    var ALIAS = { dark: 'night', light: 'paper', forest: 'sage', cream: 'paper' };
+    var ALIAS = { dark: 'lajvard', light: 'kashi', forest: 'kashi', cream: 'kashi', paper: 'kashi', blush: 'kashi', sage: 'kashi', ink: 'cobalt', lilac: 'aurora', night: 'lajvard', gold: 'lajvard', ocean: 'graphite', plum: 'nightglass' };
     var saved = localStorage.getItem('theme');
     saved = ALIAS[saved] || saved;
     if (KEYS.indexOf(saved) < 0) saved = '';
-    /* Match the theme reward gate before paint. The full reward catalogue
-       lives in js/achievements.js; this one boot rule prevents a locked saved
-       theme flashing before js/theme.js can apply the same gate. */
-    if (saved === 'lilac') {
+    /* The five worlds are earned. Match the reward gate before paint so a locked
+       theme (a restored backup, a hand-edited key) never flashes. The full
+       catalogue lives in js/achievements.js; this table is its copy of the five
+       badge/tier pairs, kept in step by tests/themes.test.mjs. */
+    var LOCK = { shabgard: ['night-owl', 1], tarnama: ['chain', 2], fazanavard: ['focus-minutes', 2], baghche: ['active-days', 2], daryanavard: ['pages', 1] };
+    if (LOCK[saved]) {
       var shelf = null;
       try { shelf = JSON.parse(localStorage.getItem('daftarche-achievements')); } catch (e) {}
-      if (!shelf || !shelf.unlocked || !shelf.unlocked['tour-intro']
-        || !(Number(shelf.unlocked['tour-intro'].tier) >= 1)) saved = 'paper';
+      var u = shelf && shelf.unlocked && shelf.unlocked[LOCK[saved][0]];
+      if (!u || !(Number(u.tier) >= LOCK[saved][1])) saved = DARK.indexOf(saved) < 0 ? 'kashi' : 'lajvard';
     }
-    if (!saved) saved = matchMedia('(prefers-color-scheme:dark)').matches ? 'night' : 'paper';
+    if (!saved) saved = matchMedia('(prefers-color-scheme:dark)').matches ? 'lajvard' : 'kashi';
     document.documentElement.dataset.theme = saved;
     document.documentElement.dataset.mode = DARK.indexOf(saved) < 0 ? 'light' : 'dark';
   } catch (e) { /* private mode / storage disabled: the light default stands */ }
@@ -110,6 +112,9 @@
 <link rel="stylesheet" href="css/jingool.css">
 <link rel="stylesheet" href="css/onboarding.css">
 <link rel="stylesheet" href="css/states.css">
+<link rel="stylesheet" href="css/glass.css">
+<link rel="stylesheet" href="css/identity.css">
+<link rel="stylesheet" href="css/worlds.css">
 </head>
 <body>
 
@@ -224,6 +229,14 @@
       </div>
     </header>
 
+    <div class="backup-nudge" id="backupNudge" hidden>
+      <p>یه ماهه پشتیبان نگرفتی. همه‌چیز فقط روی همین دستگاهه؛ یه فایل پشتیبان جلوی از دست رفتنش رو می‌گیره.</p>
+      <div class="backup-nudge-actions">
+        <button type="button" class="go" id="backupNudgeGo">پشتیبان می‌گیرم</button>
+        <button type="button" class="skip" id="backupNudgeLater">بعداً</button>
+      </div>
+    </div>
+
     <form class="today-add" id="todayAddForm" autocomplete="off">
       <svg class="ta-ico" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 20v-7"/><path d="M12 13c0-3.4 2.4-5.6 6.4-5.6 0 3.4-2.4 5.6-6.4 5.6z"/></svg>
       <input id="todayInput" type="text" maxlength="120" placeholder="+ امروز باید چی کار کنم؟" autocomplete="off"/>
@@ -232,6 +245,8 @@
       </button>
     </form>
     <div class="quickadd-preview" id="todayQuickAddPreview" hidden></div>
+
+    <section class="world-card" id="worldCard" hidden aria-label="دنیای تم"></section>
 
     <section class="today-sec frog-sec" id="todayFrog"></section>
 
@@ -1030,7 +1045,7 @@
           <div class="swatch-row" id="themeSwatches" role="radiogroup" aria-labelledby="themeLabel"></div>
         </div>
       </div>
-      <p class="settings-hint">نه رنگ — پنج روشن و چهار تیره. انتخاب هر نصف یادش می‌مونه، پس دفعهٔ بعد که سر بزنی همون رنگی که گذاشتی برمی‌گرده.</p>
+      <p class="settings-hint">یازده رنگ: شش‌تا همیشه بازن (فیروزه، لاجورد، کبالت، گرافیت، آرورا، شب‌شیشه) و پنج دنیای ویژه — شب‌گرد، تارنما، فضانورد، باغچه و دریانورد — با نشان‌ها باز می‌شن. هر دنیا یه کارت کوچیک توی صفحهٔ امروز هم میاره. انتخاب هر نصف یادش می‌مونه.</p>
       <div class="settings-divider"></div>
       <div class="set-item">
         <div class="settings-row">
@@ -1052,6 +1067,14 @@
           </div>
         </div>
         <p class="settings-hint" id="motionHint">حرکت‌های تزیینی و پرش‌ها کم می‌شن؛ بازخورد لازم (مثل تیک‌خوردن) می‌مونه.</p>
+      </div>
+      <div class="settings-divider"></div>
+      <div class="set-item">
+        <div class="settings-row">
+          <span class="settings-label" id="textSizeLbl">اندازهٔ متن</span>
+          <div class="seg" id="textSizeSeg" role="radiogroup" aria-labelledby="textSizeLbl"></div>
+        </div>
+        <p class="settings-hint">متن صفحه‌ها بزرگ‌تر می‌شه؛ نوار پایین و خواندن PDF تغییری نمی‌کنن.</p>
       </div>
     </div>
 

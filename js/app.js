@@ -2,6 +2,9 @@ import { state } from './state.js';
 import { PRIMARY_PAGES, MORE_PAGES } from './constants.js';
 import { $ } from './utils.js';
 import { initMotion, prefersReducedMotion } from './motion.js';
+import { applyTextSize } from './textsize.js';
+import { initWorlds } from './worlds.js';
+import { initBackupNudge } from './backup-nudge.js';
 import { saveName, safeSet, readString } from './store.js';
 import { initTheme } from './theme.js';
 import { notify } from './bus.js';
@@ -765,6 +768,9 @@ function initKeyboard() {
 
 /* ═══ Startup ═══ */
 safe('حرکت', initMotion);
+safe('اندازهٔ متن', applyTextSize);
+safe('دنیای تم', initWorlds);
+safe('یادآوری پشتیبان', initBackupNudge);
 safe('تم', initTheme);
 safe('وضعیت نمایش', initVisibility);
 /* Keeps focus inside whichever dialog is open and freezes the page behind it —

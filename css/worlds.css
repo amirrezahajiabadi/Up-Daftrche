@@ -1,0 +1,146 @@
+/* ═══ Worlds — the five earned themes ═══
+   Each world is a small place the notebook sits in, drawn only from CSS and a
+   few data-URI shapes — no images to download, nothing that outlives the theme.
+   Art goes on html::before and html::after (z-index -1, fixed, pointer-events
+   none); body::before / ::after belong to the dock fade and the paper grain, so
+   they are never touched. Anything that moves is a transform on a fixed layer,
+   which the compositor animates without repainting the page, and every loop is
+   switched off for «reduce motion» (system or in-app) and while the tab is
+   hidden. Contrast is measured on the solid palette in css/base.css; the art
+   never sits under text that is not on a surface. */
+
+html[data-theme="shabgard"]::before,html[data-theme="shabgard"]::after,
+html[data-theme="tarnama"]::before,html[data-theme="tarnama"]::after,
+html[data-theme="fazanavard"]::before,html[data-theme="fazanavard"]::after,
+html[data-theme="baghche"]::before,html[data-theme="baghche"]::after,
+html[data-theme="daryanavard"]::before,html[data-theme="daryanavard"]::after{
+  content:'';position:fixed;pointer-events:none;z-index:-1}
+
+/* ── شب‌گرد: a rainy skyline, a projector in the corner ── */
+html[data-theme="shabgard"]::before{
+  inset:auto 0 0 0;height:200px;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='480' height='200' viewBox='0 0 480 200'%3E%3Cg fill='%252311131b'%3E%3Crect x='0' y='110' width='44' height='90'/%3E%3Crect x='46' y='140' width='28' height='60'/%3E%3Crect x='78' y='80' width='28' height='120'/%3E%3Crect x='110' y='20' width='28' height='180'/%3E%3Crect x='138' y='140' width='28' height='60'/%3E%3Crect x='168' y='140' width='52' height='60'/%3E%3Crect x='220' y='20' width='28' height='180'/%3E%3Crect x='250' y='130' width='28' height='70'/%3E%3Crect x='282' y='110' width='28' height='90'/%3E%3Crect x='314' y='140' width='60' height='60'/%3E%3Crect x='378' y='50' width='60' height='150'/%3E%3Crect x='438' y='140' width='36' height='60'/%3E%3Crect x='478' y='80' width='36' height='120'/%3E%3C/g%3E%3Crect x='77' y='139' width='3' height='4' fill='%2523f2c230' fill-opacity='.55'/%3E%3Crect x='64' y='143' width='3' height='4' fill='%2523f2c230' fill-opacity='.55'/%3E%3Crect x='161' y='141' width='3' height='4' fill='%2523f2c230' fill-opacity='.55'/%3E%3Crect x='421' y='157' width='3' height='4' fill='%2523f2c230' fill-opacity='.55'/%3E%3Crect x='96' y='83' width='3' height='4' fill='%2523f2c230' fill-opacity='.55'/%3E%3Crect x='301' y='143' width='3' height='4' fill='%2523f2c230' fill-opacity='.55'/%3E%3Crect x='331' y='94' width='3' height='4' fill='%2523f2c230' fill-opacity='.55'/%3E%3Crect x='194' y='82' width='3' height='4' fill='%2523f2c230' fill-opacity='.55'/%3E%3Crect x='284' y='161' width='3' height='4' fill='%2523f2c230' fill-opacity='.55'/%3E%3Crect x='36' y='142' width='3' height='4' fill='%2523f2c230' fill-opacity='.55'/%3E%3Crect x='34' y='149' width='3' height='4' fill='%2523f2c230' fill-opacity='.55'/%3E%3Crect x='109' y='133' width='3' height='4' fill='%2523f2c230' fill-opacity='.55'/%3E%3Crect x='352' y='138' width='3' height='4' fill='%2523f2c230' fill-opacity='.55'/%3E%3Crect x='222' y='169' width='3' height='4' fill='%2523f2c230' fill-opacity='.55'/%3E%3Crect x='164' y='129' width='3' height='4' fill='%2523f2c230' fill-opacity='.55'/%3E%3Crect x='303' y='188' width='3' height='4' fill='%2523f2c230' fill-opacity='.55'/%3E%3Crect x='236' y='116' width='3' height='4' fill='%2523f2c230' fill-opacity='.55'/%3E%3Crect x='157' y='101' width='3' height='4' fill='%2523f2c230' fill-opacity='.55'/%3E%3Crect x='410' y='93' width='3' height='4' fill='%2523f2c230' fill-opacity='.55'/%3E%3Crect x='361' y='169' width='3' height='4' fill='%2523f2c230' fill-opacity='.55'/%3E%3Crect x='128' y='80' width='3' height='4' fill='%2523f2c230' fill-opacity='.55'/%3E%3Crect x='298' y='108' width='3' height='4' fill='%2523f2c230' fill-opacity='.55'/%3E%3Crect x='272' y='133' width='3' height='4' fill='%2523f2c230' fill-opacity='.55'/%3E%3Crect x='452' y='113' width='3' height='4' fill='%2523f2c230' fill-opacity='.55'/%3E%3Crect x='377' y='127' width='3' height='4' fill='%2523f2c230' fill-opacity='.55'/%3E%3Crect x='151' y='147' width='3' height='4' fill='%2523f2c230' fill-opacity='.55'/%3E%3Crect x='41' y='85' width='3' height='4' fill='%2523f2c230' fill-opacity='.55'/%3E%3Crect x='266' y='123' width='3' height='4' fill='%2523f2c230' fill-opacity='.55'/%3E%3Crect x='88' y='166' width='3' height='4' fill='%2523f2c230' fill-opacity='.55'/%3E%3Crect x='179' y='89' width='3' height='4' fill='%2523f2c230' fill-opacity='.55'/%3E%3Crect x='254' y='123' width='3' height='4' fill='%2523f2c230' fill-opacity='.55'/%3E%3Crect x='24' y='155' width='3' height='4' fill='%2523f2c230' fill-opacity='.55'/%3E%3Crect x='43' y='167' width='3' height='4' fill='%2523f2c230' fill-opacity='.55'/%3E%3Crect x='289' y='143' width='3' height='4' fill='%2523f2c230' fill-opacity='.55'/%3E%3Crect x='408' y='182' width='3' height='4' fill='%2523f2c230' fill-opacity='.55'/%3E%3Crect x='422' y='110' width='3' height='4' fill='%2523f2c230' fill-opacity='.55'/%3E%3Crect x='178' y='158' width='3' height='4' fill='%2523f2c230' fill-opacity='.55'/%3E%3Crect x='183' y='146' width='3' height='4' fill='%2523f2c230' fill-opacity='.55'/%3E%3Crect x='258' y='144' width='3' height='4' fill='%2523f2c230' fill-opacity='.55'/%3E%3Crect x='412' y='128' width='3' height='4' fill='%2523f2c230' fill-opacity='.55'/%3E%3Crect x='39' y='177' width='3' height='4' fill='%2523f2c230' fill-opacity='.55'/%3E%3Crect x='51' y='190' width='3' height='4' fill='%2523f2c230' fill-opacity='.55'/%3E%3Crect x='142' y='130' width='3' height='4' fill='%2523f2c230' fill-opacity='.55'/%3E%3Crect x='360' y='155' width='3' height='4' fill='%2523f2c230' fill-opacity='.55'/%3E%3Crect x='37' y='77' width='3' height='4' fill='%2523f2c230' fill-opacity='.55'/%3E%3Crect x='378' y='159' width='3' height='4' fill='%2523f2c230' fill-opacity='.55'/%3E%3C/svg%3E") repeat-x bottom/480px 200px;
+  -webkit-mask-image:linear-gradient(to top,#000 40%,transparent);mask-image:linear-gradient(to top,#000 40%,transparent)}
+html[data-theme="shabgard"] body{background-image:radial-gradient(70% 38% at 88% -4%,rgba(242,194,48,.14) 0,transparent 70%);background-attachment:fixed}
+html[data-theme="shabgard"]::after{
+  inset:-120px 0 0 0;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120' viewBox='0 0 120 120'%3E%3Cg stroke='%2523b9c4e6' stroke-opacity='.35' stroke-width='1' stroke-linecap='round'%3E%3Cline x1='14' y1='6' x2='8' y2='28'/%3E%3Cline x1='52' y1='40' x2='46' y2='62'/%3E%3Cline x1='96' y1='12' x2='90' y2='34'/%3E%3Cline x1='30' y1='70' x2='24' y2='92'/%3E%3Cline x1='78' y1='86' x2='72' y2='108'/%3E%3Cline x1='110' y1='58' x2='104' y2='80'/%3E%3Cline x1='8' y1='104' x2='2' y2='126'/%3E%3Cline x1='64' y1='112' x2='58' y2='134'/%3E%3C/g%3E%3C/svg%3E") repeat 0 0/120px 120px;opacity:.55;
+  animation:worldRain .8s linear infinite;will-change:transform}
+@keyframes worldRain{to{transform:translate3d(-14px,120px,0)}}
+
+/* ── تارنما: a web in the corner, comic dots fading in from the edge ── */
+html[data-theme="tarnama"]::before{
+  inset:0 auto auto 0;width:260px;height:260px;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260' viewBox='0 0 260 260'%3E%3Cg fill='none' stroke='%25231e40af' stroke-opacity='.16' stroke-width='1.1'%3E%3Cline x1='0' y1='0' x2='260.0' y2='0.0'/%3E%3Cline x1='0' y1='0' x2='251.1' y2='67.3'/%3E%3Cline x1='0' y1='0' x2='225.2' y2='130.0'/%3E%3Cline x1='0' y1='0' x2='183.8' y2='183.8'/%3E%3Cline x1='0' y1='0' x2='130.0' y2='225.2'/%3E%3Cline x1='0' y1='0' x2='67.3' y2='251.1'/%3E%3Cline x1='0' y1='0' x2='0.0' y2='260.0'/%3E%3Cpath d='M40.0 0.0 Q36.6 4.8 38.6 10.4'/%3E%3Cpath d='M38.6 10.4 Q34.1 14.1 34.6 20.0'/%3E%3Cpath d='M34.6 20.0 Q29.3 22.5 28.3 28.3'/%3E%3Cpath d='M28.3 28.3 Q22.5 29.3 20.0 34.6'/%3E%3Cpath d='M20.0 34.6 Q14.1 34.1 10.4 38.6'/%3E%3Cpath d='M10.4 38.6 Q4.8 36.6 0.0 40.0'/%3E%3Cpath d='M80.0 0.0 Q73.1 9.6 77.3 20.7'/%3E%3Cpath d='M77.3 20.7 Q68.1 28.2 69.3 40.0'/%3E%3Cpath d='M69.3 40.0 Q58.5 44.9 56.6 56.6'/%3E%3Cpath d='M56.6 56.6 Q44.9 58.5 40.0 69.3'/%3E%3Cpath d='M40.0 69.3 Q28.2 68.1 20.7 77.3'/%3E%3Cpath d='M20.7 77.3 Q9.6 73.1 0.0 80.0'/%3E%3Cpath d='M120.0 0.0 Q109.7 14.4 115.9 31.1'/%3E%3Cpath d='M115.9 31.1 Q102.2 42.3 103.9 60.0'/%3E%3Cpath d='M103.9 60.0 Q87.8 67.4 84.9 84.9'/%3E%3Cpath d='M84.9 84.9 Q67.4 87.8 60.0 103.9'/%3E%3Cpath d='M60.0 103.9 Q42.3 102.2 31.1 115.9'/%3E%3Cpath d='M31.1 115.9 Q14.4 109.7 0.0 120.0'/%3E%3Cpath d='M160.0 0.0 Q146.3 19.3 154.5 41.4'/%3E%3Cpath d='M154.5 41.4 Q136.3 56.5 138.6 80.0'/%3E%3Cpath d='M138.6 80.0 Q117.0 89.8 113.1 113.1'/%3E%3Cpath d='M113.1 113.1 Q89.8 117.0 80.0 138.6'/%3E%3Cpath d='M80.0 138.6 Q56.5 136.3 41.4 154.5'/%3E%3Cpath d='M41.4 154.5 Q19.3 146.3 0.0 160.0'/%3E%3Cpath d='M200.0 0.0 Q182.8 24.1 193.2 51.8'/%3E%3Cpath d='M193.2 51.8 Q170.4 70.6 173.2 100.0'/%3E%3Cpath d='M173.2 100.0 Q146.3 112.3 141.4 141.4'/%3E%3Cpath d='M141.4 141.4 Q112.3 146.3 100.0 173.2'/%3E%3Cpath d='M100.0 173.2 Q70.6 170.4 51.8 193.2'/%3E%3Cpath d='M51.8 193.2 Q24.1 182.8 0.0 200.0'/%3E%3Cpath d='M240.0 0.0 Q219.4 28.9 231.8 62.1'/%3E%3Cpath d='M231.8 62.1 Q204.4 84.7 207.8 120.0'/%3E%3Cpath d='M207.8 120.0 Q175.6 134.7 169.7 169.7'/%3E%3Cpath d='M169.7 169.7 Q134.7 175.6 120.0 207.8'/%3E%3Cpath d='M120.0 207.8 Q84.7 204.4 62.1 231.8'/%3E%3Cpath d='M62.1 231.8 Q28.9 219.4 0.0 240.0'/%3E%3C/g%3E%3C/svg%3E") no-repeat 0 0/260px 260px}
+html[data-theme="tarnama"]::after{
+  inset:auto 0 0 auto;width:70vw;height:46vh;
+  background:radial-gradient(circle,rgba(214,35,47,.13) 1.2px,transparent 1.7px) 0 0/14px 14px;
+  -webkit-mask-image:radial-gradient(circle at 100% 100%,#000 0,transparent 70%);
+  mask-image:radial-gradient(circle at 100% 100%,#000 0,transparent 70%)}
+
+/* ── فضانورد: two star fields, one of them breathing; a violet planet-glow ── */
+html[data-theme="fazanavard"] body{background-image:radial-gradient(60% 34% at 10% 2%,rgba(139,92,246,.30) 0,transparent 70%),radial-gradient(50% 30% at 96% 40%,rgba(98,224,208,.10) 0,transparent 70%);background-attachment:fixed}
+html[data-theme="fazanavard"]::before{
+  inset:0;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Ccircle cx='64' cy='155' r='2' fill='%2523eef0ff' fill-opacity='0.75'/%3E%3Ccircle cx='37' cy='98' r='2' fill='%2523eef0ff' fill-opacity='0.75'/%3E%3Ccircle cx='125' cy='164' r='2' fill='%2523eef0ff' fill-opacity='0.75'/%3E%3Ccircle cx='20' cy='159' r='1.1' fill='%2523eef0ff' fill-opacity='0.75'/%3E%3Ccircle cx='124' cy='70' r='2' fill='%2523eef0ff' fill-opacity='0.75'/%3E%3Ccircle cx='63' cy='53' r='2' fill='%2523eef0ff' fill-opacity='0.75'/%3E%3Ccircle cx='124' cy='142' r='2' fill='%2523eef0ff' fill-opacity='0.75'/%3E%3Ccircle cx='125' cy='105' r='2' fill='%2523eef0ff' fill-opacity='0.75'/%3E%3Ccircle cx='42' cy='63' r='2' fill='%2523eef0ff' fill-opacity='0.75'/%3E%3Ccircle cx='42' cy='137' r='1' fill='%2523eef0ff' fill-opacity='0.75'/%3E%3Ccircle cx='193' cy='7' r='2' fill='%2523eef0ff' fill-opacity='0.75'/%3E%3Ccircle cx='202' cy='20' r='1.1' fill='%2523eef0ff' fill-opacity='0.75'/%3E%3Ccircle cx='198' cy='155' r='1.1' fill='%2523eef0ff' fill-opacity='0.75'/%3E%3Ccircle cx='81' cy='203' r='1.1' fill='%2523eef0ff' fill-opacity='0.75'/%3E%3Ccircle cx='214' cy='72' r='1' fill='%2523eef0ff' fill-opacity='0.75'/%3E%3Ccircle cx='156' cy='188' r='1' fill='%2523eef0ff' fill-opacity='0.75'/%3E%3Ccircle cx='186' cy='205' r='1' fill='%2523eef0ff' fill-opacity='0.75'/%3E%3Ccircle cx='105' cy='190' r='2' fill='%2523eef0ff' fill-opacity='0.75'/%3E%3Ccircle cx='117' cy='38' r='1' fill='%2523eef0ff' fill-opacity='0.75'/%3E%3Ccircle cx='28' cy='13' r='1.1' fill='%2523eef0ff' fill-opacity='0.75'/%3E%3Ccircle cx='130' cy='59' r='1' fill='%2523eef0ff' fill-opacity='0.75'/%3E%3Ccircle cx='176' cy='115' r='2' fill='%2523eef0ff' fill-opacity='0.75'/%3E%3Ccircle cx='81' cy='111' r='2' fill='%2523eef0ff' fill-opacity='0.75'/%3E%3Ccircle cx='102' cy='150' r='1' fill='%2523eef0ff' fill-opacity='0.75'/%3E%3Ccircle cx='140' cy='153' r='1' fill='%2523eef0ff' fill-opacity='0.75'/%3E%3Ccircle cx='153' cy='63' r='1' fill='%2523eef0ff' fill-opacity='0.75'/%3E%3C/svg%3E") 0 0/220px 220px,url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='340' height='340'%3E%3Ccircle cx='241' cy='317' r='1' fill='%2523eef0ff' fill-opacity='0.45'/%3E%3Ccircle cx='140' cy='74' r='1.1' fill='%2523eef0ff' fill-opacity='0.45'/%3E%3Ccircle cx='7' cy='177' r='2' fill='%2523eef0ff' fill-opacity='0.45'/%3E%3Ccircle cx='241' cy='313' r='1.1' fill='%2523eef0ff' fill-opacity='0.45'/%3E%3Ccircle cx='175' cy='287' r='2' fill='%2523eef0ff' fill-opacity='0.45'/%3E%3Ccircle cx='24' cy='198' r='1.1' fill='%2523eef0ff' fill-opacity='0.45'/%3E%3Ccircle cx='235' cy='220' r='1.1' fill='%2523eef0ff' fill-opacity='0.45'/%3E%3Ccircle cx='90' cy='125' r='1.1' fill='%2523eef0ff' fill-opacity='0.45'/%3E%3Ccircle cx='60' cy='71' r='2' fill='%2523eef0ff' fill-opacity='0.45'/%3E%3Ccircle cx='306' cy='36' r='2' fill='%2523eef0ff' fill-opacity='0.45'/%3E%3Ccircle cx='200' cy='56' r='1' fill='%2523eef0ff' fill-opacity='0.45'/%3E%3Ccircle cx='108' cy='118' r='2' fill='%2523eef0ff' fill-opacity='0.45'/%3E%3Ccircle cx='219' cy='48' r='1' fill='%2523eef0ff' fill-opacity='0.45'/%3E%3Ccircle cx='111' cy='207' r='1' fill='%2523eef0ff' fill-opacity='0.45'/%3E%3Ccircle cx='178' cy='26' r='1.1' fill='%2523eef0ff' fill-opacity='0.45'/%3E%3Ccircle cx='6' cy='214' r='1.1' fill='%2523eef0ff' fill-opacity='0.45'/%3E%3Ccircle cx='197' cy='255' r='1.1' fill='%2523eef0ff' fill-opacity='0.45'/%3E%3Ccircle cx='16' cy='125' r='1' fill='%2523eef0ff' fill-opacity='0.45'/%3E%3C/svg%3E") 60px 40px/340px 340px}
+html[data-theme="fazanavard"]::after{
+  inset:0;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260'%3E%3Ccircle cx='46' cy='111' r='2' fill='%2523eef0ff' fill-opacity='0.95'/%3E%3Ccircle cx='111' cy='166' r='1' fill='%2523eef0ff' fill-opacity='0.95'/%3E%3Ccircle cx='126' cy='219' r='1.1' fill='%2523eef0ff' fill-opacity='0.95'/%3E%3Ccircle cx='206' cy='125' r='2' fill='%2523eef0ff' fill-opacity='0.95'/%3E%3Ccircle cx='50' cy='133' r='2' fill='%2523eef0ff' fill-opacity='0.95'/%3E%3Ccircle cx='64' cy='205' r='1.1' fill='%2523eef0ff' fill-opacity='0.95'/%3E%3Ccircle cx='7' cy='98' r='2' fill='%2523eef0ff' fill-opacity='0.95'/%3E%3Ccircle cx='113' cy='21' r='1.1' fill='%2523eef0ff' fill-opacity='0.95'/%3E%3Ccircle cx='207' cy='196' r='1.1' fill='%2523eef0ff' fill-opacity='0.95'/%3E%3Ccircle cx='239' cy='63' r='2' fill='%2523eef0ff' fill-opacity='0.95'/%3E%3Ccircle cx='14' cy='115' r='2' fill='%2523eef0ff' fill-opacity='0.95'/%3E%3Ccircle cx='201' cy='228' r='1' fill='%2523eef0ff' fill-opacity='0.95'/%3E%3Ccircle cx='161' cy='117' r='1.1' fill='%2523eef0ff' fill-opacity='0.95'/%3E%3Ccircle cx='248' cy='88' r='2' fill='%2523eef0ff' fill-opacity='0.95'/%3E%3C/svg%3E") 20px 90px/260px 260px;
+  animation:worldTwinkle 4.5s ease-in-out infinite alternate}
+@keyframes worldTwinkle{from{opacity:.15}to{opacity:.85}}
+
+/* ── باغچه: leaves on the top of the page, morning sun from a corner ── */
+html[data-theme="baghche"] body{background-image:radial-gradient(60% 30% at 8% -6%,rgba(255,214,102,.30) 0,transparent 70%);background-attachment:fixed}
+html[data-theme="baghche"]::before{
+  inset:0 0 auto 0;height:60vh;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='72' height='72' viewBox='0 0 72 72'%3E%3Cg fill='%25233a7d44' fill-opacity='.10'%3E%3Cpath d='M18 30c0-10 8-16 18-16 0 10-8 18-18 16z'/%3E%3Cpath d='M50 62c0-8 6-13 14-13 0 8-6 14-14 13z'/%3E%3Ccircle cx='56' cy='18' r='2'/%3E%3Ccircle cx='10' cy='58' r='2'/%3E%3C/g%3E%3Cg stroke='%25233a7d44' stroke-opacity='.10' fill='none'%3E%3Cpath d='M18 30l12-10M50 62l10-9'/%3E%3C/g%3E%3C/svg%3E") repeat 0 0/72px 72px;
+  -webkit-mask-image:linear-gradient(to bottom,#000,transparent);mask-image:linear-gradient(to bottom,#000,transparent)}
+
+/* ── دریانورد: two slow waves along the bottom, sun glare in the corner ── */
+html[data-theme="daryanavard"] body{background-image:radial-gradient(50% 28% at 92% -4%,rgba(255,196,84,.28) 0,transparent 70%);background-attachment:fixed}
+html[data-theme="daryanavard"]::before{
+  inset:auto -200px 0 -200px;height:96px;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='48' viewBox='0 0 200 48'%3E%3Cpath d='M0 24 C 33 4, 67 4, 100 24 S 167 44, 200 24 V48 H0 Z' fill='%25230b6e99' fill-opacity='.12'/%3E%3C/svg%3E") repeat-x 0 bottom/200px 48px,url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='48' viewBox='0 0 200 48'%3E%3Cpath d='M0 30 C 33 12, 67 12, 100 30 S 167 48, 200 30 V48 H0 Z' fill='%25230b6e99' fill-opacity='.09'/%3E%3C/svg%3E") repeat-x 60px bottom/200px 48px;
+  animation:worldWave 18s linear infinite;will-change:transform}
+@keyframes worldWave{to{transform:translate3d(200px,0,0)}}
+
+/* ── Calm ── */
+@media (prefers-reduced-motion:reduce){
+  html[data-theme="shabgard"]::after{display:none}
+  html[data-theme="fazanavard"]::after,html[data-theme="daryanavard"]::before{animation:none}
+}
+html[data-motion="reduced"][data-theme="shabgard"]::after{display:none}
+html[data-motion="reduced"][data-theme="fazanavard"]::after,
+html[data-motion="reduced"][data-theme="daryanavard"]::before{animation:none}
+html.tab-hidden::before,html.tab-hidden::after{animation-play-state:paused!important}
+
+/* ═══ The world card on Today ═══
+   One flat card in the notebook's own language: the surface, the hairline, the
+   same radius as the other Today cards. Nothing glows; the art is the SVG. */
+.world-card{margin:0 0 14px;padding:14px 16px;border-radius:var(--radius-lg);
+  background:var(--color-surface);border:1px solid var(--color-border);
+  box-shadow:var(--shadow-1);display:grid;gap:10px}
+.world-card[hidden]{display:none}
+.wc-head{display:flex;align-items:center;gap:12px}
+.wc-ico{flex:none;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;
+  background:var(--color-accent-soft);color:var(--color-accent-text)}
+.wc-ico .ico{width:22px;height:22px}
+.wc-title{margin:0;font-family:var(--font-personality);font-size:16px;font-weight:700;line-height:1.5;color:var(--color-text-primary)}
+.wc-sub{margin:0;font-size:12.5px;line-height:1.8;color:var(--color-text-secondary)}
+.wc-actions{display:flex;gap:8px}
+.wc-btn{min-height:44px;padding:0 18px;border:none;border-radius:var(--radius-pill);cursor:pointer;
+  background:var(--color-accent);color:var(--color-text-on-accent);
+  font-family:var(--font-ui);font-size:13.5px;font-weight:700;
+  transition:transform var(--duration-fast) var(--ease-out)}
+.wc-btn:active{transform:scale(.97)}
+.wc-btn.is-quiet{background:transparent;color:var(--color-accent-text);border:1.5px solid var(--color-border-strong)}
+.wc-btn:focus-visible,.wc-step:focus-visible{outline:2px solid var(--color-focus);outline-offset:2px}
+
+/* تارنما */
+.wc-web{width:100%;max-width:230px;justify-self:center;overflow:visible}
+.wc-grid{stroke:var(--color-border-strong);stroke-width:1;fill:none}
+.wc-shape{fill:var(--color-accent-soft);stroke:var(--color-accent);stroke-width:2;stroke-linejoin:round;
+  animation:wcGrow var(--duration-slow) var(--ease-out);transform-origin:110px 92px}
+.wc-dots circle{fill:var(--color-accent)}
+.wc-labels text{fill:var(--color-text-secondary);font-size:11px;font-family:var(--font-ui)}
+@keyframes wcGrow{from{opacity:0;transform:scale(.6)}}
+
+/* فضانورد */
+.wc-orbit{position:relative;width:76px;height:76px;justify-self:center}
+.wc-orbit svg{width:100%;height:100%}
+.wc-orbit-bg{fill:none;stroke:var(--color-border-strong);stroke-width:4}
+.wc-orbit-fg{fill:none;stroke:var(--color-accent);stroke-width:4;stroke-linecap:round;transition:stroke-dasharray var(--duration-slow) var(--ease-out)}
+.wc-orbit span{position:absolute;inset:0;display:grid;place-items:center;font-size:13px;font-weight:700;color:var(--color-text-primary)}
+
+/* باغچه */
+.wc-plant{width:100px;height:100px;justify-self:center}
+.wc-soil{fill:var(--color-border-strong)}
+.wc-stem{stroke:var(--color-accent);stroke-width:2.4;fill:none;stroke-linecap:round}
+.wc-leaf{fill:var(--color-accent);fill-opacity:.85}
+.wc-seed{fill:var(--color-text-secondary)}
+.wc-bud{fill:var(--color-accent-text)}
+.wc-bloom ellipse{fill:var(--tape);stroke:var(--color-accent-text);stroke-width:1}
+.wc-core{fill:var(--color-accent-text)}
+.wc-plant>*{animation:wcGrow var(--duration-slow) var(--ease-out);transform-origin:32px 54px}
+.wc-plant.stage-4 .wc-bloom{animation:wcBloom 1.4s ease-in-out infinite alternate;transform-origin:32px 22px}
+@keyframes wcBloom{to{transform:rotate(6deg) scale(1.04)}}
+
+/* دریانورد */
+.wc-sea{width:100%;height:auto;overflow:hidden}
+.wc-wave{fill:var(--color-accent-soft)}
+.wc-port{stroke:var(--color-text-secondary);stroke-width:1.8;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.wc-ship{fill:var(--color-surface);stroke:var(--color-accent-text);stroke-width:1.8;stroke-linejoin:round;stroke-linecap:round;
+  transition:transform var(--duration-slow) var(--ease-out)}
+.wc-ship path:first-child{fill:var(--color-accent-soft)}
+.wc-goal{display:flex;align-items:center;justify-content:center;gap:10px;font-size:12.5px;color:var(--color-text-secondary)}
+.wc-goal b{min-width:2ch;text-align:center;font-size:15px;color:var(--color-text-primary)}
+.wc-step{width:44px;height:44px;border-radius:50%;border:1.5px solid var(--color-border-strong);background:transparent;
+  color:var(--color-text-primary);font-size:18px;line-height:1;cursor:pointer}
+.wc-step:active{transform:scale(.94)}
+
+@media (prefers-reduced-motion:reduce){
+  .wc-shape,.wc-plant>*,.wc-plant.stage-4 .wc-bloom{animation:none}
+  .wc-ship,.wc-orbit-fg,.wc-btn,.wc-step{transition:none}
+}
+html[data-motion="reduced"] .wc-shape,html[data-motion="reduced"] .wc-plant>*,
+html[data-motion="reduced"] .wc-plant.stage-4 .wc-bloom{animation:none}

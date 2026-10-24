@@ -13,7 +13,7 @@
    it here. */
 .avatar-big{width:104px;height:104px;border-radius:50%;border:2.5px dashed var(--accent);background:var(--bg);cursor:pointer;overflow:hidden;position:relative;transition:transform var(--duration-base),box-shadow var(--duration-base),border-color var(--duration-base);padding:0}
 .avatar-big svg,.avatar-big img{width:100%;height:100%;object-fit:cover;display:block}
-.avatar-big.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;background:var(--accent-soft);color:var(--accent)}
+.avatar-big.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;background:var(--accent-soft);color:var(--accent-text)}
 .avatar-big.empty::after{content:none}
 .avatar-big .ph-ico{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
 .avatar-big .ph-txt{font-size:11px;font-weight:700;line-height:1.4;color:var(--accent)}

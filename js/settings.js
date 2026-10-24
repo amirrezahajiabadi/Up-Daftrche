@@ -20,6 +20,8 @@ import { clearLibraryData, exportBookPack, importBookPack } from './library.js';
 import { clearUserAudioData } from './audio.js';
 import { renderBirthdayRow } from './birthday.js';
 import { openShortcuts } from './shortcuts.js';
+import { TEXT_SIZES, loadTextSize, saveTextSize } from './textsize.js';
+import { markBackupDone } from './backup-nudge.js';
 import { collectBackup, parseBackup, applyBackup, mergeBackup, backupFileName, BACKUP_MAX_CHARS } from './backup.js';
 import { confirmDialog, showNotice } from './dialog.js';
 import { clearAll } from './store.js';
@@ -134,6 +136,24 @@ export function initSettings() {
   }
   renderMotionRow();
 
+  /* Text size: three radio buttons in the same segmented control the theme
+     picker uses; the choice applies at once. */
+  const seg = $('#textSizeSeg');
+  if (seg) {
+    const paint = () => {
+      const cur = loadTextSize();
+      seg.replaceChildren(...TEXT_SIZES.map(s => {
+        const b = document.createElement('button');
+        b.type = 'button'; b.className = 'seg-btn' + (s.id === cur ? ' sel' : '');
+        b.setAttribute('role', 'radio'); b.setAttribute('aria-checked', String(s.id === cur));
+        b.textContent = s.label;
+        b.addEventListener('click', () => { saveTextSize(s.id); paint(); });
+        return b;
+      }));
+    };
+    paint();
+  }
+
   /* ── Backup ──
      Export writes every daftarche-* key to one JSON file; import validates a
      file completely before touching anything, then asks how it should land —
@@ -154,6 +174,7 @@ export function initSettings() {
       a.click();
       a.remove();
       setTimeout(() => URL.revokeObjectURL(url), 10000);
+      markBackupDone();
       say('پشتیبان ساخته شد؛ فایل رو یه جای امن نگه دار.');
     } catch {
       say('ساختن پشتیبان نشد. دوباره امتحان کن.');

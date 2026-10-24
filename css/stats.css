@@ -21,7 +21,7 @@
 .stat-range-btn{position:relative;border:none;background:transparent;font-family:var(--font-ui);font-size:12.5px;
   font-weight:600;color:var(--muted);padding:9px 2px;border-radius:var(--radius-xs);cursor:pointer;min-width:0;
   transition:color var(--duration-base),background var(--duration-base)}
-.stat-range-btn.sel{color:#fff;background:var(--accent)}
+.stat-range-btn.sel{color:var(--color-text-on-accent);background:var(--accent)}
 .stat-range-btn:focus-visible{outline:2px solid var(--color-focus);outline-offset:2px}
 
 /* ── The card the reader can take away ──
@@ -203,7 +203,7 @@
 .share-actions button{flex:1;min-height:46px;border-radius:var(--radius-sm);font-family:var(--font-ui);
   font-size:13.5px;font-weight:600;cursor:pointer;transition:transform var(--duration-fast)}
 .share-actions button:active{transform:translateY(1px)}
-.share-go{border:none;background:var(--accent);color:#fff}
+.share-go{border:none;background:var(--accent);color:var(--color-text-on-accent)}
 .share-go[hidden]{display:none}
 .share-ghost{border:1.5px solid var(--border);background:transparent;color:var(--text)}
 .share-go:focus-visible,.share-ghost:focus-visible{outline:2px solid var(--color-focus);outline-offset:2px}

@@ -166,14 +166,13 @@ export const ACHIEVEMENTS = [
   { id: 'first-book', family: 'start', kind: 'base', icon: 'spine', title: 'کتابِ تمام‌شده', unit: 'کتاب',
     how: 'یک کتاب را تمام کن', tiers: [1, 3, 10, 25], value: t => t.read.booksDone },
   { id: 'tour-intro', family: 'start', kind: 'base', icon: 'compass', title: 'آشنایی با دفترچه', unit: 'بار',
-    how: 'تور راهنمای دفترچه را تمام کن', tiers: [1], value: t => t.tourDone,
-    rewards: ['theme:lilac'] },
+    how: 'تور راهنمای دفترچه را تمام کن', tiers: [1], value: t => t.tourDone },
 
   /* ── پیوستگی: the days themselves ── */
   { id: 'chain', family: 'streak', kind: 'base', icon: 'flame', title: 'پشت‌سرهم', unit: 'روز',
-    how: 'روزهای پیاپی را بلند کن', tiers: [3, 7, 30, 100], value: t => t.bestStreak },
+    how: 'روزهای پیاپی را بلند کن', tiers: [3, 7, 30, 100], value: t => t.bestStreak , rewards: [{ id: 'theme:tarnama', tier: 2 }] },
   { id: 'active-days', family: 'streak', kind: 'base', icon: 'sprout', title: 'روزِ کار', unit: 'روز',
-    how: 'روزهایی که دفترچه باز شده', tiers: [7, 30, 100, 365], value: t => t.activeDays },
+    how: 'روزهایی که دفترچه باز شده', tiers: [7, 30, 100, 365], value: t => t.activeDays , rewards: [{ id: 'theme:baghche', tier: 2 }] },
   { id: 'clean-weeks', family: 'streak', kind: 'skilled', icon: 'wipe', title: 'هفتهٔ منظم', unit: 'هفته',
     how: 'هفته‌هایی با ۵ روز فعال یا بیشتر', tiers: [4, 12, 52], value: t => t.consistency.weeksClean },
   { id: 'returned', family: 'streak', kind: 'skilled', icon: 'return', title: 'برگشتم', unit: 'بار',
@@ -194,7 +193,7 @@ export const ACHIEVEMENTS = [
 
   /* ── تمرکز ── */
   { id: 'focus-minutes', family: 'focus', kind: 'base', icon: 'beam', title: 'کانون', unit: 'دقیقه',
-    how: 'دقیقه‌های تمرکز را جمع کن', tiers: [60, 600, 3000, 10000], value: t => t.focus.minutes },
+    how: 'دقیقه‌های تمرکز را جمع کن', tiers: [60, 600, 3000, 10000], value: t => t.focus.minutes , rewards: [{ id: 'theme:fazanavard', tier: 2 }] },
   { id: 'long-session', family: 'focus', kind: 'base', icon: 'longhand', title: 'جلسهٔ بلند', unit: 'دقیقه',
     how: 'یک نشست طولانی‌تر بگذار', tiers: [25, 50, 90, 150], value: t => t.focus.longest },
   { id: 'focus-weeks', family: 'focus', kind: 'skilled', icon: 'five', title: 'هفتهٔ تمرکز', unit: 'هفته',
@@ -206,7 +205,7 @@ export const ACHIEVEMENTS = [
   { id: 'read-minutes', family: 'read', kind: 'base', icon: 'reading', title: 'دقیقهٔ خواندن', unit: 'دقیقه',
     how: 'مطالعه کن', tiers: [60, 600, 3000, 10000], value: t => t.read.minutes },
   { id: 'pages', family: 'read', kind: 'base', icon: 'flip', title: 'صفحه‌خوان', unit: 'صفحه',
-    how: 'صفحه ورق بزن', tiers: [100, 1000, 5000, 20000], value: t => t.read.pages },
+    how: 'صفحه ورق بزن', tiers: [100, 1000, 5000, 20000], value: t => t.read.pages , rewards: [{ id: 'theme:daryanavard', tier: 1 }] },
   { id: 'shelf', family: 'read', kind: 'skilled', icon: 'shelf', title: 'قفسه‌ساز', unit: 'کتاب',
     how: 'کتاب‌هایی که به کتابخانه اضافه می‌کنی', tiers: [3, 10, 30], value: t => t.read.books },
   { id: 'finished', family: 'read', kind: 'skilled', icon: 'volume', title: 'کتابِ بسته', unit: 'کتاب',
@@ -224,7 +223,7 @@ export const ACHIEVEMENTS = [
   { id: 'early-bird', family: 'legend', kind: 'legend', icon: 'dawn', title: 'سحرخیز', unit: 'بار',
     how: 'کار قبل از ۷ صبح تیک بزن', tiers: [5, 20, 60], value: t => t.task.morning },
   { id: 'night-owl', family: 'legend', kind: 'legend', icon: 'moon', title: 'شب‌زنده‌دار', unit: 'بار',
-    how: 'بعد از نیمه‌شب تمرکز کن', tiers: [3, 10, 30], value: t => t.focus.dawn },
+    how: 'بعد از نیمه‌شب تمرکز کن', tiers: [3, 10, 30], value: t => t.focus.dawn , rewards: [{ id: 'theme:shabgard', tier: 1 }] },
   { id: 'dragon', family: 'legend', kind: 'legend', icon: 'dragon', title: 'اژدها', unit: 'روز',
     how: 'روزی ۳۰۰ دقیقه تمرکز، تمرکز است', tiers: [1, 5, 20], value: t => t.focus.bigDays },
   { id: 'record-breaker', family: 'legend', kind: 'legend', icon: 'flag', title: 'رکوردشکن', unit: 'بار',
@@ -237,12 +236,18 @@ export const ACHIEVEMENTS = [
    An achievement can open one or more things outside the shelf. The catalogue
    stores stable reward ids; this table owns how each reward is described and
    lets future features use the same lock, picker and celebration contract. */
+/* The five worlds are the rewards: each theme opens with one badge's tier, and
+   its entry here owns the words for the lock and for the moment it opens. The
+   contract is the same one any future reward (a card style, a scene) uses. */
+const world = (key, label, lockedText, unlockText) => Object.freeze({
+  id: `theme:${key}`, kind: 'theme', key, label, area: 'settings', lockedText, unlockText,
+});
 export const REWARDS = Object.freeze({
-  'theme:lilac': Object.freeze({
-    id: 'theme:lilac', kind: 'theme', key: 'lilac', label: 'یاسی', area: 'settings',
-    lockedText: 'هنوز تنونستی "یاسی" رو بدست بیاری!',
-    unlockText: 'تم «یاسی» در بخش تنظیمات برات باز شد!',
-  }),
+  'theme:shabgard':    world('shabgard', 'شب‌گرد', 'سه بار بعد از نیمه‌شب تمرکز کن.', 'دنیای «شب‌گرد» برات باز شد! گشت شبانه توی صفحهٔ امروز منتظرته.'),
+  'theme:tarnama':     world('tarnama', 'تارنما', 'هفت روز پشت‌سرهم دفترچه رو باز کن.', 'دنیای «تارنما» برات باز شد! تار هفته توی صفحهٔ امروز می‌تنه.'),
+  'theme:fazanavard':  world('fazanavard', 'فضانورد', 'ده ساعت تمرکز جمع کن.', 'دنیای «فضانورد» برات باز شد! دفتر پرواز توی صفحهٔ امروز ثبت می‌شه.'),
+  'theme:baghche':     world('baghche', 'باغچه', 'سی روز با دفترچه باش.', 'دنیای «باغچه» برات باز شد! گلدان امروزت منتظر آب‌دادنه.'),
+  'theme:daryanavard': world('daryanavard', 'دریانورد', 'صد صفحه کتاب بخون.', 'دنیای «دریانورد» برات باز شد! کشتیِ هدف هفته آماده حرکته.'),
 });
 
 export const rewardOf = id => REWARDS[id] || null;

@@ -93,18 +93,39 @@ test('the tour achievement opens only after the tour is marked complete', () => 
   assert.equal(row.complete, true);
 });
 
-test('achievement rewards are generic and unlock from the earned tier', () => {
-  const tour = A.byId('tour-intro');
-  assert.deepEqual(A.rewardsOf(tour).map(reward => reward.id), ['theme:lilac']);
-  assert.equal(A.hasReward(A.emptyState(), 'theme:lilac'), false);
-  assert.equal(A.hasReward(A.normalizeState({
-    baselineAt: '2026-09-01',
-    unlocked: { 'tour-intro': { tier: 1, at: '2026-09-02' } },
-  }), 'theme:lilac'), true);
-  assert.equal(A.rewardFor('theme', 'lilac').lockedText, 'هنوز تنونستی "یاسی" رو بدست بیاری!');
-  assert.deepEqual(A.rewardsOf({ rewards: [{ id: 'theme:lilac', tier: 2 }] }, 1), []);
-  assert.equal(A.rewardsOf({ rewards: [{ id: 'theme:lilac', tier: 2 }] }, 2).length, 1);
+const WORLDS = {
+  shabgard: ['night-owl', 1], tarnama: ['chain', 2], fazanavard: ['focus-minutes', 2],
+  baghche: ['active-days', 2], daryanavard: ['pages', 1],
+};
+
+test('each world theme is a reward of one badge tier, and not earned by default', () => {
+  for (const [key, [badge, tier]] of Object.entries(WORLDS)) {
+    const id = `theme:${key}`;
+    assert.deepEqual(A.rewardRequirements(id).map(r => [r.achievement.id, r.tier]), [[badge, tier]], key);
+    assert.equal(A.hasReward(A.emptyState(), id), false);
+    assert.equal(A.hasReward(A.normalizeState({
+      baselineAt: '2026-09-01', unlocked: { [badge]: { tier, at: '2026-09-02' } },
+    }), id), true);
+    /* one rung short is still locked */
+    if (tier > 1) assert.equal(A.hasReward(A.normalizeState({
+      baselineAt: '2026-09-01', unlocked: { [badge]: { tier: tier - 1, at: '2026-09-02' } },
+    }), id), false);
+    const r = A.rewardFor('theme', key);
+    assert.ok(r.lockedText.length > 10 && r.unlockText.length > 10, key);
+  }
   assert.equal(A.hasReward(A.emptyState(), 'unknown-reward'), false);
+});
+
+test('only the five worlds are gated; the six everyday themes are always open', () => {
+  for (const k of ['kashi', 'cobalt', 'aurora', 'lajvard', 'graphite', 'nightglass']) assert.equal(T.isThemeUnlocked(k), true, k);
+  for (const k of Object.keys(WORLDS)) assert.equal(T.isThemeUnlocked(k), false, k);
+  S.saveThemeModes({ light: 'tarnama', dark: 'shabgard' });
+  assert.equal(T.applyTheme('shabgard'), false);
+  assert.equal(T.themeForMode('light'), 'kashi');
+  S.saveAchv(A.normalizeState({ unlocked: { chain: { tier: 2, at: '2026-09-02' } } }));
+  assert.equal(T.isThemeUnlocked('tarnama'), true);
+  assert.equal(T.themeForMode('light'), 'tarnama');
+  assert.equal(T.isThemeUnlocked('shabgard'), false);
 });
 
 test('declining a tour suppresses its offer without earning its achievement', () => {
@@ -113,20 +134,6 @@ test('declining a tour suppresses its offer without earning its achievement', ()
   assert.equal(S.loadTourAwarded(), false);
   S.saveTourAwarded();
   assert.equal(S.loadTourAwarded(), true);
-});
-
-test('only the rewarded theme is gated, including remembered theme choices', () => {
-  S.saveThemeModes({ light: 'lilac', dark: 'night' });
-  assert.equal(T.isThemeUnlocked('paper'), true);
-  assert.equal(T.isThemeUnlocked('night'), true);
-  assert.equal(T.isThemeUnlocked('lilac'), false);
-  assert.equal(T.applyTheme('lilac'), false);
-  assert.equal(T.themeForMode('light'), 'paper');
-  S.saveAchv(A.normalizeState({
-    unlocked: { 'tour-intro': { tier: 1, at: '2026-09-02' } },
-  }));
-  assert.equal(T.isThemeUnlocked('lilac'), true);
-  assert.equal(T.themeForMode('light'), 'lilac');
 });
 
 test('badges with a minimum sample stay at 0 until it is met (on-time needs 20 dated ticks)', () => {

@@ -51,8 +51,8 @@ const isTodayPending = t => {
   return !!t.created && dayKey(new Date(t.created)) === dayKey(new Date());
 };
 const isDoneToday = t => !!t && !!t.done && !!t.doneAt && dayKey(new Date(t.doneAt)) === dayKey(new Date());
-const todayPending = () => state.tasks.filter(isTodayPending);
-const todayDone = () => state.tasks.filter(isDoneToday);
+export const todayPending = () => state.tasks.filter(isTodayPending);
+export const todayDone = () => state.tasks.filter(isDoneToday);
 
 /* ── Header: greeting, date, summary ── */
 function renderHeader() {

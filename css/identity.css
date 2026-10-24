@@ -1,0 +1,18 @@
+/* ═══ Identity — the tile family («فیروزه» and «لاجورد») ═══
+   The one decoration the app wears on purpose: a faint eight-pointed star, the
+   shape under every tiled dome, repeated in a thin line across the top of each
+   page and fading out before the content starts to matter. It is a background,
+   never an element — nothing sits on it that needs to be read against it at
+   less than the contrast floors, and it paints nothing at all in the clean and
+   glass families. The star's colour is the theme's own accent at a whisper. */
+
+html[data-theme="kashi"]::before,
+html[data-theme="lajvard"]::before{
+  content:'';position:fixed;inset:0 0 auto 0;height:62vh;z-index:-1;pointer-events:none;
+  background-size:56px 56px;background-repeat:repeat;
+  -webkit-mask-image:linear-gradient(to bottom,#000 0,transparent 100%);
+  mask-image:linear-gradient(to bottom,#000 0,transparent 100%)}
+html[data-theme="kashi"]::before{
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='56' viewBox='0 0 56 56'%3E%3Cg fill='none' stroke='%230e7c86' stroke-opacity='.08' stroke-width='1.2'%3E%3Crect x='14' y='14' width='28' height='28'/%3E%3Crect x='14' y='14' width='28' height='28' transform='rotate(45 28 28)'/%3E%3Ccircle cx='28' cy='28' r='4'/%3E%3C/g%3E%3C/svg%3E")}
+html[data-theme="lajvard"]::before{
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='56' viewBox='0 0 56 56'%3E%3Cg fill='none' stroke='%233cc4cc' stroke-opacity='.07' stroke-width='1.2'%3E%3Crect x='14' y='14' width='28' height='28'/%3E%3Crect x='14' y='14' width='28' height='28' transform='rotate(45 28 28)'/%3E%3Ccircle cx='28' cy='28' r='4'/%3E%3C/g%3E%3C/svg%3E")}

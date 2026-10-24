@@ -38,20 +38,20 @@
      The default theme, and the same values the palette table holds as «روشن» —
      these point at them, so the interface and anything showing that palette
      (the theme picker's dot) can never disagree about what light is. */
-  --color-bg:var(--pal-paper-bg);
-  --color-surface:var(--pal-paper-surface);
-  --color-surface-elevated:var(--pal-paper-elev);
-  --color-text-primary:var(--pal-paper-text);
-  --color-text-secondary:var(--pal-paper-text2);
-  --color-text-muted:var(--pal-paper-muted);
-  --color-text-on-accent:var(--pal-paper-on-accent);
-  --color-border:var(--pal-paper-border);
-  --color-border-strong:var(--pal-paper-border-strong);
-  --color-accent:var(--pal-paper-accent);
-  --color-accent-soft:var(--pal-paper-accent-soft);
-  --color-accent-strong:var(--pal-paper-accent-strong);
-  --color-accent-text:var(--pal-paper-accent-text);
-  --color-focus:var(--pal-paper-accent);
+  --color-bg:var(--pal-kashi-bg);
+  --color-surface:var(--pal-kashi-surface);
+  --color-surface-elevated:var(--pal-kashi-elev);
+  --color-text-primary:var(--pal-kashi-text);
+  --color-text-secondary:var(--pal-kashi-text2);
+  --color-text-muted:var(--pal-kashi-muted);
+  --color-text-on-accent:var(--pal-kashi-on-accent);
+  --color-border:var(--pal-kashi-border);
+  --color-border-strong:var(--pal-kashi-border-strong);
+  --color-accent:var(--pal-kashi-accent);
+  --color-accent-soft:var(--pal-kashi-accent-soft);
+  --color-accent-strong:var(--pal-kashi-accent-strong);
+  --color-accent-text:var(--pal-kashi-accent-text);
+  --color-focus:var(--pal-kashi-accent);
 
   /* Meaning is not a fashion: success, warning and danger are the same three
      colours across the three daylight themes, and re-tuned once for the dark
@@ -88,8 +88,8 @@
   --border:var(--color-border);
 
   /* ── Organic identity layers (not global character palettes) ── */
-  --tape:var(--pal-paper-tape);
-  --glass:var(--pal-paper-glass);
+  --tape:var(--pal-kashi-tape);
+  --glass:var(--pal-kashi-glass);
   --glass-hover:var(--state-glass-hover);
 
   /* ── Spacing Scale: 4 / 8 / 12 / 16 / 24 / 32 / 48 ── */
@@ -166,192 +166,192 @@
      and the frosted tint the floating dock is cut from. Colours meaning success,
      warning or danger are deliberately not here — they are shared by mode. */
 
-  /* paper — the notebook's own paper, the theme this app was drawn in before it
-     had a table at all: #F6EFE3 with the orange it has always been written in,
-     #E05F28. It is in the table as a palette like the rest so the picker can
-     show the default as a colour rather than a promise — and so both halves of
-     that picker contain one of the app's own two themes.
+  /* «فیروزه» — the tile family: warm ivory paper under lapis ink, a turquoise accent and a saffron strip of tape. The default. */
+  --pal-kashi-bg:#f6f2e8;
+  --pal-kashi-surface:#fffdf7;
+  --pal-kashi-elev:#ffffff;
+  --pal-kashi-text:#18243f;
+  --pal-kashi-text2:#42506b;
+  --pal-kashi-muted:#545e75;
+  --pal-kashi-border:rgba(24,36,63,.10);
+  --pal-kashi-border-strong:rgba(24,36,63,.22);
+  --pal-kashi-accent:#0e7c86;
+  --pal-kashi-accent-strong:#0a5f69;
+  --pal-kashi-accent-soft:rgba(14,124,134,.13);
+  --pal-kashi-accent-text:#0a5f69;
+  --pal-kashi-tape:rgba(230,185,77,.55);
+  --pal-kashi-glass:rgba(255,253,247,.78);
+  --pal-kashi-on-accent:#ffffff;
 
-     Two of the original values moved a shade, and for the same reason: the paper
-     is untouched, but the ink on it had to clear the floors the other seven
-     palettes clear. The muted grey was #A79C8A (2.6:1 on the card surface) and is
-     #8F8574 (3.6:1). The orange was #F4703A, which reads at 2.5:1 on this paper —
-     and the accent is not decoration here, it carries the chosen tab's label and
-     every focus ring — so it is #E05F28: 3.2:1 on the paper and 4.8:1 for the ink
-     that sits on it, which is the same two-sided window the hexagon sits in.
-     Neither change is visible as a different colour; both are visible as text
-     that can be read. */
-  --pal-paper-bg:#f6efe3;
-  --pal-paper-surface:#fffcf5;
-  --pal-paper-elev:#ffffff;
-  --pal-paper-text:#2e2921;
-  --pal-paper-text2:#5d5548;
-  --pal-paper-muted:#71695b;
-  --pal-paper-border:rgba(80,60,30,.10);
-  --pal-paper-border-strong:rgba(80,60,30,.22);
-  --pal-paper-accent:#e05f28;
-  --pal-paper-accent-strong:#c04a18;
-  --pal-paper-accent-soft:rgba(224,95,40,.13);
-  --pal-paper-accent-text:#8f330c;
-  --pal-paper-tape:rgba(255,196,120,.50);
-  --pal-paper-glass:rgba(255,252,245,.72);
-  --pal-paper-on-accent:#1e1b18;
+  /* «لاجورد» — the same tile family after dark: lapis night, ivory ink, turquoise that glows. */
+  --pal-lajvard-bg:#0c1424;
+  --pal-lajvard-surface:#152033;
+  --pal-lajvard-elev:#1d2b43;
+  --pal-lajvard-text:#f1ede2;
+  --pal-lajvard-text2:#c5cbd8;
+  --pal-lajvard-muted:#98a2b8;
+  --pal-lajvard-border:rgba(220,235,255,.10);
+  --pal-lajvard-border-strong:rgba(220,235,255,.22);
+  --pal-lajvard-accent:#3cc4cc;
+  --pal-lajvard-accent-strong:#6fd8de;
+  --pal-lajvard-accent-soft:rgba(60,196,204,.16);
+  --pal-lajvard-accent-text:#6fd8de;
+  --pal-lajvard-tape:rgba(230,185,77,.28);
+  --pal-lajvard-glass:rgba(21,32,51,.74);
+  --pal-lajvard-on-accent:#07202a;
 
-  /* lilac — Pastel Dreamland Adventure (trending, 88.1K): the cool half of the
-     light table, standing where «شیری» used to. That theme was retired because
-     the picker made the case against it: «شیری» was a brighter «کاغذ» sitting
-     right beside it, so two of the five light swatches promised nearly the same
-     page. This one answers something the other three cannot — paper, peach and
-     green are all warm, and nothing in the light half was cooler.
-     #CDB4DB #FFC8DD #FFAFCC #BDE0FE #A2D2FF — the lavender anchor taken down far
-     enough to carry white ink (5.3:1), which is why this palette's on-accent is
-     white where «کاغذ»'s is ink. */
-  --pal-lilac-bg:#f5f0fa;
-  --pal-lilac-surface:#ffffff;
-  --pal-lilac-elev:#ffffff;
-  --pal-lilac-text:#2a2334;
-  --pal-lilac-text2:#574d63;
-  --pal-lilac-muted:#756a80;
-  --pal-lilac-border:rgba(109,84,143,.12);
-  --pal-lilac-border-strong:rgba(109,84,143,.26);
-  --pal-lilac-accent:#7b5ea7;
-  --pal-lilac-accent-strong:#64498d;
-  --pal-lilac-accent-soft:rgba(123,94,167,.14);
-  --pal-lilac-accent-text:#53377a;
-  --pal-lilac-tape:rgba(205,180,219,.55);
-  --pal-lilac-glass:rgba(245,240,250,.72);
-  --pal-lilac-on-accent:#ffffff;
+  /* «کبالت» — the clean family: cool grey page, white cards, one cobalt accent. */
+  --pal-cobalt-bg:#f2f3f6;
+  --pal-cobalt-surface:#ffffff;
+  --pal-cobalt-elev:#ffffff;
+  --pal-cobalt-text:#12151d;
+  --pal-cobalt-text2:#454c5c;
+  --pal-cobalt-muted:#525a6e;
+  --pal-cobalt-border:rgba(18,21,29,.09);
+  --pal-cobalt-border-strong:rgba(18,21,29,.20);
+  --pal-cobalt-accent:#3b55f5;
+  --pal-cobalt-accent-strong:#2740d6;
+  --pal-cobalt-accent-soft:rgba(59,85,245,.12);
+  --pal-cobalt-accent-text:#2740d6;
+  --pal-cobalt-tape:rgba(120,130,160,.35);
+  --pal-cobalt-glass:rgba(255,255,255,.80);
+  --pal-cobalt-on-accent:#ffffff;
 
-  /* blush — Peachy Delight (43.7K): a peach paper under a dusty mauve accent.
-     #D8E2DC #FFE5D9 #FFCAD4 #F4ACB7 #9D8189 */
-  --pal-blush-bg:#fff1ec;
-  --pal-blush-surface:#ffffff;
-  --pal-blush-elev:#ffffff;
-  --pal-blush-text:#33272b;
-  --pal-blush-text2:#5e4b50;
-  --pal-blush-muted:#856770;
-  --pal-blush-border:rgba(157,129,137,.18);
-  --pal-blush-border-strong:rgba(157,129,137,.32);
-  --pal-blush-accent:#9d8189;
-  --pal-blush-accent-strong:#7e6169;
-  --pal-blush-accent-soft:rgba(157,129,137,.16);
-  --pal-blush-accent-text:#6b4d56;
-  --pal-blush-tape:rgba(244,172,183,.40);
-  --pal-blush-glass:rgba(255,241,236,.72);
-  --pal-blush-on-accent:#201a1c;
+  /* «گرافیت» — the clean family after dark: graphite surfaces, a soft periwinkle accent. */
+  --pal-graphite-bg:#0f1115;
+  --pal-graphite-surface:#181b21;
+  --pal-graphite-elev:#222630;
+  --pal-graphite-text:#eef0f5;
+  --pal-graphite-text2:#bfc5d2;
+  --pal-graphite-muted:#8f97a8;
+  --pal-graphite-border:rgba(255,255,255,.08);
+  --pal-graphite-border-strong:rgba(255,255,255,.18);
+  --pal-graphite-accent:#7c93ff;
+  --pal-graphite-accent-strong:#a3b3ff;
+  --pal-graphite-accent-soft:rgba(124,147,255,.16);
+  --pal-graphite-accent-text:#a3b3ff;
+  --pal-graphite-tape:rgba(124,147,255,.25);
+  --pal-graphite-glass:rgba(24,27,33,.74);
+  --pal-graphite-on-accent:#0b1030;
 
-  /* sage — Earthy Forest Hues (49K): the green the mascot already is.
-     #DAD7CD #A3B18A #588157 #3A5A40 #344E41 */
-  --pal-sage-bg:#dad7cd;
-  --pal-sage-surface:#f7f8f2;
-  --pal-sage-elev:#ffffff;
-  --pal-sage-text:#2a3128;
-  --pal-sage-text2:#4a5244;
-  --pal-sage-muted:#565e4d;
-  --pal-sage-border:rgba(58,90,64,.14);
-  --pal-sage-border-strong:rgba(58,90,64,.26);
-  --pal-sage-accent:#4a6b44;
-  --pal-sage-accent-strong:#37522f;
-  --pal-sage-accent-soft:rgba(88,129,87,.16);
-  --pal-sage-accent-text:#274221;
-  --pal-sage-tape:rgba(218,215,205,.70);
-  --pal-sage-glass:rgba(232,234,223,.72);
-  --pal-sage-on-accent:#ffffff;
+  /* «آرورا» — the glass family: lilac-white base under a drifting aurora (see css/glass.css). Values here are the solid fallback every contrast floor is measured on. */
+  --pal-aurora-bg:#e9e6f5;
+  --pal-aurora-surface:#f8f6fe;
+  --pal-aurora-elev:#ffffff;
+  --pal-aurora-text:#1b1f33;
+  --pal-aurora-text2:#444a66;
+  --pal-aurora-muted:#5a6080;
+  --pal-aurora-border:rgba(98,64,240,.14);
+  --pal-aurora-border-strong:rgba(60,50,130,.30);
+  --pal-aurora-accent:#6240f0;
+  --pal-aurora-accent-strong:#4b2bd0;
+  --pal-aurora-accent-soft:rgba(98,64,240,.13);
+  --pal-aurora-accent-text:#4b2bd0;
+  --pal-aurora-tape:rgba(255,255,255,.60);
+  --pal-aurora-glass:rgba(255,255,255,.55);
+  --pal-aurora-on-accent:#ffffff;
 
-  /* ink — E-Ink / Paper: the flattest face of the notebook, for reading and
-     writing. Off-white paper, near-black ink, a pencil-grey secondary, and a
-     grey-brown accent instead of the warm orange. Monochrome by design: no
-     gradients and no shadows, so the interface disappears behind the text.
-     Every value is a plain colour the share card can parse. */
-  --pal-ink-bg:#f4f1e8;
-  --pal-ink-surface:#fbf9f2;
-  --pal-ink-elev:#ffffff;
-  --pal-ink-text:#1f1d1a;
-  --pal-ink-text2:#45413a;
-  --pal-ink-muted:#5c574e;
-  --pal-ink-border:rgba(52,46,38,.14);
-  --pal-ink-border-strong:rgba(52,46,38,.30);
-  --pal-ink-accent:#6b5a3e;
-  --pal-ink-accent-strong:#54452f;
-  --pal-ink-accent-soft:rgba(107,90,62,.14);
-  --pal-ink-accent-text:#4a3d20;
-  --pal-ink-tape:rgba(120,104,72,.34);
-  --pal-ink-glass:rgba(251,249,242,.80);
-  --pal-ink-on-accent:#f6f2e8;
+  /* «شب‌شیشه» — the glass family after dark: deep violet base, frosted panels, a lavender accent. */
+  --pal-nightglass-bg:#0e0b1f;
+  --pal-nightglass-surface:#1a1636;
+  --pal-nightglass-elev:#241e47;
+  --pal-nightglass-text:#f0eeff;
+  --pal-nightglass-text2:#c6c2e6;
+  --pal-nightglass-muted:#9a96c0;
+  --pal-nightglass-border:rgba(200,190,255,.12);
+  --pal-nightglass-border-strong:rgba(200,190,255,.26);
+  --pal-nightglass-accent:#9d8cff;
+  --pal-nightglass-accent-strong:#bcb0ff;
+  --pal-nightglass-accent-soft:rgba(157,140,255,.18);
+  --pal-nightglass-accent-text:#bcb0ff;
+  --pal-nightglass-tape:rgba(157,140,255,.25);
+  --pal-nightglass-glass:rgba(26,22,54,.60);
+  --pal-nightglass-on-accent:#120b3a;
 
-  /* night — the notebook under a lamp: the same page as «کاغذ», in the dark this
-     app already wore when the lights went out. #100E0C with #FF9C60, and ink on
-     that accent reads at 8.4:1 where white would read at 2.1:1. */
-  --pal-night-bg:#100e0c;
-  --pal-night-surface:#1e1a15;
-  --pal-night-elev:#2a231c;
-  --pal-night-text:#f6efe2;
-  --pal-night-text2:#cec3b0;
-  --pal-night-muted:#9d9280;
-  --pal-night-border:rgba(255,220,180,.10);
-  --pal-night-border-strong:rgba(255,220,180,.22);
-  --pal-night-accent:#ff9c60;
-  --pal-night-accent-strong:#ffb585;
-  --pal-night-accent-soft:rgba(255,156,96,.16);
-  --pal-night-accent-text:#ffb585;
-  --pal-night-tape:rgba(255,190,110,.22);
-  --pal-night-glass:rgba(30,26,21,.72);
-  --pal-night-on-accent:#241a12;
+  /* «شب‌گرد» — a rainy city after midnight: near-black blocks, one projector-yellow accent. */
+  --pal-shabgard-bg:#0a0b10;
+  --pal-shabgard-surface:#14161f;
+  --pal-shabgard-elev:#1d2030;
+  --pal-shabgard-text:#ecebe4;
+  --pal-shabgard-text2:#c0bfb6;
+  --pal-shabgard-muted:#9a998f;
+  --pal-shabgard-border:rgba(255,235,150,.10);
+  --pal-shabgard-border-strong:rgba(255,235,150,.22);
+  --pal-shabgard-accent:#f2c230;
+  --pal-shabgard-accent-strong:#ffd75e;
+  --pal-shabgard-accent-soft:rgba(242,194,48,.15);
+  --pal-shabgard-accent-text:#ffd75e;
+  --pal-shabgard-tape:rgba(242,194,48,.22);
+  --pal-shabgard-glass:rgba(20,22,31,.76);
+  --pal-shabgard-on-accent:#15130a;
 
-  /* gold — Golden Twilight (24.5K): a navy night with a gold accent. It briefly
-     held the key «شب», which went back to the warm night the name belongs to.
-     #000814 #001D3D #003566 #FFC300 #FFD60A */
-  --pal-gold-bg:#00060f;
-  --pal-gold-surface:#0a1b33;
-  --pal-gold-elev:#12294a;
-  --pal-gold-text:#f2f6ff;
-  --pal-gold-text2:#c6d4e8;
-  --pal-gold-muted:#8ca0be;
-  --pal-gold-border:rgba(140,160,190,.16);
-  --pal-gold-border-strong:rgba(140,160,190,.30);
-  --pal-gold-accent:#ffc300;
-  --pal-gold-accent-strong:#ffd60a;
-  --pal-gold-accent-soft:rgba(255,195,0,.16);
-  --pal-gold-accent-text:#ffd60a;
-  --pal-gold-tape:rgba(255,195,0,.20);
-  --pal-gold-glass:rgba(10,27,51,.72);
-  --pal-gold-on-accent:#1a1200;
+  /* «تارنما» — the day city: comic-print white, a red accent and a strip of blue tape. */
+  --pal-tarnama-bg:#f4f1f3;
+  --pal-tarnama-surface:#ffffff;
+  --pal-tarnama-elev:#ffffff;
+  --pal-tarnama-text:#14172b;
+  --pal-tarnama-text2:#424765;
+  --pal-tarnama-muted:#565b79;
+  --pal-tarnama-border:rgba(20,23,43,.10);
+  --pal-tarnama-border-strong:rgba(20,23,43,.22);
+  --pal-tarnama-accent:#d6232f;
+  --pal-tarnama-accent-strong:#b01a25;
+  --pal-tarnama-accent-soft:rgba(214,35,47,.11);
+  --pal-tarnama-accent-text:#b01a25;
+  --pal-tarnama-tape:rgba(30,64,175,.30);
+  --pal-tarnama-glass:rgba(255,255,255,.80);
+  --pal-tarnama-on-accent:#ffffff;
 
-  /* ocean — Deep Sea (27.6K): slate blue, cool and quiet.
-     #0D1B2A #1B263B #415A77 #778DA9 #E0E1DD */
-  --pal-ocean-bg:#0b1622;
-  --pal-ocean-surface:#16243a;
-  --pal-ocean-elev:#1f3250;
-  --pal-ocean-text:#e6ebf2;
-  --pal-ocean-text2:#b4c2d6;
-  --pal-ocean-muted:#7e93ae;
-  --pal-ocean-border:rgba(119,141,169,.18);
-  --pal-ocean-border-strong:rgba(119,141,169,.34);
-  --pal-ocean-accent:#6c9bd2;
-  --pal-ocean-accent-strong:#8fb7e6;
-  --pal-ocean-accent-soft:rgba(108,155,210,.16);
-  --pal-ocean-accent-text:#a4c8f0;
-  --pal-ocean-tape:rgba(119,141,169,.22);
-  --pal-ocean-glass:rgba(22,36,58,.72);
-  --pal-ocean-on-accent:#06101c;
+  /* «فضانورد» — deep space: ink-blue panels, a mint instrument-light accent, violet tape. */
+  --pal-fazanavard-bg:#070816;
+  --pal-fazanavard-surface:#11132b;
+  --pal-fazanavard-elev:#1a1d3d;
+  --pal-fazanavard-text:#eef0ff;
+  --pal-fazanavard-text2:#c3c7ea;
+  --pal-fazanavard-muted:#9499c4;
+  --pal-fazanavard-border:rgba(190,200,255,.12);
+  --pal-fazanavard-border-strong:rgba(190,200,255,.24);
+  --pal-fazanavard-accent:#62e0d0;
+  --pal-fazanavard-accent-strong:#8ff0e3;
+  --pal-fazanavard-accent-soft:rgba(98,224,208,.15);
+  --pal-fazanavard-accent-text:#8ff0e3;
+  --pal-fazanavard-tape:rgba(167,139,250,.28);
+  --pal-fazanavard-glass:rgba(17,19,43,.72);
+  --pal-fazanavard-on-accent:#04201c;
 
-  /* plum — Vivid Nightfall (13.9K): a deep violet with a lilac accent.
-     #10002B #240046 #3C096C #5A189A #7B2CBF #9D4EDD */
-  --pal-plum-bg:#0c0021;
-  --pal-plum-surface:#1b0538;
-  --pal-plum-elev:#2a0a52;
-  --pal-plum-text:#f3eaff;
-  --pal-plum-text2:#cdb6e8;
-  --pal-plum-muted:#9384b8;
-  --pal-plum-border:rgba(157,78,221,.20);
-  --pal-plum-border-strong:rgba(157,78,221,.36);
-  --pal-plum-accent:#b77bf0;
-  --pal-plum-accent-strong:#cfa3f7;
-  --pal-plum-accent-soft:rgba(157,78,221,.20);
-  --pal-plum-accent-text:#d6abff;
-  --pal-plum-tape:rgba(157,78,221,.22);
-  --pal-plum-glass:rgba(27,5,56,.72);
-  --pal-plum-on-accent:#17052e;
+  /* «باغچه» — a greenhouse morning: pale leaf paper, garden green, blossom-pink tape. */
+  --pal-baghche-bg:#eef3e6;
+  --pal-baghche-surface:#fbfdf6;
+  --pal-baghche-elev:#ffffff;
+  --pal-baghche-text:#1d2a1c;
+  --pal-baghche-text2:#46563f;
+  --pal-baghche-muted:#566450;
+  --pal-baghche-border:rgba(40,70,30,.12);
+  --pal-baghche-border-strong:rgba(40,70,30,.24);
+  --pal-baghche-accent:#3a7d44;
+  --pal-baghche-accent-strong:#2a5f33;
+  --pal-baghche-accent-soft:rgba(58,125,68,.13);
+  --pal-baghche-accent-text:#2a5f33;
+  --pal-baghche-tape:rgba(236,140,170,.45);
+  --pal-baghche-glass:rgba(251,253,246,.78);
+  --pal-baghche-on-accent:#ffffff;
+
+  /* «دریانورد» — a chart room by the sea: sea-foam paper, a deep-water accent, rope-gold tape. */
+  --pal-daryanavard-bg:#eaf4f6;
+  --pal-daryanavard-surface:#fbfeff;
+  --pal-daryanavard-elev:#ffffff;
+  --pal-daryanavard-text:#0f2a3a;
+  --pal-daryanavard-text2:#3a5566;
+  --pal-daryanavard-muted:#4f6878;
+  --pal-daryanavard-border:rgba(15,42,58,.11);
+  --pal-daryanavard-border-strong:rgba(15,42,58,.22);
+  --pal-daryanavard-accent:#0b6e99;
+  --pal-daryanavard-accent-strong:#085578;
+  --pal-daryanavard-accent-soft:rgba(11,110,153,.12);
+  --pal-daryanavard-accent-text:#085578;
+  --pal-daryanavard-tape:rgba(241,180,52,.50);
+  --pal-daryanavard-glass:rgba(251,254,255,.78);
+  --pal-daryanavard-on-accent:#ffffff;
 
   /* day — the birthday palette, and the only one here that no theme points at.
      It is written in the palette table for the same reason as the other eight:
@@ -409,122 +409,149 @@
 /* ── From palette to the card's vocabulary ──
    A chip that wears data-palette="…" is showing the palette it would print
    with: the dot is the palette's paper, ringed in its accent. */
-[data-palette="paper"]{
-  --card-bg:var(--pal-paper-bg);
-  --card-surface:var(--pal-paper-surface);
-  --card-text:var(--pal-paper-text);
-  --card-muted:var(--pal-paper-muted);
-  --card-accent:var(--pal-paper-accent);
-  --card-accent-soft:var(--pal-paper-accent-soft);
-  --card-border:var(--pal-paper-border-strong);
-  --card-grid:var(--pal-paper-border);
-  --card-tape:var(--pal-paper-tape);
-  --pick-dot-bg:var(--pal-paper-bg);
-  --pick-dot-ring:var(--pal-paper-accent);
+[data-palette="kashi"]{
+  --card-bg:var(--pal-kashi-bg);
+  --card-surface:var(--pal-kashi-surface);
+  --card-text:var(--pal-kashi-text);
+  --card-muted:var(--pal-kashi-muted);
+  --card-accent:var(--pal-kashi-accent);
+  --card-accent-soft:var(--pal-kashi-accent-soft);
+  --card-border:var(--pal-kashi-border-strong);
+  --card-grid:var(--pal-kashi-border);
+  --card-tape:var(--pal-kashi-tape);
+  --pick-dot-bg:var(--pal-kashi-bg);
+  --pick-dot-ring:var(--pal-kashi-accent);
 }
-[data-palette="lilac"]{
-  --card-bg:var(--pal-lilac-bg);
-  --card-surface:var(--pal-lilac-surface);
-  --card-text:var(--pal-lilac-text);
-  --card-muted:var(--pal-lilac-muted);
-  --card-accent:var(--pal-lilac-accent);
-  --card-accent-soft:var(--pal-lilac-accent-soft);
-  --card-border:var(--pal-lilac-border-strong);
-  --card-grid:var(--pal-lilac-border);
-  --card-tape:var(--pal-lilac-tape);
-  --pick-dot-bg:var(--pal-lilac-bg);
-  --pick-dot-ring:var(--pal-lilac-accent);
+[data-palette="lajvard"]{
+  --card-bg:var(--pal-lajvard-bg);
+  --card-surface:var(--pal-lajvard-surface);
+  --card-text:var(--pal-lajvard-text);
+  --card-muted:var(--pal-lajvard-muted);
+  --card-accent:var(--pal-lajvard-accent);
+  --card-accent-soft:var(--pal-lajvard-accent-soft);
+  --card-border:var(--pal-lajvard-border-strong);
+  --card-grid:var(--pal-lajvard-border);
+  --card-tape:var(--pal-lajvard-tape);
+  --pick-dot-bg:var(--pal-lajvard-bg);
+  --pick-dot-ring:var(--pal-lajvard-accent);
 }
-[data-palette="blush"]{
-  --card-bg:var(--pal-blush-bg);
-  --card-surface:var(--pal-blush-surface);
-  --card-text:var(--pal-blush-text);
-  --card-muted:var(--pal-blush-muted);
-  --card-accent:var(--pal-blush-accent);
-  --card-accent-soft:var(--pal-blush-accent-soft);
-  --card-border:var(--pal-blush-border-strong);
-  --card-grid:var(--pal-blush-border);
-  --card-tape:var(--pal-blush-tape);
-  --pick-dot-bg:var(--pal-blush-bg);
-  --pick-dot-ring:var(--pal-blush-accent);
+[data-palette="cobalt"]{
+  --card-bg:var(--pal-cobalt-bg);
+  --card-surface:var(--pal-cobalt-surface);
+  --card-text:var(--pal-cobalt-text);
+  --card-muted:var(--pal-cobalt-muted);
+  --card-accent:var(--pal-cobalt-accent);
+  --card-accent-soft:var(--pal-cobalt-accent-soft);
+  --card-border:var(--pal-cobalt-border-strong);
+  --card-grid:var(--pal-cobalt-border);
+  --card-tape:var(--pal-cobalt-tape);
+  --pick-dot-bg:var(--pal-cobalt-bg);
+  --pick-dot-ring:var(--pal-cobalt-accent);
 }
-[data-palette="sage"]{
-  --card-bg:var(--pal-sage-bg);
-  --card-surface:var(--pal-sage-surface);
-  --card-text:var(--pal-sage-text);
-  --card-muted:var(--pal-sage-muted);
-  --card-accent:var(--pal-sage-accent);
-  --card-accent-soft:var(--pal-sage-accent-soft);
-  --card-border:var(--pal-sage-border-strong);
-  --card-grid:var(--pal-sage-border);
-  --card-tape:var(--pal-sage-tape);
-  --pick-dot-bg:var(--pal-sage-bg);
-  --pick-dot-ring:var(--pal-sage-accent);
+[data-palette="graphite"]{
+  --card-bg:var(--pal-graphite-bg);
+  --card-surface:var(--pal-graphite-surface);
+  --card-text:var(--pal-graphite-text);
+  --card-muted:var(--pal-graphite-muted);
+  --card-accent:var(--pal-graphite-accent);
+  --card-accent-soft:var(--pal-graphite-accent-soft);
+  --card-border:var(--pal-graphite-border-strong);
+  --card-grid:var(--pal-graphite-border);
+  --card-tape:var(--pal-graphite-tape);
+  --pick-dot-bg:var(--pal-graphite-bg);
+  --pick-dot-ring:var(--pal-graphite-accent);
 }
-[data-palette="ink"]{
-  --card-bg:var(--pal-ink-bg);
-  --card-surface:var(--pal-ink-surface);
-  --card-text:var(--pal-ink-text);
-  --card-muted:var(--pal-ink-muted);
-  --card-accent:var(--pal-ink-accent);
-  --card-accent-soft:var(--pal-ink-accent-soft);
-  --card-border:var(--pal-ink-border-strong);
-  --card-grid:var(--pal-ink-border);
-  --card-tape:var(--pal-ink-tape);
-  --pick-dot-bg:var(--pal-ink-bg);
-  --pick-dot-ring:var(--pal-ink-accent);
+[data-palette="aurora"]{
+  --card-bg:var(--pal-aurora-bg);
+  --card-surface:var(--pal-aurora-surface);
+  --card-text:var(--pal-aurora-text);
+  --card-muted:var(--pal-aurora-muted);
+  --card-accent:var(--pal-aurora-accent);
+  --card-accent-soft:var(--pal-aurora-accent-soft);
+  --card-border:var(--pal-aurora-border-strong);
+  --card-grid:var(--pal-aurora-border);
+  --card-tape:var(--pal-aurora-tape);
+  --pick-dot-bg:var(--pal-aurora-bg);
+  --pick-dot-ring:var(--pal-aurora-accent);
 }
-[data-palette="night"]{
-  --card-bg:var(--pal-night-bg);
-  --card-surface:var(--pal-night-surface);
-  --card-text:var(--pal-night-text);
-  --card-muted:var(--pal-night-muted);
-  --card-accent:var(--pal-night-accent);
-  --card-accent-soft:var(--pal-night-accent-soft);
-  --card-border:var(--pal-night-border-strong);
-  --card-grid:var(--pal-night-border);
-  --card-tape:var(--pal-night-tape);
-  --pick-dot-bg:var(--pal-night-bg);
-  --pick-dot-ring:var(--pal-night-accent);
+[data-palette="nightglass"]{
+  --card-bg:var(--pal-nightglass-bg);
+  --card-surface:var(--pal-nightglass-surface);
+  --card-text:var(--pal-nightglass-text);
+  --card-muted:var(--pal-nightglass-muted);
+  --card-accent:var(--pal-nightglass-accent);
+  --card-accent-soft:var(--pal-nightglass-accent-soft);
+  --card-border:var(--pal-nightglass-border-strong);
+  --card-grid:var(--pal-nightglass-border);
+  --card-tape:var(--pal-nightglass-tape);
+  --pick-dot-bg:var(--pal-nightglass-bg);
+  --pick-dot-ring:var(--pal-nightglass-accent);
 }
-[data-palette="gold"]{
-  --card-bg:var(--pal-gold-bg);
-  --card-surface:var(--pal-gold-surface);
-  --card-text:var(--pal-gold-text);
-  --card-muted:var(--pal-gold-muted);
-  --card-accent:var(--pal-gold-accent);
-  --card-accent-soft:var(--pal-gold-accent-soft);
-  --card-border:var(--pal-gold-border-strong);
-  --card-grid:var(--pal-gold-border);
-  --card-tape:var(--pal-gold-tape);
-  --pick-dot-bg:var(--pal-gold-bg);
-  --pick-dot-ring:var(--pal-gold-accent);
+
+[data-palette="shabgard"]{
+  --card-bg:var(--pal-shabgard-bg);
+  --card-surface:var(--pal-shabgard-surface);
+  --card-text:var(--pal-shabgard-text);
+  --card-muted:var(--pal-shabgard-muted);
+  --card-accent:var(--pal-shabgard-accent);
+  --card-accent-soft:var(--pal-shabgard-accent-soft);
+  --card-border:var(--pal-shabgard-border-strong);
+  --card-grid:var(--pal-shabgard-border);
+  --card-tape:var(--pal-shabgard-tape);
+  --pick-dot-bg:var(--pal-shabgard-bg);
+  --pick-dot-ring:var(--pal-shabgard-accent);
 }
-[data-palette="ocean"]{
-  --card-bg:var(--pal-ocean-bg);
-  --card-surface:var(--pal-ocean-surface);
-  --card-text:var(--pal-ocean-text);
-  --card-muted:var(--pal-ocean-muted);
-  --card-accent:var(--pal-ocean-accent);
-  --card-accent-soft:var(--pal-ocean-accent-soft);
-  --card-border:var(--pal-ocean-border-strong);
-  --card-grid:var(--pal-ocean-border);
-  --card-tape:var(--pal-ocean-tape);
-  --pick-dot-bg:var(--pal-ocean-bg);
-  --pick-dot-ring:var(--pal-ocean-accent);
+[data-palette="tarnama"]{
+  --card-bg:var(--pal-tarnama-bg);
+  --card-surface:var(--pal-tarnama-surface);
+  --card-text:var(--pal-tarnama-text);
+  --card-muted:var(--pal-tarnama-muted);
+  --card-accent:var(--pal-tarnama-accent);
+  --card-accent-soft:var(--pal-tarnama-accent-soft);
+  --card-border:var(--pal-tarnama-border-strong);
+  --card-grid:var(--pal-tarnama-border);
+  --card-tape:var(--pal-tarnama-tape);
+  --pick-dot-bg:var(--pal-tarnama-bg);
+  --pick-dot-ring:var(--pal-tarnama-accent);
 }
-[data-palette="plum"]{
-  --card-bg:var(--pal-plum-bg);
-  --card-surface:var(--pal-plum-surface);
-  --card-text:var(--pal-plum-text);
-  --card-muted:var(--pal-plum-muted);
-  --card-accent:var(--pal-plum-accent);
-  --card-accent-soft:var(--pal-plum-accent-soft);
-  --card-border:var(--pal-plum-border-strong);
-  --card-grid:var(--pal-plum-border);
-  --card-tape:var(--pal-plum-tape);
-  --pick-dot-bg:var(--pal-plum-bg);
-  --pick-dot-ring:var(--pal-plum-accent);
+[data-palette="fazanavard"]{
+  --card-bg:var(--pal-fazanavard-bg);
+  --card-surface:var(--pal-fazanavard-surface);
+  --card-text:var(--pal-fazanavard-text);
+  --card-muted:var(--pal-fazanavard-muted);
+  --card-accent:var(--pal-fazanavard-accent);
+  --card-accent-soft:var(--pal-fazanavard-accent-soft);
+  --card-border:var(--pal-fazanavard-border-strong);
+  --card-grid:var(--pal-fazanavard-border);
+  --card-tape:var(--pal-fazanavard-tape);
+  --pick-dot-bg:var(--pal-fazanavard-bg);
+  --pick-dot-ring:var(--pal-fazanavard-accent);
+}
+[data-palette="baghche"]{
+  --card-bg:var(--pal-baghche-bg);
+  --card-surface:var(--pal-baghche-surface);
+  --card-text:var(--pal-baghche-text);
+  --card-muted:var(--pal-baghche-muted);
+  --card-accent:var(--pal-baghche-accent);
+  --card-accent-soft:var(--pal-baghche-accent-soft);
+  --card-border:var(--pal-baghche-border-strong);
+  --card-grid:var(--pal-baghche-border);
+  --card-tape:var(--pal-baghche-tape);
+  --pick-dot-bg:var(--pal-baghche-bg);
+  --pick-dot-ring:var(--pal-baghche-accent);
+}
+[data-palette="daryanavard"]{
+  --card-bg:var(--pal-daryanavard-bg);
+  --card-surface:var(--pal-daryanavard-surface);
+  --card-text:var(--pal-daryanavard-text);
+  --card-muted:var(--pal-daryanavard-muted);
+  --card-accent:var(--pal-daryanavard-accent);
+  --card-accent-soft:var(--pal-daryanavard-accent-soft);
+  --card-border:var(--pal-daryanavard-border-strong);
+  --card-grid:var(--pal-daryanavard-border);
+  --card-tape:var(--pal-daryanavard-tape);
+  --pick-dot-bg:var(--pal-daryanavard-bg);
+  --pick-dot-ring:var(--pal-daryanavard-accent);
 }
 
 /* ═══ Themes ═══
@@ -577,184 +604,224 @@ html[data-mode="dark"]{
    and these blocks only say which colour goes in which slot. `--glass` is the
    tint the floating dock is frosted from — it used to be a hardcoded cream that
    silently ignored every theme but one. */
-html[data-theme="paper"]{
+html[data-theme="kashi"]{
   color-scheme:light;
-  --color-bg:var(--pal-paper-bg);
-  --color-surface:var(--pal-paper-surface);
-  --color-surface-elevated:var(--pal-paper-elev);
-  --color-text-primary:var(--pal-paper-text);
-  --color-text-secondary:var(--pal-paper-text2);
-  --color-text-muted:var(--pal-paper-muted);
-  --color-text-on-accent:var(--pal-paper-on-accent);
-  --color-border:var(--pal-paper-border);
-  --color-border-strong:var(--pal-paper-border-strong);
-  --color-accent:var(--pal-paper-accent);
-  --color-accent-strong:var(--pal-paper-accent-strong);
-  --color-accent-soft:var(--pal-paper-accent-soft);
-  --color-accent-text:var(--pal-paper-accent-text);
-  --color-focus:var(--pal-paper-accent);
-  --tape:var(--pal-paper-tape);
-  --glass:var(--pal-paper-glass);
+  --color-bg:var(--pal-kashi-bg);
+  --color-surface:var(--pal-kashi-surface);
+  --color-surface-elevated:var(--pal-kashi-elev);
+  --color-text-primary:var(--pal-kashi-text);
+  --color-text-secondary:var(--pal-kashi-text2);
+  --color-text-muted:var(--pal-kashi-muted);
+  --color-text-on-accent:var(--pal-kashi-on-accent);
+  --color-border:var(--pal-kashi-border);
+  --color-border-strong:var(--pal-kashi-border-strong);
+  --color-accent:var(--pal-kashi-accent);
+  --color-accent-strong:var(--pal-kashi-accent-strong);
+  --color-accent-soft:var(--pal-kashi-accent-soft);
+  --color-accent-text:var(--pal-kashi-accent-text);
+  --color-focus:var(--pal-kashi-accent);
+  --tape:var(--pal-kashi-tape);
+  --glass:var(--pal-kashi-glass);
 }
 
-html[data-theme="lilac"]{
-  color-scheme:light;
-  --color-bg:var(--pal-lilac-bg);
-  --color-surface:var(--pal-lilac-surface);
-  --color-surface-elevated:var(--pal-lilac-elev);
-  --color-text-primary:var(--pal-lilac-text);
-  --color-text-secondary:var(--pal-lilac-text2);
-  --color-text-muted:var(--pal-lilac-muted);
-  --color-text-on-accent:var(--pal-lilac-on-accent);
-  --color-border:var(--pal-lilac-border);
-  --color-border-strong:var(--pal-lilac-border-strong);
-  --color-accent:var(--pal-lilac-accent);
-  --color-accent-strong:var(--pal-lilac-accent-strong);
-  --color-accent-soft:var(--pal-lilac-accent-soft);
-  --color-accent-text:var(--pal-lilac-accent-text);
-  --color-focus:var(--pal-lilac-accent);
-  --tape:var(--pal-lilac-tape);
-  --glass:var(--pal-lilac-glass);
-}
-
-html[data-theme="blush"]{
-  color-scheme:light;
-  --color-bg:var(--pal-blush-bg);
-  --color-surface:var(--pal-blush-surface);
-  --color-surface-elevated:var(--pal-blush-elev);
-  --color-text-primary:var(--pal-blush-text);
-  --color-text-secondary:var(--pal-blush-text2);
-  --color-text-muted:var(--pal-blush-muted);
-  --color-text-on-accent:var(--pal-blush-on-accent);
-  --color-border:var(--pal-blush-border);
-  --color-border-strong:var(--pal-blush-border-strong);
-  --color-accent:var(--pal-blush-accent);
-  --color-accent-strong:var(--pal-blush-accent-strong);
-  --color-accent-soft:var(--pal-blush-accent-soft);
-  --color-accent-text:var(--pal-blush-accent-text);
-  --color-focus:var(--pal-blush-accent);
-  --tape:var(--pal-blush-tape);
-  --glass:var(--pal-blush-glass);
-}
-
-html[data-theme="sage"]{
-  color-scheme:light;
-  --color-bg:var(--pal-sage-bg);
-  --color-surface:var(--pal-sage-surface);
-  --color-surface-elevated:var(--pal-sage-elev);
-  --color-text-primary:var(--pal-sage-text);
-  --color-text-secondary:var(--pal-sage-text2);
-  --color-text-muted:var(--pal-sage-muted);
-  --color-text-on-accent:var(--pal-sage-on-accent);
-  --color-border:var(--pal-sage-border);
-  --color-border-strong:var(--pal-sage-border-strong);
-  --color-accent:var(--pal-sage-accent);
-  --color-accent-strong:var(--pal-sage-accent-strong);
-  --color-accent-soft:var(--pal-sage-accent-soft);
-  --color-accent-text:var(--pal-sage-accent-text);
-  --color-focus:var(--pal-sage-accent);
-  --tape:var(--pal-sage-tape);
-  --glass:var(--pal-sage-glass);
-}
-
-html[data-theme="ink"]{
-  color-scheme:light;
-  --color-bg:var(--pal-ink-bg);
-  --color-surface:var(--pal-ink-surface);
-  --color-surface-elevated:var(--pal-ink-elev);
-  --color-text-primary:var(--pal-ink-text);
-  --color-text-secondary:var(--pal-ink-text2);
-  --color-text-muted:var(--pal-ink-muted);
-  --color-text-on-accent:var(--pal-ink-on-accent);
-  --color-border:var(--pal-ink-border);
-  --color-border-strong:var(--pal-ink-border-strong);
-  --color-accent:var(--pal-ink-accent);
-  --color-accent-strong:var(--pal-ink-accent-strong);
-  --color-accent-soft:var(--pal-ink-accent-soft);
-  --color-accent-text:var(--pal-ink-accent-text);
-  --color-focus:var(--pal-ink-accent);
-  --tape:var(--pal-ink-tape);
-  --glass:var(--pal-ink-glass);
-}
-
-html[data-theme="night"]{
+html[data-theme="lajvard"]{
   color-scheme:dark;
-  --color-bg:var(--pal-night-bg);
-  --color-surface:var(--pal-night-surface);
-  --color-surface-elevated:var(--pal-night-elev);
-  --color-text-primary:var(--pal-night-text);
-  --color-text-secondary:var(--pal-night-text2);
-  --color-text-muted:var(--pal-night-muted);
-  --color-text-on-accent:var(--pal-night-on-accent);
-  --color-border:var(--pal-night-border);
-  --color-border-strong:var(--pal-night-border-strong);
-  --color-accent:var(--pal-night-accent);
-  --color-accent-strong:var(--pal-night-accent-strong);
-  --color-accent-soft:var(--pal-night-accent-soft);
-  --color-accent-text:var(--pal-night-accent-text);
-  --color-focus:var(--pal-night-accent);
-  --tape:var(--pal-night-tape);
-  --glass:var(--pal-night-glass);
+  --color-bg:var(--pal-lajvard-bg);
+  --color-surface:var(--pal-lajvard-surface);
+  --color-surface-elevated:var(--pal-lajvard-elev);
+  --color-text-primary:var(--pal-lajvard-text);
+  --color-text-secondary:var(--pal-lajvard-text2);
+  --color-text-muted:var(--pal-lajvard-muted);
+  --color-text-on-accent:var(--pal-lajvard-on-accent);
+  --color-border:var(--pal-lajvard-border);
+  --color-border-strong:var(--pal-lajvard-border-strong);
+  --color-accent:var(--pal-lajvard-accent);
+  --color-accent-strong:var(--pal-lajvard-accent-strong);
+  --color-accent-soft:var(--pal-lajvard-accent-soft);
+  --color-accent-text:var(--pal-lajvard-accent-text);
+  --color-focus:var(--pal-lajvard-accent);
+  --tape:var(--pal-lajvard-tape);
+  --glass:var(--pal-lajvard-glass);
 }
 
-html[data-theme="gold"]{
-  color-scheme:dark;
-  --color-bg:var(--pal-gold-bg);
-  --color-surface:var(--pal-gold-surface);
-  --color-surface-elevated:var(--pal-gold-elev);
-  --color-text-primary:var(--pal-gold-text);
-  --color-text-secondary:var(--pal-gold-text2);
-  --color-text-muted:var(--pal-gold-muted);
-  --color-text-on-accent:var(--pal-gold-on-accent);
-  --color-border:var(--pal-gold-border);
-  --color-border-strong:var(--pal-gold-border-strong);
-  --color-accent:var(--pal-gold-accent);
-  --color-accent-strong:var(--pal-gold-accent-strong);
-  --color-accent-soft:var(--pal-gold-accent-soft);
-  --color-accent-text:var(--pal-gold-accent-text);
-  --color-focus:var(--pal-gold-accent);
-  --tape:var(--pal-gold-tape);
-  --glass:var(--pal-gold-glass);
+html[data-theme="cobalt"]{
+  color-scheme:light;
+  --color-bg:var(--pal-cobalt-bg);
+  --color-surface:var(--pal-cobalt-surface);
+  --color-surface-elevated:var(--pal-cobalt-elev);
+  --color-text-primary:var(--pal-cobalt-text);
+  --color-text-secondary:var(--pal-cobalt-text2);
+  --color-text-muted:var(--pal-cobalt-muted);
+  --color-text-on-accent:var(--pal-cobalt-on-accent);
+  --color-border:var(--pal-cobalt-border);
+  --color-border-strong:var(--pal-cobalt-border-strong);
+  --color-accent:var(--pal-cobalt-accent);
+  --color-accent-strong:var(--pal-cobalt-accent-strong);
+  --color-accent-soft:var(--pal-cobalt-accent-soft);
+  --color-accent-text:var(--pal-cobalt-accent-text);
+  --color-focus:var(--pal-cobalt-accent);
+  --tape:var(--pal-cobalt-tape);
+  --glass:var(--pal-cobalt-glass);
 }
 
-html[data-theme="ocean"]{
+html[data-theme="graphite"]{
   color-scheme:dark;
-  --color-bg:var(--pal-ocean-bg);
-  --color-surface:var(--pal-ocean-surface);
-  --color-surface-elevated:var(--pal-ocean-elev);
-  --color-text-primary:var(--pal-ocean-text);
-  --color-text-secondary:var(--pal-ocean-text2);
-  --color-text-muted:var(--pal-ocean-muted);
-  --color-text-on-accent:var(--pal-ocean-on-accent);
-  --color-border:var(--pal-ocean-border);
-  --color-border-strong:var(--pal-ocean-border-strong);
-  --color-accent:var(--pal-ocean-accent);
-  --color-accent-strong:var(--pal-ocean-accent-strong);
-  --color-accent-soft:var(--pal-ocean-accent-soft);
-  --color-accent-text:var(--pal-ocean-accent-text);
-  --color-focus:var(--pal-ocean-accent);
-  --tape:var(--pal-ocean-tape);
-  --glass:var(--pal-ocean-glass);
+  --color-bg:var(--pal-graphite-bg);
+  --color-surface:var(--pal-graphite-surface);
+  --color-surface-elevated:var(--pal-graphite-elev);
+  --color-text-primary:var(--pal-graphite-text);
+  --color-text-secondary:var(--pal-graphite-text2);
+  --color-text-muted:var(--pal-graphite-muted);
+  --color-text-on-accent:var(--pal-graphite-on-accent);
+  --color-border:var(--pal-graphite-border);
+  --color-border-strong:var(--pal-graphite-border-strong);
+  --color-accent:var(--pal-graphite-accent);
+  --color-accent-strong:var(--pal-graphite-accent-strong);
+  --color-accent-soft:var(--pal-graphite-accent-soft);
+  --color-accent-text:var(--pal-graphite-accent-text);
+  --color-focus:var(--pal-graphite-accent);
+  --tape:var(--pal-graphite-tape);
+  --glass:var(--pal-graphite-glass);
 }
 
-html[data-theme="plum"]{
+html[data-theme="aurora"]{
+  color-scheme:light;
+  --color-bg:var(--pal-aurora-bg);
+  --color-surface:var(--pal-aurora-surface);
+  --color-surface-elevated:var(--pal-aurora-elev);
+  --color-text-primary:var(--pal-aurora-text);
+  --color-text-secondary:var(--pal-aurora-text2);
+  --color-text-muted:var(--pal-aurora-muted);
+  --color-text-on-accent:var(--pal-aurora-on-accent);
+  --color-border:var(--pal-aurora-border);
+  --color-border-strong:var(--pal-aurora-border-strong);
+  --color-accent:var(--pal-aurora-accent);
+  --color-accent-strong:var(--pal-aurora-accent-strong);
+  --color-accent-soft:var(--pal-aurora-accent-soft);
+  --color-accent-text:var(--pal-aurora-accent-text);
+  --color-focus:var(--pal-aurora-accent);
+  --tape:var(--pal-aurora-tape);
+  --glass:var(--pal-aurora-glass);
+}
+
+html[data-theme="nightglass"]{
   color-scheme:dark;
-  --color-bg:var(--pal-plum-bg);
-  --color-surface:var(--pal-plum-surface);
-  --color-surface-elevated:var(--pal-plum-elev);
-  --color-text-primary:var(--pal-plum-text);
-  --color-text-secondary:var(--pal-plum-text2);
-  --color-text-muted:var(--pal-plum-muted);
-  --color-text-on-accent:var(--pal-plum-on-accent);
-  --color-border:var(--pal-plum-border);
-  --color-border-strong:var(--pal-plum-border-strong);
-  --color-accent:var(--pal-plum-accent);
-  --color-accent-strong:var(--pal-plum-accent-strong);
-  --color-accent-soft:var(--pal-plum-accent-soft);
-  --color-accent-text:var(--pal-plum-accent-text);
-  --color-focus:var(--pal-plum-accent);
-  --tape:var(--pal-plum-tape);
-  --glass:var(--pal-plum-glass);
+  --color-bg:var(--pal-nightglass-bg);
+  --color-surface:var(--pal-nightglass-surface);
+  --color-surface-elevated:var(--pal-nightglass-elev);
+  --color-text-primary:var(--pal-nightglass-text);
+  --color-text-secondary:var(--pal-nightglass-text2);
+  --color-text-muted:var(--pal-nightglass-muted);
+  --color-text-on-accent:var(--pal-nightglass-on-accent);
+  --color-border:var(--pal-nightglass-border);
+  --color-border-strong:var(--pal-nightglass-border-strong);
+  --color-accent:var(--pal-nightglass-accent);
+  --color-accent-strong:var(--pal-nightglass-accent-strong);
+  --color-accent-soft:var(--pal-nightglass-accent-soft);
+  --color-accent-text:var(--pal-nightglass-accent-text);
+  --color-focus:var(--pal-nightglass-accent);
+  --tape:var(--pal-nightglass-tape);
+  --glass:var(--pal-nightglass-glass);
+}
+
+html[data-theme="shabgard"]{
+  color-scheme:dark;
+  --color-bg:var(--pal-shabgard-bg);
+  --color-surface:var(--pal-shabgard-surface);
+  --color-surface-elevated:var(--pal-shabgard-elev);
+  --color-text-primary:var(--pal-shabgard-text);
+  --color-text-secondary:var(--pal-shabgard-text2);
+  --color-text-muted:var(--pal-shabgard-muted);
+  --color-text-on-accent:var(--pal-shabgard-on-accent);
+  --color-border:var(--pal-shabgard-border);
+  --color-border-strong:var(--pal-shabgard-border-strong);
+  --color-accent:var(--pal-shabgard-accent);
+  --color-accent-strong:var(--pal-shabgard-accent-strong);
+  --color-accent-soft:var(--pal-shabgard-accent-soft);
+  --color-accent-text:var(--pal-shabgard-accent-text);
+  --color-focus:var(--pal-shabgard-accent);
+  --tape:var(--pal-shabgard-tape);
+  --glass:var(--pal-shabgard-glass);
+}
+
+html[data-theme="tarnama"]{
+  color-scheme:light;
+  --color-bg:var(--pal-tarnama-bg);
+  --color-surface:var(--pal-tarnama-surface);
+  --color-surface-elevated:var(--pal-tarnama-elev);
+  --color-text-primary:var(--pal-tarnama-text);
+  --color-text-secondary:var(--pal-tarnama-text2);
+  --color-text-muted:var(--pal-tarnama-muted);
+  --color-text-on-accent:var(--pal-tarnama-on-accent);
+  --color-border:var(--pal-tarnama-border);
+  --color-border-strong:var(--pal-tarnama-border-strong);
+  --color-accent:var(--pal-tarnama-accent);
+  --color-accent-strong:var(--pal-tarnama-accent-strong);
+  --color-accent-soft:var(--pal-tarnama-accent-soft);
+  --color-accent-text:var(--pal-tarnama-accent-text);
+  --color-focus:var(--pal-tarnama-accent);
+  --tape:var(--pal-tarnama-tape);
+  --glass:var(--pal-tarnama-glass);
+}
+
+html[data-theme="fazanavard"]{
+  color-scheme:dark;
+  --color-bg:var(--pal-fazanavard-bg);
+  --color-surface:var(--pal-fazanavard-surface);
+  --color-surface-elevated:var(--pal-fazanavard-elev);
+  --color-text-primary:var(--pal-fazanavard-text);
+  --color-text-secondary:var(--pal-fazanavard-text2);
+  --color-text-muted:var(--pal-fazanavard-muted);
+  --color-text-on-accent:var(--pal-fazanavard-on-accent);
+  --color-border:var(--pal-fazanavard-border);
+  --color-border-strong:var(--pal-fazanavard-border-strong);
+  --color-accent:var(--pal-fazanavard-accent);
+  --color-accent-strong:var(--pal-fazanavard-accent-strong);
+  --color-accent-soft:var(--pal-fazanavard-accent-soft);
+  --color-accent-text:var(--pal-fazanavard-accent-text);
+  --color-focus:var(--pal-fazanavard-accent);
+  --tape:var(--pal-fazanavard-tape);
+  --glass:var(--pal-fazanavard-glass);
+}
+
+html[data-theme="baghche"]{
+  color-scheme:light;
+  --color-bg:var(--pal-baghche-bg);
+  --color-surface:var(--pal-baghche-surface);
+  --color-surface-elevated:var(--pal-baghche-elev);
+  --color-text-primary:var(--pal-baghche-text);
+  --color-text-secondary:var(--pal-baghche-text2);
+  --color-text-muted:var(--pal-baghche-muted);
+  --color-text-on-accent:var(--pal-baghche-on-accent);
+  --color-border:var(--pal-baghche-border);
+  --color-border-strong:var(--pal-baghche-border-strong);
+  --color-accent:var(--pal-baghche-accent);
+  --color-accent-strong:var(--pal-baghche-accent-strong);
+  --color-accent-soft:var(--pal-baghche-accent-soft);
+  --color-accent-text:var(--pal-baghche-accent-text);
+  --color-focus:var(--pal-baghche-accent);
+  --tape:var(--pal-baghche-tape);
+  --glass:var(--pal-baghche-glass);
+}
+
+html[data-theme="daryanavard"]{
+  color-scheme:light;
+  --color-bg:var(--pal-daryanavard-bg);
+  --color-surface:var(--pal-daryanavard-surface);
+  --color-surface-elevated:var(--pal-daryanavard-elev);
+  --color-text-primary:var(--pal-daryanavard-text);
+  --color-text-secondary:var(--pal-daryanavard-text2);
+  --color-text-muted:var(--pal-daryanavard-muted);
+  --color-text-on-accent:var(--pal-daryanavard-on-accent);
+  --color-border:var(--pal-daryanavard-border);
+  --color-border-strong:var(--pal-daryanavard-border-strong);
+  --color-accent:var(--pal-daryanavard-accent);
+  --color-accent-strong:var(--pal-daryanavard-accent-strong);
+  --color-accent-soft:var(--pal-daryanavard-accent-soft);
+  --color-accent-text:var(--pal-daryanavard-accent-text);
+  --color-focus:var(--pal-daryanavard-accent);
+  --tape:var(--pal-daryanavard-tape);
+  --glass:var(--pal-daryanavard-glass);
 }
 
 /* ═══ The day ═══

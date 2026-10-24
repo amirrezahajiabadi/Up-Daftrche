@@ -26,6 +26,11 @@ export const STORAGE_KEYS = {
   tourAwarded: 'daftarche-tour-awarded',
   themeAuto: 'daftarche-theme-auto',
   motion: 'daftarche-motion',
+  textSize: 'daftarche-text-size',
+  firstSeen: 'daftarche-first-seen',
+  weekGoal: 'daftarche-week-goal',
+  backupAt: 'daftarche-backup-at',
+  backupNudge: 'daftarche-backup-nudge',
   goal: 'daftarche-goal',
 };
 
@@ -50,20 +55,24 @@ export const STORAGE_KEYS = {
    and into the card panel, so they must match the blocks in css/base.css in name
    and in order. */
 export const THEMES = [
-  { key: 'paper', label: 'کاغذ',    mode: 'light', palette: 'paper' },
-  { key: 'lilac', label: 'یاسی',    mode: 'light', palette: 'lilac' },
-  { key: 'blush', label: 'گلاب',    mode: 'light', palette: 'blush' },
-  { key: 'sage',  label: 'نعناع',   mode: 'light', palette: 'sage'  },
-  { key: 'ink',   label: 'کاغذی',   mode: 'light', palette: 'ink'   },
-  { key: 'night', label: 'شب',      mode: 'dark',  palette: 'night' },
-  { key: 'gold',  label: 'طلایی',   mode: 'dark',  palette: 'gold'  },
-  { key: 'ocean', label: 'اقیانوس', mode: 'dark',  palette: 'ocean' },
-  { key: 'plum',  label: 'بادمجان', mode: 'dark',  palette: 'plum'  },
+  { key: 'kashi',      label: 'فیروزه',   mode: 'light', palette: 'kashi',      family: 'tile'  },
+  { key: 'cobalt',     label: 'کبالت',    mode: 'light', palette: 'cobalt',     family: 'clean' },
+  { key: 'aurora',     label: 'آرورا',    mode: 'light', palette: 'aurora',     family: 'glass' },
+  { key: 'lajvard',    label: 'لاجورد',   mode: 'dark',  palette: 'lajvard',    family: 'tile'  },
+  { key: 'graphite',   label: 'گرافیت',   mode: 'dark',  palette: 'graphite',   family: 'clean' },
+  { key: 'nightglass', label: 'شب‌شیشه',  mode: 'dark',  palette: 'nightglass', family: 'glass' },
+  /* The five worlds: each is earned (js/achievements.js REWARDS) and each brings
+     a small feature of its own to Today (js/worlds.js). */
+  { key: 'tarnama',     label: 'تارنما',    mode: 'light', palette: 'tarnama',     family: 'world' },
+  { key: 'baghche',     label: 'باغچه',     mode: 'light', palette: 'baghche',     family: 'world' },
+  { key: 'daryanavard', label: 'دریانورد',  mode: 'light', palette: 'daryanavard', family: 'world' },
+  { key: 'shabgard',    label: 'شب‌گرد',    mode: 'dark',  palette: 'shabgard',    family: 'world' },
+  { key: 'fazanavard',  label: 'فضانورد',   mode: 'dark',  palette: 'fazanavard',  family: 'world' },
 ];
 
 export const THEME_KEYS = THEMES.map(t => t.key);
 export const THEME_MODES = ['light', 'dark'];
-export const DEFAULT_THEME = 'paper';
+export const DEFAULT_THEME = 'kashi';
 
 /* ─── Navigation map ───
    Two lists, one source. The four homes the bottom bar moves between, and the
@@ -74,7 +83,7 @@ export const PRIMARY_PAGES = ['today', 'tasks', 'focus', 'library'];
 export const MORE_PAGES = ['week', 'stats', 'achv', 'profile', 'settings'];
 /* The dark end of the table, and the first of the two halves the one-tap switch
    in the header walks between. */
-export const NIGHT_THEME = 'night';
+export const NIGHT_THEME = 'lajvard';
 
 /* A key an older build wrote down, mapped to the nearest theme that replaced it.
    «light» was the warm paper and «paper» still is it; «forest» was the green and
@@ -85,7 +94,15 @@ export const NIGHT_THEME = 'night';
    these meanings changed under anyone's feet, which is the point of giving the
    notebook's own two themes their old names back: «شب» is the warm night it
    always was, and the navy-and-gold one that briefly held the name is «طلایی». */
-const THEME_ALIASES = { dark: 'night', light: 'paper', forest: 'sage', cream: 'paper' };
+const THEME_ALIASES = {
+  /* the first generation */
+  dark: 'lajvard', light: 'kashi', forest: 'kashi', cream: 'kashi',
+  /* the nine themes this identity replaced, each to the nearest of the six:
+     warm light faces to the tile family, the cool bare one to the clean family,
+     the lilac to its glass cousin; the dark faces by hue. */
+  paper: 'kashi', blush: 'kashi', sage: 'kashi', ink: 'cobalt', lilac: 'aurora',
+  night: 'lajvard', gold: 'lajvard', ocean: 'graphite', plum: 'nightglass',
+};
 
 /* A stored or shared value, made safe: an unknown key comes back empty so the
    caller can fall back to the default instead of painting nothing. */

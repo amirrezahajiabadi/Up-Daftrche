@@ -34,3 +34,35 @@
          .focus-rating button,.pri-row button,.moods button,.scene-chips button,.due-row button,.dur-row button,.cat-scroll button,.seg-btn,.pick-chip):active{
     transform:none}
 }
+
+/* ═══ Touch reach ═══
+   On a coarse pointer every control that is not already covered by a hit-area
+   extension gets a 44px minimum, so a thumb never has to aim. Controls whose
+   box is deliberately small (the tick box, the row's delete) keep their look
+   and extend their reach with ::after instead — see css/today.css. */
+@media (pointer:coarse){
+  .today-all,.frog-toggle,.frog-start,.frog-next{min-height:44px}
+  #todayInput{min-height:44px}
+  .overlay .skip,#shareClose,.overlay .te-chip,.overlay .pick-chip{
+    min-width:44px;
+    min-height:44px;display:inline-flex;align-items:center;justify-content:center}
+  #shareClose{min-width:44px}
+  .share-style .pick-field.is-seg .pick-chip{min-height:44px}
+}
+
+/* ═══ Text size ═══
+   Pages are scaled with `zoom` (see js/textsize.js); the tab bar, dialogs and
+   the PDF reader stay at their own size. */
+html[data-text="lg"] .page{zoom:1.12}
+html[data-text="xl"] .page{zoom:1.25}
+
+/* ═══ Backup reminder ═══ */
+.backup-nudge{margin:0 0 14px;padding:14px 16px;border-radius:var(--radius-md);
+  background:var(--color-accent-soft);border:1px solid var(--color-border)}
+.backup-nudge[hidden]{display:none}
+.backup-nudge p{margin:0 0 10px;font-size:13px;line-height:1.9;color:var(--color-text-primary)}
+.backup-nudge-actions{display:flex;align-items:center;gap:8px}
+.backup-nudge-actions .go{min-height:44px;padding:0 18px;border:none;cursor:pointer;
+  border-radius:var(--radius-sm);background:var(--color-accent);color:var(--color-text-on-accent);
+  font-family:var(--font-ui);font-size:13.5px;font-weight:700}
+.backup-nudge-actions .skip{min-height:44px;padding:0 14px}

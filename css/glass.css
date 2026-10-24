@@ -1,0 +1,69 @@
+/* ═══ Glass — «آرورا» and «شب‌شیشه» ═══
+   The glass family is the only place the app lets the page behind a surface
+   show through. Three rules keep it readable (liquidglassdesign.com's own list):
+
+   1. The palette values in base.css are SOLID. Every contrast floor in
+      tests/themes.test.mjs is measured on them, and they are what paints when
+      this file does not apply — no backdrop-filter in the engine, or the system
+      asking for reduced transparency. Glass is an enhancement over a page that
+      already works.
+   2. Frosting goes on the floating layer and on surfaces, never under a long
+      block of copy that has no surface of its own: the dock, dialogs, the
+      cards and rows. Text always sits on a surface at 70% or more.
+   3. One layer. A frosted card never contains another frosted card; inner chips
+      stay on the flat accent-soft fill.
+
+   The aurora behind it is plain CSS gradients on the body, fixed so the glass
+   has something to bend over while the page scrolls. */
+
+html[data-theme="aurora"] body{
+  background-color:var(--color-bg);
+  background-image:
+    radial-gradient(60% 38% at 12% 8%,#9fe3e0 0,transparent 70%),
+    radial-gradient(55% 40% at 92% 22%,#c9a7ff 0,transparent 70%),
+    radial-gradient(60% 45% at 28% 96%,#ffc2d6 0,transparent 70%);
+  background-attachment:fixed}
+html[data-theme="nightglass"] body{
+  background-color:var(--color-bg);
+  background-image:
+    radial-gradient(60% 38% at 10% 6%,rgba(56,189,200,.30) 0,transparent 70%),
+    radial-gradient(55% 40% at 95% 24%,rgba(139,92,246,.38) 0,transparent 70%),
+    radial-gradient(60% 45% at 30% 98%,rgba(236,72,153,.22) 0,transparent 70%);
+  background-attachment:fixed}
+
+@supports ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){
+  @media not (prefers-reduced-transparency:reduce){
+    html[data-theme="aurora"]{
+      --glass-fill:color-mix(in srgb,#ffffff 68%,transparent);
+      --glass-fill-strong:color-mix(in srgb,#ffffff 82%,transparent);
+      --glass-edge:rgba(255,255,255,.85);
+      --glass-shadow:0 10px 30px -14px rgba(70,50,140,.28)}
+    html[data-theme="nightglass"]{
+      --glass-fill:color-mix(in srgb,#1a1636 70%,transparent);
+      --glass-fill-strong:color-mix(in srgb,#1a1636 86%,transparent);
+      --glass-edge:rgba(210,200,255,.20);
+      --glass-shadow:0 10px 30px -14px rgba(0,0,0,.6)}
+
+    :is(html[data-theme="aurora"],html[data-theme="nightglass"]) :is(
+      .progress-card,.t-row,.task,.today-add,.week-card,.vibe-card,.sheet-paper,.theme-btn,.page-back){
+      background:var(--glass-fill);
+      border-color:var(--glass-edge);
+      box-shadow:var(--glass-shadow);
+      backdrop-filter:blur(18px) saturate(1.35);
+      -webkit-backdrop-filter:blur(18px) saturate(1.35)}
+
+    /* The floating layer is frosted a little harder and reads from the stronger
+       fill, because it travels over every page's content. */
+    :is(html[data-theme="aurora"],html[data-theme="nightglass"]) :is(.bottom-nav,.sheet,.name-card){
+      background:var(--glass-fill-strong);
+      border-color:var(--glass-edge);
+      backdrop-filter:blur(24px) saturate(1.45);
+      -webkit-backdrop-filter:blur(24px) saturate(1.45)}
+
+    /* One layer: anything frosted that sits inside something frosted goes flat. */
+    :is(html[data-theme="aurora"],html[data-theme="nightglass"])
+      :is(.sheet-paper,.progress-card,.vibe-card,.week-card,.sheet,.name-card) :is(.t-row,.task,.today-add,.theme-btn,.page-back){
+      backdrop-filter:none;-webkit-backdrop-filter:none;box-shadow:none;
+      background:color-mix(in srgb,var(--color-surface-elevated) 70%,transparent)}
+  }
+}

@@ -55,3 +55,4 @@ test('onboarding: the panes count two and three of three', () => {
   assert.match(PANES.task.steps, /۳/);
   for (const p of Object.values(PANES)) { assert.ok(p.title.length > 0); assert.ok(p.sub.length > 0); }
 });
+
