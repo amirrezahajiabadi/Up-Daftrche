@@ -8,7 +8,13 @@
     "test": "node --test",
     "test:browser": "node tests/browser/regress.mjs",
     "icons": "node scripts/sync-icons.mjs",
-    "icons:check": "node scripts/sync-icons.mjs --check"
+    "icons:check": "node scripts/sync-icons.mjs --check",
+    "build:www": "node tools/build-www.mjs",
+    "cap:sync": "node tools/build-www.mjs && npx cap sync android",
+    "cap:open": "npx cap open android",
+    "keystore:gen": "node tools/gen-keystore.mjs",
+    "build:apk": "node tools/build-apk.mjs",
+    "build:apk:debug": "node tools/build-apk.mjs --debug"
   },
   "engines": {
     "node": ">=20"
@@ -16,5 +22,15 @@
   "repository": {
     "type": "git",
     "url": "https://github.com/amirrezahajiabadi/daftarche.git"
+  },
+  "devDependencies": {
+    "@capacitor/android": "^8.5.3",
+    "@capacitor/app": "^8.1.2",
+    "@capacitor/cli": "^8.5.3",
+    "@capacitor/core": "^8.5.3",
+    "@capacitor/filesystem": "^8.1.5",
+    "@capacitor/local-notifications": "^8.3.1",
+    "@capacitor/share": "^8.0.3",
+    "@capacitor/status-bar": "^8.0.4"
   }
 }

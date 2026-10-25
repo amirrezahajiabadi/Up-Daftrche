@@ -217,16 +217,23 @@ export function swatchRow(host, items, { group, onPick, isLocked = null }) {
 
   if (!host.dataset.built) {
     host.dataset.built = '1';
-    host.innerHTML = items.map(it =>
-      `<button type="button" class="swatch" role="radio" data-group="${esc(group)}"`
-      + ` data-key="${esc(it.key)}" data-mode="${esc(it.mode)}" data-palette="${esc(it.palette)}"`
-      + ` aria-checked="false" tabindex="-1">`
-      + `<i class="swatch-preview" aria-hidden="true"><i></i><i></i><i></i></i>`
-      + `<span class="swatch-name">${esc(it.label)}</span>`
-      + (it.rewardId ? '<svg class="swatch-lock-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="10" width="14" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>' : '')
-      + (it.locked || it.lockText ? `<small class="swatch-lock">${esc(it.lockText || 'قفل')}<span>${esc(it.lockCondition || '')}</span></small>` : '')
-      + `</button>`
-    ).join('');
+    let html = '';
+    for (const it of items) {
+      if (it.groupTitle) {
+        html += `<div class="swatch-group-title"><span>${esc(it.groupTitle)}</span>`
+          + (it.groupSub ? `<small class="swatch-group-sub">${esc(it.groupSub)}</small>` : '')
+          + `</div>`;
+      }
+      html += `<button type="button" class="swatch" role="radio" data-group="${esc(group)}"`
+        + ` data-key="${esc(it.key)}" data-mode="${esc(it.mode)}" data-palette="${esc(it.palette)}"`
+        + ` aria-checked="false" tabindex="-1">`
+        + `<i class="swatch-preview" aria-hidden="true"><i></i><i></i><i></i></i>`
+        + `<span class="swatch-name">${esc(it.label)}</span>`
+        + (it.rewardId ? '<svg class="swatch-lock-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="10" width="14" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>' : '')
+        + (it.locked || it.lockText ? `<small class="swatch-lock">${esc(it.lockText || 'قفل')}<span>${esc(it.lockCondition || '')}</span></small>` : '')
+        + `</button>`;
+    }
+    host.innerHTML = html;
 
     host.addEventListener('click', e => {
       const b = e.target.closest('.swatch');

@@ -500,6 +500,13 @@ async function show(i) {
   if (currentPage() !== step.page) {
     window.dispatchEvent(new CustomEvent('navigate', { detail: step.page }));
   }
+  if (step.page === 'settings' && step.sel) {
+    const el = document.querySelector(step.sel);
+    const panel = el?.closest?.('.settings-panel');
+    if (panel?.dataset?.settingsPanel) {
+      window.dispatchEvent(new CustomEvent('navigate-settings-tab', { detail: panel.dataset.settingsPanel }));
+    }
+  }
   const target = step.sel && resolveTarget(step);
   if (target) target.scrollIntoView({ block: 'center', behavior: 'instant' });
   await raf2();

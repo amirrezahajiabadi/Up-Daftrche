@@ -459,3 +459,49 @@ test('all world themes have complete atmospheric and reduced-motion rules in css
     assert.ok(WORLDS_CSS.includes(cls), `css/worlds.css missing card styles for ${cls}`);
   }
 });
+
+test('settings page dual tabs and themes panel structure', async () => {
+  const SETTINGS_CSS = read('css/settings.css');
+
+  // Verify tab list and buttons in HTML
+  assert.ok(HTML.includes('class="settings-tabs"'), 'index.html missing .settings-tabs');
+  assert.ok(HTML.includes('data-settings-tab="general"'), 'index.html missing general tab');
+  assert.ok(HTML.includes('data-settings-tab="themes"'), 'index.html missing themes tab');
+  assert.ok(HTML.includes('id="settingsThemeCount"'), 'index.html missing #settingsThemeCount badge');
+
+  // Verify panels
+  assert.ok(HTML.includes('data-settings-panel="general"'), 'index.html missing general panel');
+  assert.ok(HTML.includes('data-settings-panel="themes"'), 'index.html missing themes panel');
+
+  // Verify readability/motion moved to general panel
+  const genPanelStart = HTML.indexOf('data-settings-panel="general"');
+  const themesPanelStart = HTML.indexOf('data-settings-panel="themes"');
+  assert.ok(genPanelStart > -1 && themesPanelStart > genPanelStart, 'panels in expected order');
+
+  const genPanelHtml = HTML.slice(genPanelStart, themesPanelStart);
+  assert.ok(genPanelHtml.includes('id="textSizeSeg"'), '#textSizeSeg should be inside general panel');
+  assert.ok(genPanelHtml.includes('id="motionBtn"'), '#motionBtn should be inside general panel');
+  assert.ok(genPanelHtml.includes('id="backupExport"'), '#backupExport should be inside general panel');
+
+  const themesPanelHtml = HTML.slice(themesPanelStart);
+  assert.ok(themesPanelHtml.includes('id="themeAutoBtn"'), '#themeAutoBtn should be inside themes panel');
+  assert.ok(themesPanelHtml.includes('id="themeModeSwitch"'), '#themeModeSwitch should be inside themes panel');
+  assert.ok(themesPanelHtml.includes('id="themeSwatches"'), '#themeSwatches should be inside themes panel');
+
+  // Verify CSS styles
+  assert.ok(SETTINGS_CSS.includes('.settings-tabs'), 'css/settings.css missing .settings-tabs');
+  assert.ok(SETTINGS_CSS.includes('.settings-tab'), 'css/settings.css missing .settings-tab');
+  assert.ok(SETTINGS_CSS.includes('.settings-panel[hidden]'), 'css/settings.css missing .settings-panel[hidden]');
+  assert.ok(SETTINGS_CSS.includes('.swatch-group-title'), 'css/settings.css missing .swatch-group-title');
+
+  // Verify JS exports and handlers
+  const SETTINGS_JS = read('js/settings.js');
+  assert.ok(/export function switchSettingsTab\(/.test(SETTINGS_JS), 'switchSettingsTab export missing');
+  assert.ok(/export function renderSettingsThemeCount\(/.test(SETTINGS_JS), 'renderSettingsThemeCount export missing');
+  assert.ok(SETTINGS_JS.includes('navigate-settings-tab'), 'navigate-settings-tab listener missing');
+
+  const T = await import('../js/theme.js');
+  assert.equal(typeof T.unlockedThemesCount, 'function', 'unlockedThemesCount export missing');
+  assert.equal(T.totalThemesCount(), 16, 'totalThemesCount should be 16');
+  assert.equal(T.unlockedThemesCount(), 16, 'unlockedThemesCount should be 16 in test mode');
+});

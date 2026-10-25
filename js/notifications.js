@@ -10,6 +10,7 @@
 import { ICONS } from './constants.js';
 import { enablePush, disablePush } from './push-service.js';
 import { isBusy } from './calm.js';
+import { isNative, scheduleNativeTaskNotification } from './native.js';
 
 const BELL_SVG = ICONS.bell;
 
@@ -28,11 +29,12 @@ const persist = () => { _save && _save(); _notify && _notify(); };
 
 /* ── Capability ── */
 export const notificationsSupported = () =>
-  'Notification' in window && 'serviceWorker' in navigator;
+  isNative() || ('Notification' in window && 'serviceWorker' in navigator);
 
 /* ── Permission ──
    'default' → not asked yet; 'granted' → can show; 'denied' → blocked. */
 export function notificationPermission() {
+  if (isNative()) return 'granted';
   return notificationsSupported() ? Notification.permission : 'unsupported';
 }
 
@@ -40,6 +42,7 @@ export function notificationPermission() {
    the resulting permission string. Never called automatically. */
 export async function requestNotificationPermission() {
   if (!notificationsSupported()) return 'unsupported';
+  if (isNative()) return 'granted';
   if (Notification.permission !== 'default') return Notification.permission;
   try { return await Notification.requestPermission(); }
   catch { return 'denied'; }
@@ -49,7 +52,12 @@ export async function requestNotificationPermission() {
    Routes through the service worker when available (required on Android,
    best behaviour on desktop too); falls back to the page Notification. */
 async function showNotification(title, body, tag) {
-  if (!notificationsSupported() || Notification.permission !== 'granted') return;
+  if (!notificationsSupported()) return;
+  if (isNative()) {
+    scheduleNativeTaskNotification({ id: tag, title, body, date: Date.now() });
+    return;
+  }
+  if (Notification.permission !== 'granted') return;
   try {
     const reg = await navigator.serviceWorker.getRegistration();
     if (reg) {

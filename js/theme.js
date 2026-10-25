@@ -188,17 +188,29 @@ export const toggleTheme = () => {
   applyTheme(currentMode() === 'dark' ? themeForMode('light') : themeForMode('dark'));
 };
 
+export const unlockedThemesCount = () => THEMES.filter(t => isThemeUnlocked(t.key)).length;
+export const totalThemesCount = () => THEMES.length;
+
 export function initTheme() {
   modeControl = modeSwitch($('#themeModeSwitch'), { modes: THEME_MODES, onPick: applyMode });
-  swatchControl = swatchRow($('#themeSwatches'), THEMES.map(theme => {
+  swatchControl = swatchRow($('#themeSwatches'), THEMES.map((theme, idx) => {
     const reward = rewardFor('theme', theme.key);
     const condition = reward ? rewardRequirements(reward.id).map(({ achievement }) =>
       `نشان «${achievement.title}»`).join(' یا ') : '';
+    let groupTitle = '';
+    let groupSub = '';
+    if (idx === 0) {
+      groupTitle = 'تم‌های پایه';
+    } else if (theme.family === 'world' && THEMES[idx - 1]?.family !== 'world') {
+      groupTitle = 'دنیاهای ویژه (با نشان‌ها باز می‌شوند)';
+      groupSub = 'هر دنیا یک کارت تعاملی به صفحهٔ امروز اضافه می‌کند';
+    }
     return {
       ...theme, rewardId: reward?.id,
       locked: !isThemeUnlocked(theme.key),
       lockText: reward?.lockedText,
       lockCondition: condition ? `شرط باز شدن: ${condition}` : '',
+      groupTitle, groupSub,
     };
   }), {
     group: 'theme',

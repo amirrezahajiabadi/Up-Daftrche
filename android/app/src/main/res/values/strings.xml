@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">دَفتَرچه</string>
+    <string name="title_activity_main">دَفتَرچه</string>
+    <string name="package_name">com.Amirreza.daftarche</string>
+    <string name="custom_url_scheme">com.Amirreza.daftarche</string>
+</resources>

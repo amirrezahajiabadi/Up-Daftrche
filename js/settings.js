@@ -13,7 +13,7 @@
 
 import { $, faNum } from './utils.js';
 import { state } from './state.js';
-import { markThemePicker, isAutoTheme, setAutoTheme } from './theme.js';
+import { markThemePicker, isAutoTheme, setAutoTheme, unlockedThemesCount, totalThemesCount } from './theme.js';
 import { APP_VERSION, openReleaseNotes } from './changelog.js';
 import { startTour } from './tour.js';
 import { clearLibraryData, exportBookPack, importBookPack } from './library.js';
@@ -26,6 +26,51 @@ import { collectBackup, parseBackup, applyBackup, mergeBackup, backupFileName, B
 import { confirmDialog, showNotice } from './dialog.js';
 import { clearAll } from './store.js';
 import { systemReducedMotion, userReducedMotion, setUserReducedMotion } from './motion.js';
+import { isNative, saveAndShareBlob } from './native.js';
+
+let activeSettingsTab = 'general';
+
+export function switchSettingsTab(tabKey) {
+  const target = tabKey === 'themes' ? 'themes' : 'general';
+  activeSettingsTab = target;
+
+  const tabBtns = document.querySelectorAll('.settings-tab');
+  tabBtns.forEach(btn => {
+    const isSel = btn.dataset.settingsTab === target;
+    btn.classList.toggle('sel', isSel);
+    btn.setAttribute('aria-selected', String(isSel));
+  });
+
+  const panels = document.querySelectorAll('.settings-panel');
+  panels.forEach(panel => {
+    const match = panel.dataset.settingsPanel === target;
+    panel.hidden = !match;
+  });
+
+  renderSettingsThemeCount();
+}
+
+export function currentSettingsTab() {
+  return activeSettingsTab;
+}
+
+export function renderSettingsThemeCount() {
+  const countEl = $('#settingsThemeCount');
+  if (countEl) {
+    const unlocked = unlockedThemesCount();
+    countEl.textContent = faNum(unlocked);
+    countEl.setAttribute('aria-label', `${faNum(unlocked)} تم باز شده از ${faNum(totalThemesCount())}`);
+  }
+}
+
+export function ensureSettingsElementVisible(elOrSelector) {
+  const el = typeof elOrSelector === 'string' ? $(elOrSelector) : elOrSelector;
+  if (!el) return;
+  const panel = el.closest('.settings-panel');
+  if (panel?.dataset?.settingsPanel) {
+    switchSettingsTab(panel.dataset.settingsPanel);
+  }
+}
 
 /* What the page says about itself, painted on entry. The picker is marked here
    as well as by js/theme.js because the two halves of the table are remembered
@@ -47,6 +92,9 @@ export function renderSettings() {
 
   renderPersistRow();
   renderThemeAutoRow();
+  renderMotionRow();
+  renderSettingsThemeCount();
+  switchSettingsTab(activeSettingsTab);
 }
 
 function renderThemeAutoRow() {
@@ -79,6 +127,11 @@ function renderPersistRow() {
   const persistText = $('#persistStatusText');
   const persistHint = $('#persistHint');
   if (!persistText) return;
+  if (isNative()) {
+    persistText.textContent = 'فعال (حافظهٔ دستگاه)';
+    if (persistHint) persistHint.textContent = 'اطلاعات در حافظهٔ داخلی برنامه نگهداری می‌شوند. پاک‌کردن داده‌ها از تنظیمات گوشی اطلاعات را حذف می‌کند؛ پشتیبان‌گیری منظم توصیه می‌شود.';
+    return;
+  }
   if (typeof navigator !== 'undefined' && navigator.storage?.persisted) {
     navigator.storage.persisted().then(persisted => {
       if (persisted) {
@@ -154,6 +207,38 @@ export function initSettings() {
     paint();
   }
 
+  /* ── Settings tabs (general vs themes) ── */
+  const tabsList = document.querySelector('.settings-tabs');
+  if (tabsList) {
+    tabsList.addEventListener('click', e => {
+      const btn = e.target.closest('.settings-tab');
+      if (btn && btn.dataset.settingsTab) {
+        switchSettingsTab(btn.dataset.settingsTab);
+      }
+    });
+
+    tabsList.addEventListener('keydown', e => {
+      if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+      e.preventDefault();
+      const tabs = Array.from(tabsList.querySelectorAll('.settings-tab'));
+      const curIdx = tabs.findIndex(t => t.classList.contains('sel'));
+      const step = e.key === 'ArrowLeft' ? 1 : -1;
+      const nextIdx = (curIdx + step + tabs.length) % tabs.length;
+      const nextTab = tabs[nextIdx];
+      if (nextTab) {
+        nextTab.focus();
+        switchSettingsTab(nextTab.dataset.settingsTab);
+      }
+    });
+  }
+
+  window.addEventListener('navigate-settings-tab', e => {
+    if (e.detail) switchSettingsTab(e.detail);
+  });
+  window.addEventListener('theme-applied', renderSettingsThemeCount);
+  renderSettingsThemeCount();
+  switchSettingsTab(activeSettingsTab);
+
   /* ── Backup ──
      Export writes every daftarche-* key to one JSON file; import validates a
      file completely before touching anything, then asks how it should land —
@@ -162,20 +247,17 @@ export function initSettings() {
   const status = $('#backupStatus');
   const say = msg => { if (status) status.textContent = msg; };
 
-  $('#backupExport')?.addEventListener('click', () => {
+  $('#backupExport')?.addEventListener('click', async () => {
     try {
       const backup = collectBackup(localStorage, { release: APP_VERSION });
       const blob = new Blob([JSON.stringify(backup)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = backupFileName();
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 10000);
-      markBackupDone();
-      say('پشتیبان ساخته شد؛ فایل رو یه جای امن نگه دار.');
+      const res = await saveAndShareBlob(blob, backupFileName(), { title: 'پشتیبان دَفتَرچه' });
+      if (res.ok) {
+        markBackupDone();
+        say('پشتیبان ساخته شد؛ فایل رو یه جای امن نگه دار.');
+      } else {
+        say('ساختن پشتیبان نشد. دوباره امتحان کن.');
+      }
     } catch {
       say('ساختن پشتیبان نشد. دوباره امتحان کن.');
     }
@@ -189,12 +271,12 @@ export function initSettings() {
     try {
       const { blob, count, missing } = await exportBookPack();
       if (!blob) { sayPdf('فایل PDFای روی این دستگاه نیست که ذخیره بشه.'); return; }
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url; a.download = backupFileName().replace(/\.json$/, '') + '-pdf.zip';
-      document.body.appendChild(a); a.click(); a.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 60000);
-      sayPdf(`${faNum(count)} فایل ذخیره شد${missing ? ` (${faNum(missing)} کتاب فایلی نداشت)` : ''}. این زیپ رو هم کنار پشتیبان نگه دار.`);
+      const res = await saveAndShareBlob(blob, backupFileName().replace(/\.json$/, '') + '-pdf.zip', { title: 'پک PDF کتاب‌های دَفتَرچه' });
+      if (res.ok) {
+        sayPdf(`${faNum(count)} فایل ذخیره شد${missing ? ` (${faNum(missing)} کتاب فایلی نداشت)` : ''}. این زیپ رو هم کنار پشتیبان نگه دار.`);
+      } else {
+        sayPdf('ساختن پک PDF نشد. شاید حافظه کم باشه.');
+      }
     } catch { sayPdf('ساختن پک PDF نشد. شاید حافظه کم باشه.'); }
   });
   const pdfInput = $('#pdfPackFile');

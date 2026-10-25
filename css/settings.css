@@ -85,3 +85,96 @@
   .set-item{padding:12px 0}
   .settings-hint{font-size:11.5px}
 }
+
+/* ═══ Settings Dual Tabs ═══ */
+.settings-tabs{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:4px;
+  padding:4px;
+  background:var(--color-surface);
+  border:1px solid var(--color-border);
+  border-radius:var(--radius-md);
+  box-shadow:var(--shadow-sm);
+  margin-block-end:16px;
+}
+.settings-tab{
+  position:relative;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  border:none;
+  background:transparent;
+  font-family:var(--font-ui);
+  font-size:13px;
+  font-weight:600;
+  color:var(--color-text-secondary);
+  padding:10px 8px;
+  min-height:42px;
+  border-radius:var(--radius-xs);
+  cursor:pointer;
+  transition:color var(--duration-base),background var(--duration-base);
+}
+.settings-tab small{
+  color:var(--color-text-muted);
+  font-size:11px;
+  font-weight:600;
+}
+.settings-tab.sel,
+.settings-tab[aria-selected="true"]{
+  background:var(--color-accent-soft);
+  color:var(--color-text-primary);
+  box-shadow:inset 0 0 0 1.5px var(--color-accent);
+}
+.settings-tab.sel small,
+.settings-tab[aria-selected="true"] small{
+  color:var(--color-accent-text);
+  opacity:.9;
+}
+.settings-tab:focus-visible{
+  outline:2px solid var(--color-focus);
+  outline-offset:2px;
+}
+@media (pointer: coarse){
+  .settings-tab{min-height:44px}
+}
+@media (prefers-reduced-motion: reduce){
+  .settings-tab{transition:none}
+}
+html[data-motion="reduced"] .settings-tab{
+  transition:none;
+}
+
+.settings-panel{
+  display:flex;
+  flex-direction:column;
+  gap:16px;
+}
+.settings-panel[hidden]{
+  display:none !important;
+}
+
+/* Swatch Group Titles */
+.swatch-group-title{
+  grid-column:1 / -1;
+  font-size:12px;
+  font-weight:600;
+  color:var(--color-text-secondary);
+  margin-block-start:12px;
+  margin-block-end:2px;
+  display:flex;
+  flex-direction:column;
+  gap:3px;
+  line-height:1.6;
+  text-align:start;
+}
+.swatch-group-title:first-child{
+  margin-block-start:2px;
+}
+.swatch-group-sub{
+  font-size:11px;
+  font-weight:400;
+  color:var(--color-text-muted);
+  line-height:1.6;
+}

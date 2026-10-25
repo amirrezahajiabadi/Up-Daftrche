@@ -5,6 +5,20 @@ const RETRY_DELAY = 60 * 1000;
 const ACTIVATION_TIMEOUT = 15000;
 
 export function initPWA() {
+  const isNative = typeof window !== 'undefined' && Boolean(window.Capacitor?.isNativePlatform?.());
+  if (isNative) {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(regs => {
+        regs.forEach(r => r.unregister());
+      }).catch(() => {});
+    }
+    if (typeof caches !== 'undefined') {
+      caches.keys().then(keys => {
+        keys.filter(k => k.startsWith('daftarche-')).forEach(k => caches.delete(k));
+      }).catch(() => {});
+    }
+    return;
+  }
   if (!('serviceWorker' in navigator)) return;
 
   const sw = navigator.serviceWorker;

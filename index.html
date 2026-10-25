@@ -215,10 +215,11 @@
 <!-- ═══ Page 1: Today ═══ -->
 <div class="page active" id="page-today">
   <main class="app">
-    <header class="today-head">
-      <div class="today-head-main">
+    <header>
+      <div>
         <h1 id="todayGreet">سلام</h1>
         <p class="subtitle" id="todayDate"></p>
+        <p class="today-summary" id="todaySummary"></p>
       </div>
       <div class="header-actions">
         <button class="header-avatar" aria-label="پروفایل"></button>
@@ -229,12 +230,6 @@
       </div>
     </header>
 
-    <!-- The day's one fact, set below the greeting rather than inside it: it is
-         the finding the rest of the page answers (how much is left, what was
-         already finished), and it belongs to the whole column, not to the title's
-         corner. js/today.js fills it. -->
-    <p class="today-summary" id="todaySummary"></p>
-
     <div class="backup-nudge" id="backupNudge" hidden>
       <p>یه ماهه پشتیبان نگرفتی. همه‌چیز فقط روی همین دستگاهه؛ یه فایل پشتیبان جلوی از دست رفتنش رو می‌گیره.</p>
       <div class="backup-nudge-actions">
@@ -244,10 +239,10 @@
     </div>
 
     <form class="today-add" id="todayAddForm" autocomplete="off">
-      <svg class="ta-ico" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 20v-7"/><path d="M12 13c0-3.4 2.4-5.6 6.4-5.6 0 3.4-2.4 5.6-6.4 5.6z"/></svg>
-      <input id="todayInput" type="text" maxlength="120" placeholder="یه کار برای امروز…" aria-label="کار جدید برای امروز" autocomplete="off"/>
+      <svg class="ta-ico" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 20v-7"/><path d="M12 13c0-3.4 2.4-5.6 6.4-5.6 0 3.4-2.4 5.6-6.4 5.6z"/></svg>
+      <input id="todayInput" type="text" maxlength="120" placeholder="+ امروز باید چی کار کنم؟" autocomplete="off"/>
       <button class="today-go" type="submit" aria-label="افزودن کار">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>افزودن</span>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
       </button>
     </form>
     <div class="quickadd-preview" id="todayQuickAddPreview" hidden></div>
@@ -1038,218 +1033,223 @@
       </div>
     </header>
 
-    <!-- The one setting whose answer is visible, so it stands first. The switch
-         is the half of the table, the four swatches are the colours inside it,
-         and the line under them says the rule out loud rather than leaving the
-         reader to discover it by tapping. -->
-    <div class="vibe-card">
-      <div class="vibe-head"><strong>ظاهر</strong></div>
-      <div class="settings-row settings-row-theme">
-        <span class="settings-label" id="themeLabel">تم</span>
-        <div class="theme-picker">
-          <div id="themeModeSwitch" aria-label="روشن یا تیره"></div>
-          <div class="swatch-row" id="themeSwatches" role="radiogroup" aria-labelledby="themeLabel"></div>
+    <div class="settings-tabs" role="tablist" aria-label="بخش‌های تنظیمات">
+      <button type="button" class="settings-tab sel" role="tab" id="settingsTabGeneral" aria-selected="true" aria-controls="settingsPanelGeneral" data-settings-tab="general">
+        <span>عمومی</span>
+      </button>
+      <button type="button" class="settings-tab" role="tab" id="settingsTabThemes" aria-selected="false" aria-controls="settingsPanelThemes" data-settings-tab="themes">
+        <span>تم و دنیاها</span>
+        <small id="settingsThemeCount"></small>
+      </button>
+    </div>
+
+    <!-- ═══ Panel 1: General Settings ═══ -->
+    <div class="settings-panel" data-settings-panel="general" id="settingsPanelGeneral" role="tabpanel" aria-labelledby="settingsTabGeneral">
+      <div class="vibe-card">
+        <div class="vibe-head"><strong>خوانایی و حرکت</strong></div>
+        <div class="set-item">
+          <div class="settings-row">
+            <span class="settings-label" id="textSizeLbl">اندازهٔ متن</span>
+            <div class="seg" id="textSizeSeg" role="radiogroup" aria-labelledby="textSizeLbl"></div>
+          </div>
+          <p class="settings-hint">متن صفحه‌ها بزرگ‌تر می‌شه؛ نوار پایین و خواندن PDF تغییری نمی‌کنن.</p>
+        </div>
+        <div class="settings-divider"></div>
+        <div class="set-item">
+          <div class="settings-row">
+            <span class="settings-label">کاهش انیمیشن‌ها</span>
+            <div class="settings-value">
+              <span id="motionText">خاموش</span>
+              <button class="switch" id="motionBtn" type="button" role="switch" aria-checked="false" aria-label="کاهش انیمیشن‌ها"></button>
+            </div>
+          </div>
+          <p class="settings-hint" id="motionHint">حرکت‌های تزیینی و پرش‌ها کم می‌شن؛ بازخورد لازم (مثل تیک‌خوردن) می‌مونه.</p>
         </div>
       </div>
-      <p class="settings-hint">شانزده رنگ: شش‌تا همیشه بازن (فیروزه، لاجورد، کبالت، گرافیت، آرورا، شب‌شیشه) و ده دنیای ویژه — شب‌گرد، تارنما، فضانورد، باغچه، دریانورد، نگارخانه، کیمیاگر، قله‌نورد، رصدخانه و سیمرغ — با نشان‌ها باز می‌شن. هر دنیا یه کارت کوچیک توی صفحهٔ امروز هم میاره. انتخاب هر نصف یادش می‌مونه.</p>
-      <div class="settings-divider"></div>
-      <div class="set-item">
-        <div class="settings-row">
-          <span class="settings-label">تم خودکار</span>
-          <div class="settings-value">
-            <span id="themeAutoText">غیرفعال</span>
-            <button class="switch" id="themeAutoBtn" type="button" role="switch" aria-checked="false" aria-label="تم خودکار بر اساس تم سیستم"></button>
+
+      <div class="vibe-card">
+        <div class="vibe-head"><strong>پیوستگی و تمرکز</strong></div>
+        <div class="set-item">
+          <div class="settings-row">
+            <span class="settings-label">مرخصی پیوستگی</span>
+            <div class="settings-value">
+              <span id="profFreezeText">روشن</span>
+              <button class="switch" id="profFreezeBtn" type="button" role="switch" aria-checked="true" aria-label="مرخصی پیوستگی"></button>
+            </div>
+          </div>
+          <p class="settings-hint">هر ۳۰ روز فعال یه مرخصی می‌گیری (تا دو تا در انبار). اگه یه روز جا بمونی، خودش می‌پوشونه‌ش تا پیوستگیت نشکنه.</p>
+        </div>
+        <div class="settings-divider"></div>
+        <div class="set-item">
+          <div class="settings-row">
+            <span class="settings-label">مدت هر نشست تمرکز</span>
+            <div class="settings-value"><span id="profPomo"></span></div>
+          </div>
+          <p class="settings-hint">پیش‌فرض هر نشست؛ از خود صفحهٔ تمرکز عوضش کن.</p>
+        </div>
+      </div>
+
+      <div class="vibe-card">
+        <div class="vibe-head"><strong>تاریخ تولد</strong></div>
+        <div class="set-item">
+          <div class="settings-row">
+            <span class="settings-label">تولدت</span>
+            <div class="settings-value">
+              <button class="bd-date" id="bdPick" type="button" aria-haspopup="dialog">
+                <span id="bdDate" class="empty"></span>
+              </button>
+            </div>
+          </div>
+          <p class="settings-hint">دفترچه دوست داره تاریخ تولدتو بدونه!</p>
+        </div>
+      </div>
+
+      <div class="vibe-card">
+        <div class="vibe-head"><strong>درباره</strong></div>
+        <div class="set-item">
+          <div class="settings-row">
+            <span class="settings-label">راهنمای دفترچه</span>
+            <button class="settings-btn" id="profTour" type="button">بریم</button>
+          </div>
+          <p class="settings-hint">تور کوتاهی که همه‌جای دفترچه رو نشون می‌ده — همونی که بار اول دیدی، از اول.</p>
+        </div>
+        <div class="settings-divider"></div>
+        <div class="set-item">
+          <div class="settings-row">
+            <span class="settings-label">نسخه</span>
+            <div class="settings-value"><span id="profVersion"></span></div>
           </div>
         </div>
-        <p class="settings-hint">تغییر خودکار تم روشن و تیره مطابق با حالت تاریک/روشن گوشی یا مرورگر.</p>
+        <div class="settings-divider"></div>
+        <div class="set-item">
+          <div class="settings-row">
+            <span class="settings-label">تازه‌های دفترچه</span>
+            <button class="settings-btn" id="profNotes" type="button">ببین</button>
+          </div>
+          <p class="settings-hint">هر بار دفترچه به‌روز می‌شه، این‌جا می‌تونی ببینی چی عوض شده.</p>
+        </div>
       </div>
-      <div class="settings-divider"></div>
-      <div class="set-item">
-        <div class="settings-row">
-          <span class="settings-label">کاهش انیمیشن‌ها</span>
-          <div class="settings-value">
-            <span id="motionText">خاموش</span>
-            <button class="switch" id="motionBtn" type="button" role="switch" aria-checked="false" aria-label="کاهش انیمیشن‌ها"></button>
+
+      <div class="vibe-card">
+        <div class="vibe-head"><strong>پشتیبان‌گیری و ماندگاری</strong></div>
+        <div class="set-item">
+          <div class="settings-row">
+            <span class="settings-label">ذخیرهٔ پایدار</span>
+            <div class="settings-value"><span id="persistStatusText">بررسی…</span></div>
+          </div>
+          <p class="settings-hint" id="persistHint">با فعال بودن ذخیرهٔ پایدار، مرورگر اطلاعات دفترچه را در کمبود حافظه پاک نمی‌کند.</p>
+        </div>
+        <div class="settings-divider"></div>
+        <div class="set-item">
+          <div class="settings-row">
+            <span class="settings-label">گرفتن پشتیبان</span>
+            <button class="settings-btn" id="backupExport" type="button">دانلود</button>
+          </div>
+          <p class="settings-hint">کارها، پیوستگی، نشان‌ها، تنظیمات و پیشرفت کتاب‌ها توی یه فایل ذخیره می‌شن. خودِ فایل PDFها و موسیقی‌ها توش نیستن؛ PDFها رو از «پک PDF کتاب‌ها» پایین بگیر.</p>
+        </div>
+        <div class="settings-divider"></div>
+        <div class="set-item">
+          <div class="settings-row">
+            <span class="settings-label">پک PDF کتاب‌ها</span>
+            <button class="settings-btn" id="pdfPackExport" type="button">دانلود زیپ</button>
+          </div>
+          <div class="settings-row">
+            <span class="settings-label">برگرداندن PDFها</span>
+            <button class="settings-btn" id="pdfPackImport" type="button">انتخاب زیپ</button>
+          </div>
+          <p class="settings-hint" id="pdfPackStatus" role="status" aria-live="polite">یه زیپ معمولیه و PDFهات توشه. برای برگشتن، اول پشتیبان JSON رو برگردون تا کتاب‌ها توی لیست باشن، بعد این زیپ رو بده.</p>
+          <input type="file" id="pdfPackFile" accept=".zip,application/zip" hidden>
+        </div>
+        <div class="settings-divider"></div>
+        <div class="set-item">
+          <div class="settings-row">
+            <span class="settings-label">بازگردانی از پشتیبان</span>
+            <button class="settings-btn" id="backupImport" type="button">انتخاب فایل</button>
+          </div>
+          <p class="settings-hint" id="backupStatus" role="status" aria-live="polite">فایل معتبر که وارد شد، خودش می‌پرسه ادغام بشه یا جایگزین.</p>
+          <input type="file" id="backupFile" accept=".json,application/json" hidden>
+        </div>
+      </div>
+
+      <!-- The import decision, as its own dialog rather than a confirm() — the two
+           paths are not symmetric and a browser confirm cannot say so. Opening is
+           all this markup does: js/modal.js contains focus and freezes the page
+           behind it, the way it does for every .overlay here. -->
+      <div class="overlay" id="backupOverlay" hidden>
+        <div class="name-card backup-choice" role="dialog" aria-modal="true" aria-labelledby="backupChoiceTitle">
+          <h2 id="backupChoiceTitle">پشتیبان وارد بشه</h2>
+          <p class="backup-when">پشتیبان <span id="backupWhen"></span> گرفته شده.</p>
+          <button type="button" class="backup-merge" id="backupMerge" data-autofocus>
+            <strong>ادغام با داده‌های فعلی</strong>
+            <span>چیزی که این‌جا هست نمی‌ره جای دیگه؛ فایل بهش اضافه می‌شه.</span>
+          </button>
+          <button type="button" class="backup-replace" id="backupReplace">
+            <strong>جایگزینی کامل</strong>
+            <span>همهٔ داده‌های این دستگاه با فایل عوض می‌شه و برنمی‌گرده.</span>
+          </button>
+          <button type="button" class="skip" id="backupCancel">انصراف</button>
+        </div>
+      </div>
+
+      <div class="vibe-card">
+        <div class="vibe-head"><strong>راهنما و میانبرها</strong></div>
+        <div class="set-item">
+          <div class="settings-row">
+            <span class="settings-label">کلیدهای میانبر صفحه‌کلید</span>
+            <button class="settings-btn" id="openShortcutsBtn" type="button">راهنما (؟)</button>
+          </div>
+          <p class="settings-hint">میانبرهای سریع برای ایجاد کار (N)، جستجو (/) و حرکت بین ردیف‌ها (J/K) با کیبورد.</p>
+        </div>
+      </div>
+
+      <!-- The one destructive row stands alone, so it can never be reached by a
+           thumb travelling towards a setting it actually wanted. -->
+      <div class="vibe-card">
+        <div class="set-item">
+          <div class="settings-row danger">
+            <span class="settings-label">پاک‌کردن همهٔ داده‌ها</span>
+            <button class="settings-btn danger" id="profClear">پاک کن</button>
+          </div>
+          <p class="settings-hint">کارها، کتاب‌ها، موسیقی‌ها و تنظیمات پاک می‌شن. این کار برگشت‌پذیر نیست.</p>
+        </div>
+      </div>
+      <p class="settings-about">کار هاتو به دفتَرچه بسپار</p>
+    </div>
+
+    <!-- ═══ Panel 2: Themes & Worlds ═══ -->
+    <div class="settings-panel" data-settings-panel="themes" id="settingsPanelThemes" role="tabpanel" aria-labelledby="settingsTabThemes" hidden>
+      <div class="vibe-card">
+        <div class="vibe-head"><strong>حالت نمایش و روشنایی</strong></div>
+        <div class="set-item">
+          <div class="settings-row">
+            <span class="settings-label">تم خودکار</span>
+            <div class="settings-value">
+              <span id="themeAutoText">غیرفعال</span>
+              <button class="switch" id="themeAutoBtn" type="button" role="switch" aria-checked="false" aria-label="تم خودکار بر اساس تم سیستم"></button>
+            </div>
+          </div>
+          <p class="settings-hint">تغییر خودکار تم روشن و تیره مطابق با حالت تاریک/روشن گوشی یا مرورگر.</p>
+        </div>
+        <div class="settings-divider"></div>
+        <div class="set-item">
+          <div class="settings-row">
+            <span class="settings-label" id="themeModeLabel">حالت روشن / تیره</span>
+            <div id="themeModeSwitch" aria-labelledby="themeModeLabel"></div>
+          </div>
+          <p class="settings-hint">هر نیمه انتخاب خودش را به خاطر می‌سپارد.</p>
+        </div>
+      </div>
+
+      <div class="vibe-card">
+        <div class="vibe-head"><strong>پوسته و اتمسفر</strong></div>
+        <div class="settings-row settings-row-theme">
+          <div class="theme-picker">
+            <div class="swatch-row" id="themeSwatches" role="radiogroup" aria-label="انتخاب تم و دنیا"></div>
           </div>
         </div>
-        <p class="settings-hint" id="motionHint">حرکت‌های تزیینی و پرش‌ها کم می‌شن؛ بازخورد لازم (مثل تیک‌خوردن) می‌مونه.</p>
-      </div>
-      <div class="settings-divider"></div>
-      <div class="set-item">
-        <div class="settings-row">
-          <span class="settings-label" id="textSizeLbl">اندازهٔ متن</span>
-          <div class="seg" id="textSizeSeg" role="radiogroup" aria-labelledby="textSizeLbl"></div>
-        </div>
-        <p class="settings-hint">متن صفحه‌ها بزرگ‌تر می‌شه؛ نوار پایین و خواندن PDF تغییری نمی‌کنن.</p>
+        <p class="settings-hint">شانزده رنگ: شش تم همیشه باز (فیروزه، کبالت، آرورا در روشن / لاجورد، گرافیت، شب‌شیشه در تیره) و ده دنیای ویژه که با نشان‌ها باز می‌شوند و هر کدام کارت تعاملی به صفحهٔ امروز می‌آورند.</p>
       </div>
     </div>
-
-    <div class="vibe-card">
-      <div class="vibe-head"><strong>پیوستگی و تمرکز</strong></div>
-      <div class="set-item">
-        <div class="settings-row">
-          <span class="settings-label">مرخصی پیوستگی</span>
-          <div class="settings-value">
-            <span id="profFreezeText">روشن</span>
-            <button class="switch" id="profFreezeBtn" type="button" role="switch" aria-checked="true" aria-label="مرخصی پیوستگی"></button>
-          </div>
-        </div>
-        <p class="settings-hint">هر ۳۰ روز فعال یه مرخصی می‌گیری (تا دو تا در انبار). اگه یه روز جا بمونی، خودش می‌پوشونه‌ش تا پیوستگیت نشکنه.</p>
-      </div>
-      <div class="settings-divider"></div>
-      <div class="set-item">
-        <div class="settings-row">
-          <span class="settings-label">مدت هر نشست تمرکز</span>
-          <div class="settings-value"><span id="profPomo"></span></div>
-        </div>
-        <p class="settings-hint">پیش‌فرض هر نشست؛ از خود صفحهٔ تمرکز عوضش کن.</p>
-      </div>
-    </div>
-
-    <!-- One quiet row, on a page the reader has to open and find. Nothing asks
-for this date: no prompt, no banner, and no hint of it anywhere else.
-
-Two decisions here, both about how little this row says for itself.
-
-«خودت» (you) is gone. A settings card is grouped by what the thing is, and
-«تاریخ تولد» is the thing. A heading that names the person rather than the
-setting is the one line on this page that talks about the reader instead of
-about the notebook.
-
-So are the two buttons. The date itself is the control now: it is the only part
-of this row that can be edited, so «انتخاب» beside it asks the reader to press a
-word to reach the thing they came for, and «پاک کردن» asks them to think about removal in
-order to find out where it lives. Clearing is at the foot of the calendar itself
-— where the reader already is, and where the deadline picker keeps its own. One
-place for one job, rather than the same job in two places that then drift.
-
-The line under the row is the entire explanation, and it is the notebook talking
-rather than a form describing itself. -->
-    <div class="vibe-card">
-      <div class="vibe-head"><strong>تاریخ تولد</strong></div>
-      <div class="set-item">
-        <div class="settings-row">
-          <span class="settings-label">تولدت</span>
-          <div class="settings-value">
-            <button class="bd-date" id="bdPick" type="button" aria-haspopup="dialog">
-              <span id="bdDate" class="empty"></span>
-            </button>
-          </div>
-        </div>
-        <p class="settings-hint">دفترچه دوست داره تاریخ تولدتو بدونه!</p>
-      </div>
-    </div>
-
-    <div class="vibe-card">
-      <div class="vibe-head"><strong>درباره</strong></div>
-      <div class="set-item">
-        <div class="settings-row">
-          <span class="settings-label">راهنمای دفترچه</span>
-          <button class="settings-btn" id="profTour" type="button">بریم</button>
-        </div>
-        <p class="settings-hint">تور کوتاهی که همه‌جای دفترچه رو نشون می‌ده — همونی که بار اول دیدی، از اول.</p>
-      </div>
-      <div class="settings-divider"></div>
-      <div class="set-item">
-        <div class="settings-row">
-          <span class="settings-label">نسخه</span>
-          <div class="settings-value"><span id="profVersion"></span></div>
-        </div>
-      </div>
-      <div class="settings-divider"></div>
-      <div class="set-item">
-        <div class="settings-row">
-          <span class="settings-label">تازه‌های دفترچه</span>
-          <button class="settings-btn" id="profNotes" type="button">ببین</button>
-        </div>
-        <p class="settings-hint">هر بار دفترچه به‌روز می‌شه، این‌جا می‌تونی ببینی چی عوض شده.</p>
-      </div>
-    </div>
-
-    <div class="vibe-card">
-      <div class="vibe-head"><strong>پشتیبان‌گیری و ماندگاری</strong></div>
-      <div class="set-item">
-        <div class="settings-row">
-          <span class="settings-label">ذخیرهٔ پایدار</span>
-          <div class="settings-value"><span id="persistStatusText">بررسی…</span></div>
-        </div>
-        <p class="settings-hint" id="persistHint">با فعال بودن ذخیرهٔ پایدار، مرورگر اطلاعات دفترچه را در کمبود حافظه پاک نمی‌کند.</p>
-      </div>
-      <div class="settings-divider"></div>
-      <div class="set-item">
-        <div class="settings-row">
-          <span class="settings-label">گرفتن پشتیبان</span>
-          <button class="settings-btn" id="backupExport" type="button">دانلود</button>
-        </div>
-        <p class="settings-hint">کارها، پیوستگی، نشان‌ها، تنظیمات و پیشرفت کتاب‌ها توی یه فایل ذخیره می‌شن. خودِ فایل PDFها و موسیقی‌ها توش نیستن؛ PDFها رو از «پک PDF کتاب‌ها» پایین بگیر.</p>
-      </div>
-      <div class="settings-divider"></div>
-      <div class="set-item">
-        <div class="settings-row">
-          <span class="settings-label">پک PDF کتاب‌ها</span>
-          <button class="settings-btn" id="pdfPackExport" type="button">دانلود زیپ</button>
-        </div>
-        <div class="settings-row">
-          <span class="settings-label">برگرداندن PDFها</span>
-          <button class="settings-btn" id="pdfPackImport" type="button">انتخاب زیپ</button>
-        </div>
-        <p class="settings-hint" id="pdfPackStatus" role="status" aria-live="polite">یه زیپ معمولیه و PDFهات توشه. برای برگشتن، اول پشتیبان JSON رو برگردون تا کتاب‌ها توی لیست باشن، بعد این زیپ رو بده.</p>
-        <input type="file" id="pdfPackFile" accept=".zip,application/zip" hidden>
-      </div>
-      <div class="settings-divider"></div>
-      <div class="set-item">
-        <div class="settings-row">
-          <span class="settings-label">بازگردانی از پشتیبان</span>
-          <button class="settings-btn" id="backupImport" type="button">انتخاب فایل</button>
-        </div>
-        <p class="settings-hint" id="backupStatus" role="status" aria-live="polite">فایل معتبر که وارد شد، خودش می‌پرسه ادغام بشه یا جایگزین.</p>
-        <input type="file" id="backupFile" accept=".json,application/json" hidden>
-      </div>
-    </div>
-
-    <!-- The import decision, as its own dialog rather than a confirm() — the two
-         paths are not symmetric and a browser confirm cannot say so. Opening is
-         all this markup does: js/modal.js contains focus and freezes the page
-         behind it, the way it does for every .overlay here. -->
-    <div class="overlay" id="backupOverlay" hidden>
-      <div class="name-card backup-choice" role="dialog" aria-modal="true" aria-labelledby="backupChoiceTitle">
-        <h2 id="backupChoiceTitle">پشتیبان وارد بشه</h2>
-        <p class="backup-when">پشتیبان <span id="backupWhen"></span> گرفته شده.</p>
-        <button type="button" class="backup-merge" id="backupMerge" data-autofocus>
-          <strong>ادغام با داده‌های فعلی</strong>
-          <span>چیزی که این‌جا هست نمی‌ره جای دیگه؛ فایل بهش اضافه می‌شه.</span>
-        </button>
-        <button type="button" class="backup-replace" id="backupReplace">
-          <strong>جایگزینی کامل</strong>
-          <span>همهٔ داده‌های این دستگاه با فایل عوض می‌شه و برنمی‌گرده.</span>
-        </button>
-        <button type="button" class="skip" id="backupCancel">انصراف</button>
-      </div>
-    </div>
-
-    <div class="vibe-card">
-      <div class="vibe-head"><strong>راهنما و میانبرها</strong></div>
-      <div class="set-item">
-        <div class="settings-row">
-          <span class="settings-label">کلیدهای میانبر صفحه‌کلید</span>
-          <button class="settings-btn" id="openShortcutsBtn" type="button">راهنما (؟)</button>
-        </div>
-        <p class="settings-hint">میانبرهای سریع برای ایجاد کار (N)، جستجو (/) و حرکت بین ردیف‌ها (J/K) با کیبورد.</p>
-      </div>
-    </div>
-
-    <!-- The one destructive row stands alone, so it can never be reached by a
-         thumb travelling towards a setting it actually wanted. -->
-    <div class="vibe-card">
-      <div class="set-item">
-        <div class="settings-row danger">
-          <span class="settings-label">پاک‌کردن همهٔ داده‌ها</span>
-          <button class="settings-btn danger" id="profClear">پاک کن</button>
-        </div>
-        <p class="settings-hint">کارها، کتاب‌ها، موسیقی‌ها و تنظیمات پاک می‌شن. این کار برگشت‌پذیر نیست.</p>
-      </div>
-    </div>
-    <p class="settings-about">کار هاتو به دفتَرچه بسپار</p>
   </main>
 </div>
 

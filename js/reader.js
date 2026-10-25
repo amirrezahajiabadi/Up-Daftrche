@@ -20,8 +20,9 @@ import { recordDay } from './week.js';
 import { jingoolMarkup } from './jingool.js';
 import { showNotice } from './dialog.js';
 import { safeSet, readString } from './store.js';
+import { isNative, saveAndShareBlob } from './native.js';
 
-const PDFJS_BASE = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@4.4.168';
+const PDFJS_BASE = new URL('../assets/vendor/pdfjs', import.meta.url).href;
 
 /* ── The renderer, loaded when a book is actually opened ──
    Deliberately not a top-level import: this module is part of the app's boot
@@ -1268,8 +1269,9 @@ async function openReader(id, opts = {}) {
   /* Our own renderer is the default. The browser viewer is used only when it
      was chosen deliberately for this book, or after the internal renderer
      already failed here in this session — never written to the book, so the
-     internal engine gets a fresh chance next time. */
-  const browserViewer = book.viewer === 'browser' || (sessionFallback.has(id) && !opts.forceInternal);
+     internal engine gets a fresh chance next time. In native Android WebView,
+     the browser iframe viewer is unsupported so we always use our renderer. */
+  const browserViewer = !isNative() && (book.viewer === 'browser' || (sessionFallback.has(id) && !opts.forceInternal));
 
   let ok = false;
   let drawn = false;
@@ -2142,14 +2144,8 @@ function exportNotes() {
       ? `- صفحه ${it.page}: [نشان قلمی - ${it.color}]${it.note ? ` — ${it.note}` : ''}\n`
       : `- صفحه ${it.page}: «${it.text}»${it.note ? ` — ${it.note}` : ''}\n`;
   });
-  const a = document.createElement('a');
-  const url = URL.createObjectURL(new Blob([md], { type: 'text/markdown' }));
-  a.href = url;
-  a.download = curBook.title + '.md';
-  a.click();
-  /* The download has the bytes by now; holding the blob URL alive would keep
-     the whole export in memory for the life of the page. */
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  const blob = new Blob([md], { type: 'text/markdown' });
+  saveAndShareBlob(blob, curBook.title + '.md', { title: curBook.title });
 }
 
 /* ── Reading Timer ── */

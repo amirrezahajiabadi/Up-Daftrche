@@ -58,6 +58,7 @@ import { currentChar, getPhoto } from './profile.js';
 import { dateToJalali, JALALI_MONTHS } from './jalali.js';
 import { loadCardStyle, saveCardStyle } from './store.js';
 import { THEMES as APP_THEMES, themesOfMode } from './constants.js';
+import { isNative, saveAndShareBlob } from './native.js';
 import { currentMode } from './theme.js';
 import { pickerRow, toggleRow } from './chipgroup.js';
 import { QORQORI_URL, qorqoriArt } from './qorqori.js';
@@ -1113,6 +1114,7 @@ function releasePreview() {
 }
 
 function canShareFiles(blob) {
+  if (isNative()) return true;
   if (!navigator.canShare) return false;
   try { return navigator.canShare({ files: [fileFor(blob)] }); }
   catch { return false; }
@@ -1120,19 +1122,15 @@ function canShareFiles(blob) {
 
 function downloadCard() {
   if (!cardBlob) return;
-  const url = URL.createObjectURL(cardBlob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = fileName();
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  /* Long enough for the download to start before the object URL goes away. */
-  setTimeout(() => URL.revokeObjectURL(url), 5000);
+  saveAndShareBlob(cardBlob, fileName(), { title: 'آمار من در دفتَرچه' });
 }
 
 async function shareCard() {
   if (!cardBlob) return;
+  if (isNative()) {
+    saveAndShareBlob(cardBlob, fileName(), { title: 'آمار من در دفتَرچه' });
+    return;
+  }
   try {
     await navigator.share({ files: [fileFor(cardBlob)], title: 'آمار من در دفتَرچه' });
   } catch (e) {

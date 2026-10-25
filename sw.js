@@ -110,6 +110,7 @@ const SHELL = [
   'js/ledger.js',
   'js/library.js',
   'js/modal.js',
+  'js/native.js',
   'js/notifications.js',
   'js/planner.js',
   'js/push-service.js',

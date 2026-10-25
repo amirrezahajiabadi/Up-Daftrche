@@ -33,6 +33,7 @@ import { initModalContainment } from './modal.js';
 import { initPWA } from './pwa.js';
 import { initStorageWarning } from './storagewarn.js';
 import { initShortcuts } from './shortcuts.js';
+import { isNative, initNativeBackHandler, syncSystemBars, checkMinWebViewVersion } from './native.js';
 
 /* Each section is initialized separately; an error in one section doesn't break the rest of the app */
 const safe = (name, fn) => {
@@ -147,6 +148,7 @@ function initNavigation() {
     if (page === 'achv') renderAchievements();
     if (page === 'settings') renderSettings();
     if (page === 'week') renderPlanner();
+
     if (page !== 'library') {
       const rv = document.getElementById('readerView');
       if (rv && !rv.hidden) {
@@ -834,6 +836,17 @@ safe('رندر اولیه', () => { renderList(); notify(); });
 safe('میانبرها', initShortcuts);
 safe('راهنمای نصب iOS', initIOSInstallGuide);
 safe('پوستهٔ آفلاین', initPWA);
+if (isNative()) {
+  document.documentElement.classList.add('is-native');
+  safe('انطباق نیتیو', () => {
+    initNativeBackHandler(closeTopDialog);
+    checkMinWebViewVersion();
+    syncSystemBars(document.documentElement.dataset.mode);
+    window.addEventListener('theme-applied', () => {
+      syncSystemBars(document.documentElement.dataset.mode);
+    });
+  });
+}
 
 /* First visit: stay on the Today page and ask for the name.
    The name card and the release notes are both welcome moments, and one after

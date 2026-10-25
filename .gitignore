@@ -49,7 +49,15 @@ Desktop.ini
 *.pfx
 *.jks
 *.keystore
+keystore.properties
 vapid-keys*.json
+
+# Capacitor Android build artifacts
+www/
+android/app/build/
+android/.gradle/
+android/build/
+android/app/src/main/assets/public/
 
 # Local server data
 /server/subscriptions.json

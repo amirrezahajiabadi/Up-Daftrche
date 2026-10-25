@@ -42,6 +42,7 @@ export function initBackupNudge() {
     safeSet(STORAGE_KEYS.backupNudge, String(Date.now()));
     card.hidden = true;
     window.dispatchEvent(new CustomEvent('navigate', { detail: 'settings' }));
+    window.dispatchEvent(new CustomEvent('navigate-settings-tab', { detail: 'general' }));
     setTimeout(() => $('#backupExport')?.scrollIntoView({ block: 'center', behavior: 'smooth' }), 450);
   });
 }
