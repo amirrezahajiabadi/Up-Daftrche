@@ -43,8 +43,13 @@ html[data-theme="nightglass"] body{
       --glass-fill-strong:color-mix(in srgb,#1a1636 86%,transparent);
       --glass-edge:rgba(210,200,255,.20);
       --glass-shadow:0 10px 30px -14px rgba(0,0,0,.6)}
+    html[data-theme="simorgh"]{
+      --glass-fill:color-mix(in srgb,#1c142d 72%,transparent);
+      --glass-fill-strong:color-mix(in srgb,#1c142d 86%,transparent);
+      --glass-edge:rgba(251,146,60,.28);
+      --glass-shadow:0 12px 32px -12px rgba(10,5,20,.65)}
 
-    :is(html[data-theme="aurora"],html[data-theme="nightglass"]) :is(
+    :is(html[data-theme="aurora"],html[data-theme="nightglass"],html[data-theme="simorgh"]) :is(
       .progress-card,.today-list,.task,.today-add,.week-card,.vibe-card,.sheet-paper,.theme-btn,.page-back){
       background:var(--glass-fill);
       border-color:var(--glass-edge);
@@ -54,12 +59,14 @@ html[data-theme="nightglass"] body{
 
     /* The floating layer is frosted a little harder and reads from the stronger
        fill, because it travels over every page's content. */
-    :is(html[data-theme="aurora"],html[data-theme="nightglass"]) :is(.bottom-nav,.sheet,.name-card){
+    :is(html[data-theme="aurora"],html[data-theme="nightglass"],html[data-theme="simorgh"]) :is(.bottom-nav,.sheet,.name-card){
       background:var(--glass-fill-strong);
       border-color:var(--glass-edge);
       backdrop-filter:blur(24px) saturate(1.45);
-      -webkit-backdrop-filter:blur(24px) saturate(1.45)}    /* One layer: anything frosted that sits inside something frosted goes flat. */
-    :is(html[data-theme="aurora"],html[data-theme="nightglass"])
+      -webkit-backdrop-filter:blur(24px) saturate(1.45)}
+
+    /* One layer: anything frosted that sits inside something frosted goes flat. */
+    :is(html[data-theme="aurora"],html[data-theme="nightglass"],html[data-theme="simorgh"])
       :is(.sheet-paper,.progress-card,.vibe-card,.week-card,.sheet,.name-card) :is(.t-row,.task,.today-add,.theme-btn,.page-back){
       backdrop-filter:none;-webkit-backdrop-filter:none;box-shadow:none;
       background:color-mix(in srgb,var(--color-surface-elevated) 70%,transparent)
@@ -67,7 +74,7 @@ html[data-theme="nightglass"] body{
 
     /* Today's list is one frosted surface divided by hairlines: its rows stay
        flat and transparent rather than each becoming a tile of its own. */
-    :is(html[data-theme="aurora"],html[data-theme="nightglass"]) .today-list .t-row{
+    :is(html[data-theme="aurora"],html[data-theme="nightglass"],html[data-theme="simorgh"]) .today-list .t-row{
       background:transparent;border-color:transparent;box-shadow:none;
       backdrop-filter:none;-webkit-backdrop-filter:none
     }

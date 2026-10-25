@@ -96,6 +96,8 @@ test('the tour achievement opens only after the tour is marked complete', () => 
 const WORLDS = {
   shabgard: ['night-owl', 1], tarnama: ['chain', 2], fazanavard: ['focus-minutes', 2],
   baghche: ['active-days', 2], daryanavard: ['pages', 1],
+  negarkhane: ['first-note', 3], kimiyagar: ['hard-worker', 2], qollenavard: ['early-bird', 2],
+  rasadkhane: ['chain', 4], simorgh: ['perfect-month', 1],
 };
 
 test('each world theme is a reward of one badge tier, and not earned by default', () => {
@@ -116,16 +118,47 @@ test('each world theme is a reward of one badge tier, and not earned by default'
   assert.equal(A.hasReward(A.emptyState(), 'unknown-reward'), false);
 });
 
-test('only the five worlds are gated; the six everyday themes are always open', () => {
+test('only the world themes are gated; the six everyday themes are always open', () => {
   for (const k of ['kashi', 'cobalt', 'aurora', 'lajvard', 'graphite', 'nightglass']) assert.equal(T.isThemeUnlocked(k), true, k);
-  for (const k of Object.keys(WORLDS)) assert.equal(T.isThemeUnlocked(k), false, k);
-  S.saveThemeModes({ light: 'tarnama', dark: 'shabgard' });
-  assert.equal(T.applyTheme('shabgard'), false);
-  assert.equal(T.themeForMode('light'), 'kashi');
-  S.saveAchv(A.normalizeState({ unlocked: { chain: { tier: 2, at: '2026-09-02' } } }));
-  assert.equal(T.isThemeUnlocked('tarnama'), true);
-  assert.equal(T.themeForMode('light'), 'tarnama');
-  assert.equal(T.isThemeUnlocked('shabgard'), false);
+
+  /* 1. In QA bypass mode, all worlds report unlocked */
+  T.setQaUnlockAllThemes(true);
+  for (const k of Object.keys(WORLDS)) assert.equal(T.isThemeUnlocked(k), true, k);
+
+  /* 2. When QA bypass is off, strict gating applies to all worlds */
+  T.setQaUnlockAllThemes(false);
+  try {
+    for (const k of Object.keys(WORLDS)) assert.equal(T.isThemeUnlocked(k), false, k);
+    S.saveThemeModes({ light: 'tarnama', dark: 'shabgard' });
+    assert.equal(T.applyTheme('shabgard'), false);
+    assert.equal(T.themeForMode('light'), 'kashi');
+
+    /* Earning tier 2 of chain unlocks tarnama, but keeps tier 4 (rasadkhane) and other worlds locked */
+    S.saveAchv(A.normalizeState({ unlocked: { chain: { tier: 2, at: '2026-09-02' } } }));
+    assert.equal(T.isThemeUnlocked('tarnama'), true);
+    assert.equal(T.themeForMode('light'), 'tarnama');
+    assert.equal(T.isThemeUnlocked('rasadkhane'), false);
+    assert.equal(T.isThemeUnlocked('shabgard'), false);
+
+    /* Advancing chain to tier 4 unlocks rasadkhane */
+    S.saveAchv(A.normalizeState({ unlocked: { chain: { tier: 4, at: '2026-09-03' } } }));
+    assert.equal(T.isThemeUnlocked('rasadkhane'), true);
+
+    /* Verify each new world unlocks with its specific badge and tier */
+    S.saveAchv(A.normalizeState({ unlocked: { 'first-note': { tier: 3, at: '2026-09-04' } } }));
+    assert.equal(T.isThemeUnlocked('negarkhane'), true);
+
+    S.saveAchv(A.normalizeState({ unlocked: { 'hard-worker': { tier: 2, at: '2026-09-05' } } }));
+    assert.equal(T.isThemeUnlocked('kimiyagar'), true);
+
+    S.saveAchv(A.normalizeState({ unlocked: { 'early-bird': { tier: 2, at: '2026-09-06' } } }));
+    assert.equal(T.isThemeUnlocked('qollenavard'), true);
+
+    S.saveAchv(A.normalizeState({ unlocked: { 'perfect-month': { tier: 1, at: '2026-09-07' } } }));
+    assert.equal(T.isThemeUnlocked('simorgh'), true);
+  } finally {
+    T.setQaUnlockAllThemes(true);
+  }
 });
 
 test('declining a tour suppresses its offer without earning its achievement', () => {

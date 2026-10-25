@@ -94,6 +94,7 @@ const SHELL = [
   'js/fekrbaz.js',
   'js/focus.js',
   'js/focushistory.js',
+  'js/i18n.js',
   'js/insights.js',
   'js/jalali.js',
   'js/motion.js',

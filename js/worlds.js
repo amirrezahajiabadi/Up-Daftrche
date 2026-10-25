@@ -23,10 +23,14 @@ import { haptic } from './motion.js';
 import {
   lastDays, radarPoints, ringPoints, weekdayLetter, plantStage,
   weekDone, shipProgress, clampGoal, stepGoal, orbitProgress, flightHours,
+  miniatureStage, summitAltitude, elixirElements, constellationDays, simorghActiveDays,
 } from './worlds-data.js';
 
 const theme = () => document.documentElement.dataset.theme || '';
-const WORLDS = new Set(['shabgard', 'tarnama', 'fazanavard', 'baghche', 'daryanavard']);
+export const WORLDS = new Set([
+  'shabgard', 'tarnama', 'fazanavard', 'baghche', 'daryanavard',
+  'negarkhane', 'qollenavard', 'kimiyagar', 'rasadkhane', 'simorgh',
+]);
 
 const svg = (inner, vb = '0 0 24 24', cls = 'ico') =>
   `<svg class="${cls}" viewBox="${vb}" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${inner}</svg>`;
@@ -35,6 +39,11 @@ const ICON = {
   web: svg('<path d="M12 3v18M3 12h18M5.6 5.6l12.8 12.8M18.4 5.6L5.6 18.4"/><path d="M12 7l4 2.5 1 4.5-3.5 3.5h-3L7 14l1-4.5z"/>'),
   rocket: svg('<path d="M12 3c3 2 4.5 5 4.5 9l-2 3h-5l-2-3c0-4 1.5-7 4.5-9z"/><circle cx="12" cy="10" r="1.5"/><path d="M9.5 15l-2.5 3M14.5 15l2.5 3M12 17v3"/>'),
   ship: svg('<path d="M4 15h16l-2.5 4h-11z"/><path d="M12 4v11M12 5l5 8h-5M12 7l-4 6h4"/>'),
+  brush: svg('<path d="M18 2l4 4-10 10H8v-4L18 2zM3 21h5l1-2H5a1 1 0 0 1-1-1v-4L3 15v6z"/>'),
+  mountain: svg('<path d="M2 20L8.5 7l4.5 9 3-5 4 9H2z"/><path d="M7 10l2.5 3.5 2-1.5"/>'),
+  flask: svg('<path d="M9 3h6M10 3v5l-6 10a2 2 0 0 0 1.7 3h12.6a2 2 0 0 0 1.7-3L14 8V3"/>'),
+  telescope: svg('<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/>'),
+  feather: svg('<path d="M20.2 3.8a6.5 6.5 0 0 0-9.2 0L3 11.8V17h5.2l8-8a6.5 6.5 0 0 0 4-5.2z"/><path d="M16 8l-8 8M3 21l3-3"/>'),
 };
 
 let lastMoved = [];
@@ -131,7 +140,213 @@ function voyage(book) {
        <button type="button" class="wc-step" data-w="goal+" aria-label="هدف بیشتر">+</button></div>`;
 }
 
-const RENDER = { shabgard: patrol, tarnama: webCard, fazanavard: flight, baghche: garden, daryanavard: voyage };
+/* ── نگارخانه ── */
+function miniatureCard(book) {
+  const weekStart = book.weekStartKey(book.today);
+  const thisWeekDays = (book.days || []).filter(d => d.key >= weekStart && d.key <= book.today);
+  const doneCount = thisWeekDays.reduce((s, d) => s + (d.done || 0), 0);
+  const readMin = thisWeekDays.reduce((s, d) => s + (d.readMin || 0), 0);
+  const notesCount = (book.totals.read && book.totals.read.notes) || 0;
+  const score = doneCount + Math.floor(readMin / 10) + Math.min(5, notesCount);
+  const stage = miniatureStage(score);
+
+  const stageArt = [
+    '',
+    '<path class="wc-mini-mountains" d="M20 98 Q60 76 100 88 T180 98 Z"/>',
+    '<path class="wc-mini-mountains" d="M20 98 Q60 76 100 88 T180 98 Z"/><path class="wc-mini-tree" d="M100 88 C92 74 90 54 100 38 C110 54 108 74 100 88 Z M100 88 V98"/>',
+    '<path class="wc-mini-mountains" d="M20 98 Q60 76 100 88 T180 98 Z"/><path class="wc-mini-tree" d="M100 88 C92 74 90 54 100 38 C110 54 108 74 100 88 Z M100 88 V98"/><path class="wc-mini-cloud" d="M38 34 Q52 26 62 31 Q72 22 86 28 Q92 38 78 40 Q58 44 38 34 Z"/>',
+    '<path class="wc-mini-mountains" d="M20 98 Q60 76 100 88 T180 98 Z"/><path class="wc-mini-tree" d="M100 88 C92 74 90 54 100 38 C110 54 108 74 100 88 Z M100 88 V98"/><path class="wc-mini-cloud" d="M38 34 Q52 26 62 31 Q72 22 86 28 Q92 38 78 40 Q58 44 38 34 Z"/><path class="wc-mini-bird" d="M136 42 Q146 32 156 39 Q166 32 176 42 Q166 45 156 43 Z"/>',
+    '<path class="wc-mini-mountains" d="M20 98 Q60 76 100 88 T180 98 Z"/><path class="wc-mini-tree" d="M100 88 C92 74 90 54 100 38 C110 54 108 74 100 88 Z M100 88 V98"/><path class="wc-mini-cloud" d="M38 34 Q52 26 62 31 Q72 22 86 28 Q92 38 78 40 Q58 44 38 34 Z"/><path class="wc-mini-bird" d="M136 42 Q146 32 156 39 Q166 32 176 42 Q166 45 156 43 Z"/><g class="wc-mini-sun"><circle cx="100" cy="20" r="7"/><path d="M100 9 V13 M100 27 V31 M89 20 H93 M107 20 H111"/></g>',
+  ];
+
+  const sub = stage === 5
+    ? 'مرقع نگارگری این هفته کامل شد! شاهکار به پایان رسید.'
+    : (stage > 0
+        ? `مرحلهٔ ${faNum(stage)} از ۵ · ${faNum(score)} امتیاز مطالعه و کار این هفته`
+        : 'با مطالعه و ثبت کارهای این هفته، نقش‌های مرقع رو کامل کن.');
+
+  return head(ICON.brush, 'مرقعِ نگارگری', sub) +
+    `<svg class="wc-miniature stage-${stage}" viewBox="0 0 200 108" role="img" aria-label="مرقع نگارگری در مرحلهٔ ${faNum(stage)} از ۵">
+       <path class="wc-arch" d="M20 100 V40 Q20 12 100 10 Q180 12 180 40 V100 Z"/>
+       ${stageArt[stage]}
+     </svg>
+     <div class="wc-actions"><button type="button" class="wc-btn is-quiet" data-w="library">باز کردن کتابخانه</button></div>`;
+}
+
+/* ── قله‌نورد ── */
+function summitCard(book) {
+  const weekStart = book.weekStartKey(book.today);
+  const weekDays = (book.days || []).filter(d => d.key >= weekStart && d.key <= book.today);
+  const activeDays = weekDays.filter(d => d.done > 0 || d.focusMin > 0 || d.readMin > 0 || d.opened).length;
+  const alt = summitAltitude(activeDays);
+  const morningDone = (state.tasks || []).some(t => t.done && t.doneAt && new Date(t.doneAt).getHours() < 7);
+  const allDone = doneToday().length > 0 && pending().length === 0;
+  const heroBonus = morningDone || allDone;
+
+  const camps = [
+    { x: 18,  y: 84 },
+    { x: 48,  y: 74 },
+    { x: 78,  y: 63 },
+    { x: 108, y: 52 },
+    { x: 138, y: 41 },
+    { x: 168, y: 30 },
+    { x: 198, y: 18 },
+  ];
+
+  const currentCamp = activeDays > 0 ? camps[Math.min(activeDays - 1, camps.length - 1)] : null;
+  const climber = currentCamp
+    ? `<g class="wc-climber" transform="translate(${currentCamp.x - 6}, ${currentCamp.y - 14})"><circle cx="6" cy="3" r="2.5"/><path d="M6 6 V11 M3 8 L9 8 M4 14 L6 11 L8 14"/></g>`
+    : '';
+
+  const dots = camps.map((c, i) => {
+    const act = i < activeDays;
+    return `<circle class="wc-camp-dot ${act ? 'is-active' : ''}" cx="${c.x}" cy="${c.y}" r="${act ? 3.5 : 2.5}"/>`;
+  }).join('');
+
+  const summitFlag = (heroBonus || activeDays >= 7)
+    ? `<g class="wc-summit-flag"><path d="M198 18 V6 L208 10 L198 14" class="wc-flag"/><circle cx="210" cy="8" r="4" class="wc-sun-flare"/></g>`
+    : '';
+
+  const sub = `${faNum(alt)} متر ارتفاع صعود (${faNum(activeDays)} از ۷ روز هفته)` +
+    (heroBonus ? ' · نشان سحرگاهی روشن شد' : '');
+
+  return head(ICON.mountain, 'مسیر صعود دماوند', sub) +
+    `<svg class="wc-summit" viewBox="0 0 220 96" role="img" aria-label="مسیر صعود تا ارتفاع ${faNum(alt)} متر">
+       <path class="wc-summit-bg" d="M18 84 L48 74 L78 63 L108 52 L138 41 L168 30 L198 18"/>
+       <path class="wc-summit-done" d="${camps.slice(0, Math.max(1, activeDays)).map((c, i) => `${i === 0 ? 'M' : 'L'}${c.x} ${c.y}`).join(' ')}"/>
+       ${dots}
+       ${climber}
+       ${summitFlag}
+     </svg>
+     <div class="wc-actions"><button type="button" class="wc-btn is-quiet" data-w="tasks">برنامهٔ امروز</button></div>`;
+}
+
+/* ── کیمیاگر ── */
+function elixirCard(book) {
+  const doneCount = doneToday().length;
+  const todayRec = ((book.days || []).find(d => d.key === book.today) || {});
+  const focusMin = todayRec.focusMin || 0;
+  const hasSpirit = Boolean(todayRec.mood || todayRec.readMin > 0 || (state.moods && state.moods[book.today]));
+  const el = elixirElements({ doneCount, focusMin, hasSpirit });
+
+  const liquidLevels = [
+    '',
+    '<path class="wc-flask-liquid" d="M66 68 Q80 72 94 68 A24 24 0 0 1 66 68 Z"/>',
+    '<path class="wc-flask-liquid" d="M58 54 Q80 58 102 54 A24 24 0 0 1 58 54 Z"/>',
+    '<path class="wc-flask-liquid is-gold" d="M56 46 Q80 50 104 46 A24 24 0 0 1 56 46 Z"/><circle class="wc-bubble" cx="74" cy="50" r="2"/><circle class="wc-bubble" cx="86" cy="45" r="2.5"/><path class="wc-vapor" d="M78 12 Q80 4 82 12 Q84 4 86 12"/>',
+  ];
+
+  const sub = el.complete
+    ? 'اکسیر امروز به طلا تبدیل شد! هر سه عنصر ترکیب شدند.'
+    : `${faNum(el.count)} از ۳ عنصر اکسیر ترکیب شده · ` +
+      (!el.work ? 'کار، ' : '') + (!el.focus ? 'تمرکز، ' : '') + (!el.spirit ? 'حال/مطالعه' : '');
+
+  return head(ICON.flask, 'اکسیرِ روزانه', sub.replace(/، $/, '')) +
+    `<svg class="wc-elixir stage-${el.count}" viewBox="0 0 160 92" role="img" aria-label="اکسیر با ${faNum(el.count)} عنصر از ۳">
+       <path class="wc-flask-stand" d="M56 84 H104 M80 84 V76"/>
+       <circle class="wc-flask-glass" cx="80" cy="54" r="24"/>
+       <path class="wc-flask-neck" d="M74 30 V14 H86 V30"/>
+       ${liquidLevels[el.count]}
+       <g class="wc-element ${el.work ? 'is-active' : ''}" transform="translate(26, 46)"><circle r="9"/><text y="3" text-anchor="middle" font-size="9">کار</text></g>
+       <g class="wc-element ${el.focus ? 'is-active' : ''}" transform="translate(80, 10)"><circle r="8"/><text y="3" text-anchor="middle" font-size="8">تمرکز</text></g>
+       <g class="wc-element ${el.spirit ? 'is-active' : ''}" transform="translate(134, 46)"><circle r="9"/><text y="3" text-anchor="middle" font-size="9">جان</text></g>
+     </svg>
+     <div class="wc-actions"><button type="button" class="wc-btn" data-w="fly">شروع تمرکز کیمیاگری</button></div>`;
+}
+
+/* ── رصدخانه ── */
+function constellationCard(book) {
+  const stars = constellationDays(book.days, book.weekStartKey(book.today), book.today);
+  const coords = [
+    { x: 190, y: 32 },
+    { x: 176, y: 68 },
+    { x: 136, y: 72 },
+    { x: 142, y: 36 },
+    { x: 104, y: 44 },
+    { x: 66,  y: 56 },
+    { x: 26,  y: 40 },
+  ];
+
+  const segments = [
+    [0, 1], [1, 2], [2, 3], [3, 0], [3, 4], [4, 5], [5, 6]
+  ];
+
+  const bgLines = segments.map(([a, b]) =>
+    `<line class="wc-const-line" x1="${coords[a].x}" y1="${coords[a].y}" x2="${coords[b].x}" y2="${coords[b].y}"/>`
+  ).join('');
+
+  const activeLines = segments.filter(([a, b]) => stars[a].active && stars[b].active).map(([a, b]) =>
+    `<line class="wc-const-line is-active" x1="${coords[a].x}" y1="${coords[a].y}" x2="${coords[b].x}" y2="${coords[b].y}"/>`
+  ).join('');
+
+  const starNodes = stars.map((s, i) => {
+    const c = coords[i];
+    const ring = s.isToday ? `<circle class="wc-const-today" cx="${c.x}" cy="${c.y}" r="7"/>` : '';
+    const flare = s.active ? `<path class="wc-const-flare" d="M${c.x} ${c.y - 6} V${c.y + 6} M${c.x - 6} ${c.y} H${c.x + 6}"/>` : '';
+    return `<g class="wc-star-node ${s.active ? 'is-active' : ''}">
+              ${ring}
+              <circle class="wc-const-star ${s.active ? 'is-active' : ''}" cx="${c.x}" cy="${c.y}" r="${s.active ? 3.5 : 2}"/>
+              ${flare}
+              <text class="wc-const-label" x="${c.x}" y="${c.y + 15}" text-anchor="middle">${s.letter}</text>
+            </g>`;
+  }).join('');
+
+  const activeCount = stars.filter(s => s.active).length;
+  const sub = activeCount === 7
+    ? 'هفت‌اورنگِ کامل! آسمان هفته یکپارچه درخشید.'
+    : `${faNum(activeCount)} ستاره از هفت‌اورنگ این هفته روشنه.`;
+
+  return head(ICON.telescope, 'صورت فلکیِ هفته', sub) +
+    `<svg class="wc-constellation" viewBox="0 0 220 96" role="img" aria-label="صورت فلکی هفت‌اورنگ با ${faNum(activeCount)} ستارهٔ روشن">
+       <g class="wc-const-grid">${bgLines}${activeLines}</g>
+       <g class="wc-const-stars">${starNodes}</g>
+     </svg>
+     <div class="wc-actions"><button type="button" class="wc-btn is-quiet" data-w="tasks">رصد روزهای هفته</button></div>`;
+}
+
+/* ── سیمرغ ── */
+function simorghCard(book) {
+  const activeDays = simorghActiveDays(book.days, book.today);
+  const cx = 110, cy = 82;
+  const r1 = 44, r2 = 68;
+  const plumes = [];
+
+  for (let i = 0; i < 30; i++) {
+    const a = Math.PI - (i * Math.PI) / 29;
+    const x1 = +(cx + Math.cos(a) * r1).toFixed(1);
+    const y1 = +(cy - Math.sin(a) * r1).toFixed(1);
+    const x2 = +(cx + Math.cos(a) * r2).toFixed(1);
+    const y2 = +(cy - Math.sin(a) * r2).toFixed(1);
+    const active = i < activeDays;
+    plumes.push(`<line class="wc-plume ${active ? 'is-active' : ''}" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"/>`);
+  }
+
+  const sub = activeDays >= 30
+    ? 'سیمرغ تجلی یافت! سی مرغ به قاف رسیدند.'
+    : `${faNum(activeDays)} از ۳۰ روز فعال · پرواز در مسیر کوه قاف`;
+
+  return head(ICON.feather, 'سی مرغِ قاف', sub) +
+    `<svg class="wc-simorgh" viewBox="0 0 220 96" role="img" aria-label="${faNum(activeDays)} از ۳۰ پرِ سیمرغ روشن است">
+       <g class="wc-simorgh-fan">${plumes.join('')}</g>
+       <circle class="wc-simorgh-core" cx="${cx}" cy="${cy}" r="34"/>
+       <text class="wc-simorgh-count" x="${cx}" y="${cy - 2}" text-anchor="middle">${faNum(activeDays)}</text>
+       <text class="wc-simorgh-label" x="${cx}" y="${cy + 13}" text-anchor="middle">از ۳۰ پر</text>
+     </svg>
+     <div class="wc-actions"><button type="button" class="wc-btn" data-w="fly">پرواز سیمرغ</button></div>`;
+}
+
+export const RENDER = {
+  shabgard: patrol,
+  tarnama: webCard,
+  fazanavard: flight,
+  baghche: garden,
+  daryanavard: voyage,
+  negarkhane: miniatureCard,
+  qollenavard: summitCard,
+  kimiyagar: elixirCard,
+  rasadkhane: constellationCard,
+  simorgh: simorghCard,
+};
 
 export function renderWorld() {
   const card = $('#worldCard');
@@ -158,6 +373,10 @@ function onClick(e) {
     haptic('pick');
   } else if (act === 'fly') {
     window.dispatchEvent(new CustomEvent('navigate', { detail: 'focus' }));
+  } else if (act === 'library') {
+    window.dispatchEvent(new CustomEvent('navigate', { detail: 'library' }));
+  } else if (act === 'tasks') {
+    window.dispatchEvent(new CustomEvent('navigate', { detail: 'today' }));
   } else if (act === 'goal-' || act === 'goal+') {
     safeSet(STORAGE_KEYS.weekGoal, String(stepGoal(loadGoal(), act === 'goal+' ? 1 : -1)));
     haptic('pick');

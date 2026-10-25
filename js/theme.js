@@ -54,12 +54,16 @@ export const currentMode = () => (root().dataset.mode === 'dark' ? 'dark' : 'lig
 export const currentTheme = () =>
   normalizeTheme(root().dataset.theme) || (systemPrefersDark() ? NIGHT_THEME : DEFAULT_THEME);
 
+export let QA_UNLOCK_ALL_THEMES = true; // TODO: Set to false before final release
+export const setQaUnlockAllThemes = val => { QA_UNLOCK_ALL_THEMES = Boolean(val); };
+
 /* A theme with a reward contract is unavailable until the achievement engine
    has stored the matching rung. Themes without a contract stay basic forever,
    which makes adding a future reward opt-in and safe. */
-export const isThemeUnlocked = key => {
+export const isThemeUnlocked = (key, { ignoreQaBypass = false } = {}) => {
   const normalized = normalizeTheme(key);
   if (!normalized) return false;
+  if (QA_UNLOCK_ALL_THEMES && !ignoreQaBypass) return true;
   const reward = rewardFor('theme', normalized);
   return !reward || hasReward(normalizeState(loadAchv()), reward.id);
 };

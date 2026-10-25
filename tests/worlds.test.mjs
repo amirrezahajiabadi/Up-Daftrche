@@ -1,10 +1,11 @@
-/* The numbers behind the five worlds (js/worlds-data.js). */
+/* The numbers behind the worlds (js/worlds-data.js). */
 import './_env.mjs';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   lastDays, radarPoints, ringPoints, plantStage, weekDone, shipProgress,
   clampGoal, stepGoal, WEEK_GOALS, orbitProgress, flightHours, weekdayLetter,
+  miniatureStage, summitAltitude, elixirElements, constellationDays, simorghActiveDays,
 } from '../js/worlds-data.js';
 
 const days = [
@@ -62,4 +63,44 @@ test('flight log: hours are whole hours, the orbit is capped at one lap', () => 
   assert.equal(orbitProgress(50, 25), 1);
   assert.equal(orbitProgress(10, 25), 0.4);
   assert.equal(weekdayLetter('2026-10-23'), 'ج'); // a Friday
+});
+
+test('miniature: six stages based on score', () => {
+  assert.equal(miniatureStage(0), 0);
+  assert.equal(miniatureStage(1), 1);
+  assert.equal(miniatureStage(4), 2);
+  assert.equal(miniatureStage(8), 3);
+  assert.equal(miniatureStage(12), 4);
+  assert.equal(miniatureStage(20), 5);
+});
+
+test('summit altitude: 0 to 7 active days reach 5610m', () => {
+  assert.equal(summitAltitude(0), 1800);
+  assert.equal(summitAltitude(1), 2400);
+  assert.equal(summitAltitude(4), 4200);
+  assert.equal(summitAltitude(7), 5610);
+});
+
+test('elixir elements: three daily components', () => {
+  assert.deepEqual(elixirElements({ doneCount: 0, focusMin: 0, hasSpirit: false }),
+    { count: 0, work: false, focus: false, spirit: false, complete: false });
+  assert.deepEqual(elixirElements({ doneCount: 1, focusMin: 14, hasSpirit: false }),
+    { count: 1, work: true, focus: false, spirit: false, complete: false });
+  assert.deepEqual(elixirElements({ doneCount: 2, focusMin: 25, hasSpirit: true }),
+    { count: 3, work: true, focus: true, spirit: true, complete: true });
+});
+
+test('constellation: 7 days of the week', () => {
+  const stars = constellationDays(days, '2026-10-17', '2026-10-23');
+  assert.equal(stars.length, 7);
+  assert.equal(stars[0].key, '2026-10-17');
+  assert.equal(stars[0].active, true);
+  assert.equal(stars[1].key, '2026-10-18');
+  assert.equal(stars[1].active, false);
+  assert.equal(stars[6].key, '2026-10-23');
+  assert.equal(stars[6].isToday, true);
+});
+
+test('simorgh: active days in last 30 days', () => {
+  assert.equal(simorghActiveDays(days, '2026-10-23'), 4);
 });

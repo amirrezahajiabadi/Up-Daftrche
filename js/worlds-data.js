@@ -65,3 +65,55 @@ export const stepGoal = (g, dir) => {
 /* «دفتر پرواز»: today's focus as a share of one session, capped at 1. */
 export const orbitProgress = (todayMin, sessionMin) => Math.min(1, Math.max(0, todayMin / Math.max(1, sessionMin)));
 export const flightHours = minutes => Math.floor((minutes || 0) / 60);
+
+/* «مرقع نگارگری»: 5 stages of illumination (0..5) based on weekly intellectual progress */
+export function miniatureStage(score) {
+  const s = Math.max(0, Number(score) || 0);
+  if (s >= 15) return 5;
+  if (s >= 10) return 4;
+  if (s >= 6) return 3;
+  if (s >= 3) return 2;
+  return s > 0 ? 1 : 0;
+}
+
+/* «مسیر صعود دماوند»: Altitude in meters based on active days this week (0..7) */
+export const SUMMIT_ALTITUDES = [1800, 2400, 3000, 3600, 4200, 4800, 5200, 5610];
+export function summitAltitude(activeDays) {
+  const d = Math.min(7, Math.max(0, Math.floor(Number(activeDays) || 0)));
+  return SUMMIT_ALTITUDES[d];
+}
+
+/* «اکسیر کیمیاگر»: 3 elements of daily achievement (work, focus, spirit) */
+export function elixirElements({ doneCount = 0, focusMin = 0, hasSpirit = false } = {}) {
+  const work = doneCount >= 1;
+  const focus = focusMin >= 15;
+  const spirit = Boolean(hasSpirit);
+  const count = (work ? 1 : 0) + (focus ? 1 : 0) + (spirit ? 1 : 0);
+  return { count, work, focus, spirit, complete: count === 3 };
+}
+
+/* «صورت فلکی هفته»: 7 constellation stars for the current week (Saturday to Friday) */
+export function constellationDays(days, weekStartKey, today) {
+  const by = new Map((days || []).map(d => [d.key, d]));
+  const stars = [];
+  for (let i = 0; i < 7; i++) {
+    const key = shiftKey(weekStartKey, i);
+    const d = by.get(key);
+    const active = Boolean(d && (d.done > 0 || d.focusMin > 0 || d.readMin > 0 || d.opened));
+    stars.push({
+      index: i,
+      key,
+      letter: weekdayLetter(key),
+      active,
+      isToday: key === today,
+      isPastOrToday: key <= today,
+    });
+  }
+  return stars;
+}
+
+/* «سی مرغِ قاف»: count of active days in the last 30 days */
+export function simorghActiveDays(days, today) {
+  const recent = lastDays(days, today, 30);
+  return recent.filter(d => (d.done > 0 || d.focusMin > 0)).length;
+}

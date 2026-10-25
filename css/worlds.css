@@ -13,7 +13,12 @@ html[data-theme="shabgard"]::before,html[data-theme="shabgard"]::after,
 html[data-theme="tarnama"]::before,html[data-theme="tarnama"]::after,
 html[data-theme="fazanavard"]::before,html[data-theme="fazanavard"]::after,
 html[data-theme="baghche"]::before,html[data-theme="baghche"]::after,
-html[data-theme="daryanavard"]::before,html[data-theme="daryanavard"]::after{
+html[data-theme="daryanavard"]::before,html[data-theme="daryanavard"]::after,
+html[data-theme="negarkhane"]::before,html[data-theme="negarkhane"]::after,
+html[data-theme="qollenavard"]::before,html[data-theme="qollenavard"]::after,
+html[data-theme="kimiyagar"]::before,html[data-theme="kimiyagar"]::after,
+html[data-theme="rasadkhane"]::before,html[data-theme="rasadkhane"]::after,
+html[data-theme="simorgh"]::before,html[data-theme="simorgh"]::after{
   content:'';position:fixed;pointer-events:none;z-index:-1}
 
 /* ── شب‌گرد: a rainy skyline, a projector in the corner ── */
@@ -64,14 +69,117 @@ html[data-theme="daryanavard"]::before{
   animation:worldWave 18s linear infinite;will-change:transform}
 @keyframes worldWave{to{transform:translate3d(200px,0,0)}}
 
+/* ── نگارخانه: Iranian tazhib and shamseh illumination, gold flakes in corners ── */
+html[data-theme="negarkhane"] body{
+  background-image:
+    radial-gradient(75% 42% at 15% -6%,rgba(200,138,43,.18) 0,transparent 70%),
+    radial-gradient(60% 36% at 88% 104%,rgba(29,78,137,.10) 0,transparent 70%);
+  background-attachment:fixed}
+html[data-theme="negarkhane"]::before{
+  inset:0 0 auto 0;height:55vh;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160' viewBox='0 0 160 160'%3E%3Ccircle cx='80' cy='80' r='6' fill='%2523c88a2b' fill-opacity='.24'/%3E%3Ccircle cx='80' cy='80' r='14' stroke='%25231d4e89' stroke-opacity='.12' stroke-width='1' fill='none'/%3E%3Ccircle cx='80' cy='80' r='24' stroke='%25231d4e89' stroke-opacity='.10' stroke-width='1' stroke-dasharray='2 3' fill='none'/%3E%3Cpath d='M80 44 L87.7 61.5 L105.5 54.5 L98.5 72.3 L116 80 L98.5 87.7 L105.5 105.5 L87.7 98.5 L80 116 L72.3 98.5 L54.5 105.5 L61.5 87.7 L44 80 L61.5 72.3 L54.5 54.5 L72.3 61.5 Z' stroke='%25231d4e89' stroke-opacity='.14' stroke-width='1.1' fill='%2523c88a2b' fill-opacity='.06'/%3E%3Cg fill='%2523c88a2b' fill-opacity='.20'%3E%3Ccircle cx='80' cy='38' r='2.2'/%3E%3Ccircle cx='110' cy='50' r='2.2'/%3E%3Ccircle cx='122' cy='80' r='2.2'/%3E%3Ccircle cx='110' cy='110' r='2.2'/%3E%3Ccircle cx='80' cy='122' r='2.2'/%3E%3Ccircle cx='50' cy='110' r='2.2'/%3E%3Ccircle cx='38' cy='80' r='2.2'/%3E%3Ccircle cx='50' cy='50' r='2.2'/%3E%3C/g%3E%3Cpath d='M0 0 L54.5 54.5 M160 0 L105.5 54.5 M0 160 L54.5 105.5 M160 160 L105.5 105.5' stroke='%25231d4e89' stroke-opacity='.09' stroke-width='1'/%3E%3Cpath d='M0 24 Q18 18 24 0 M160 24 Q142 18 136 0 M0 136 Q18 142 24 160 M160 136 Q142 142 136 160' stroke='%25231d4e89' stroke-opacity='.11' stroke-width='1' fill='none'/%3E%3Ccircle cx='0' cy='0' r='10' fill='%2523c88a2b' fill-opacity='.12'/%3E%3Ccircle cx='160' cy='0' r='10' fill='%2523c88a2b' fill-opacity='.12'/%3E%3Ccircle cx='0' cy='160' r='10' fill='%2523c88a2b' fill-opacity='.12'/%3E%3Ccircle cx='160' cy='160' r='10' fill='%2523c88a2b' fill-opacity='.12'/%3E%3C/svg%3E") repeat 0 0/160px 160px;
+  -webkit-mask-image:linear-gradient(to bottom,#000 15%,transparent 100%);mask-image:linear-gradient(to bottom,#000 15%,transparent 100%)}
+html[data-theme="negarkhane"]::after{
+  inset:0;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220' viewBox='0 0 220 220'%3E%3Cpath d='M50 32 Q50 40 58 40 Q50 40 50 48 Q50 40 42 40 Z' fill='%2523c88a2b' fill-opacity='.65'/%3E%3Cpath d='M175 64 Q175 70 181 70 Q175 70 175 76 Q175 70 169 70 Z' fill='%2523e5a93c' fill-opacity='.70'/%3E%3Cpath d='M130 154 Q130 160 136 160 Q130 160 130 166 Q130 160 124 160 Z' fill='%2523c88a2b' fill-opacity='.60'/%3E%3Cpath d='M35 174 Q35 180 41 180 Q35 180 35 186 Q35 180 29 180 Z' fill='%2523e5a93c' fill-opacity='.75'/%3E%3Cpolygon points='95,25 98,22 101,25 98,28' fill='%2523c88a2b' fill-opacity='.55'/%3E%3Cpolygon points='145,110 148,106 151,110 148,114' fill='%2523e5a93c' fill-opacity='.60'/%3E%3Cpolygon points='20,95 23,91 26,95 23,99' fill='%2523c88a2b' fill-opacity='.50'/%3E%3Cpolygon points='80,140 84,138 86,142 82,144' fill='%2523e5a93c' fill-opacity='.65'/%3E%3Cpolygon points='195,190 198,187 202,191 199,194' fill='%2523c88a2b' fill-opacity='.55'/%3E%3Ccircle cx='110' cy='60' r='1.2' fill='%2523c88a2b' fill-opacity='.50'/%3E%3Ccircle cx='65' cy='115' r='1.5' fill='%2523e5a93c' fill-opacity='.55'/%3E%3Ccircle cx='165' cy='135' r='1.3' fill='%2523c88a2b' fill-opacity='.45'/%3E%3C/svg%3E") repeat 0 0/220px 220px;
+  animation:worldGoldGlow 5s ease-in-out infinite alternate;will-change:opacity}
+@keyframes worldGoldGlow{from{opacity:.25}to{opacity:.85}}
+html[data-theme="negarkhane"] :is(.frog-hero,.progress-card,.world-card){
+  box-shadow:inset 0 0 0 3px var(--color-surface),inset 0 0 0 4px color-mix(in srgb,var(--color-accent) 28%,transparent),var(--shadow-1)}
+
+/* ── قله‌نورد: Mount Damavand at dawn, floating morning mist ── */
+html[data-theme="qollenavard"] body{
+  background-image:
+    radial-gradient(70% 38% at 50% -6%,rgba(234,88,12,.18) 0,transparent 70%),
+    radial-gradient(65% 42% at 50% 104%,rgba(3,105,161,.12) 0,transparent 70%);
+  background-attachment:fixed}
+html[data-theme="qollenavard"]::before{
+  inset:auto 0 0 0;height:240px;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='640' height='240' viewBox='0 0 640 240'%3E%3Ccircle cx='320' cy='95' r='55' fill='%2523f97316' fill-opacity='.12'/%3E%3Ccircle cx='320' cy='95' r='34' fill='%2523ea580c' fill-opacity='.28'/%3E%3Cpath d='M0 165 L45 142 L110 162 L180 135 L255 152 L320 115 L385 152 L460 135 L530 162 L595 142 L640 165 V240 H0 Z' fill='%25230369a1' fill-opacity='.10'/%3E%3Cpath d='M0 185 L65 158 L135 176 L210 148 L280 168 L360 156 L430 174 L505 148 L575 174 L640 185 V240 H0 Z' fill='%2523075985' fill-opacity='.16'/%3E%3Cpath d='M0 240 L160 240 L210 200 L275 125 L320 68 L365 125 L430 200 L480 240 L640 240 Z' fill='%25230f1d2e' fill-opacity='.25'/%3E%3Cpath d='M320 68 L304 98 L310 105 L298 120 L314 115 L320 124 L326 115 L342 120 L330 105 L336 98 Z' fill='%2523ffffff' fill-opacity='.65'/%3E%3Cpath d='M320 72 L318 108 L315 122 M320 72 L322 108 L325 122' stroke='%2523075985' stroke-opacity='.30' stroke-width='1'/%3E%3Cpath d='M0 220 Q160 200 320 225 T640 220 V240 H0 Z' fill='%25230369a1' fill-opacity='.12'/%3E%3C/svg%3E") repeat-x bottom/640px 240px;
+  -webkit-mask-image:linear-gradient(to top,#000 65%,transparent);mask-image:linear-gradient(to top,#000 65%,transparent)}
+html[data-theme="qollenavard"]::after{
+  inset:auto -300px 40px -300px;height:140px;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='140' viewBox='0 0 600 140'%3E%3Cpath d='M0 80 Q75 50 150 75 T300 70 T450 80 T600 70 V140 H0 Z' fill='%2523edf4f9' fill-opacity='.20'/%3E%3Cpath d='M0 100 Q100 80 200 105 T400 95 T600 100 V140 H0 Z' fill='%2523edf4f9' fill-opacity='.26'/%3E%3Cpath d='M0 115 Q80 105 180 120 T380 112 T600 118 V140 H0 Z' fill='%2523edf4f9' fill-opacity='.32'/%3E%3C/svg%3E") repeat-x 0 bottom/600px 140px;
+  animation:worldMist 26s linear infinite;will-change:transform}
+@keyframes worldMist{to{transform:translate3d(300px,0,0)}}
+html[data-theme="qollenavard"] :is(.frog-hero,.progress-card){
+  border-top:2px solid color-mix(in srgb,#ea580c 55%,var(--color-accent))}
+
+/* ── کیمیاگر: alchemist laboratory apparatus, rising elixir essence ── */
+html[data-theme="kimiyagar"] body{
+  background-image:
+    radial-gradient(65% 38% at 92% -6%,rgba(245,158,11,.14) 0,transparent 70%),
+    radial-gradient(70% 46% at 50% 106%,rgba(45,212,191,.18) 0,transparent 70%);
+  background-attachment:fixed}
+html[data-theme="kimiyagar"]::before{
+  inset:auto 0 0 0;height:220px;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='520' height='220' viewBox='0 0 520 220'%3E%3Ccircle cx='85' cy='115' r='60' stroke='%25232dd4bf' stroke-opacity='.20' stroke-width='1.2' fill='none'/%3E%3Ccircle cx='85' cy='115' r='48' stroke='%25232dd4bf' stroke-opacity='.18' stroke-width='1' stroke-dasharray='3 3' fill='none'/%3E%3Ccircle cx='85' cy='115' r='32' stroke='%2523f59e0b' stroke-opacity='.22' stroke-width='1' fill='none'/%3E%3Cpolygon points='85,55 137,145 33,145' stroke='%2523f59e0b' stroke-opacity='.18' stroke-width='1' fill='none'/%3E%3Cpolygon points='85,175 33,85 137,85' stroke='%25232dd4bf' stroke-opacity='.16' stroke-width='1' fill='none'/%3E%3Ccircle cx='85' cy='115' r='4' fill='%2523f59e0b' fill-opacity='.30'/%3E%3Cpath d='M230 190 H270 M250 190 V90' stroke='%25238aa297' stroke-opacity='.20' stroke-width='1.5'/%3E%3Ccircle cx='215' cy='160' r='24' stroke='%25232dd4bf' stroke-opacity='.30' stroke-width='1.4' fill='none'/%3E%3Cpath d='M195 165 C200 155 230 155 235 165 A24 24 0 0 1 195 165' fill='%25232dd4bf' fill-opacity='.15'/%3E%3Cpath d='M225 142 L245 105 Q255 90 270 115 L285 155' stroke='%25232dd4bf' stroke-opacity='.28' stroke-width='1.4' fill='none'/%3E%3Cpath d='M285 155 C295 160 295 170 285 175 S275 190 285 195' stroke='%25232dd4bf' stroke-opacity='.26' stroke-width='1.2' fill='none'/%3E%3Crect x='280' y='198' width='12' height='16' rx='2' stroke='%2523f59e0b' stroke-opacity='.28' stroke-width='1' fill='%2523f59e0b' fill-opacity='.12'/%3E%3Cline x1='410' y1='80' x2='410' y2='190' stroke='%2523f59e0b' stroke-opacity='.24' stroke-width='1.5'/%3E%3Cpath d='M395 190 H425' stroke='%2523f59e0b' stroke-opacity='.24' stroke-width='2'/%3E%3Cline x1='370' y1='95' x2='450' y2='95' stroke='%2523f59e0b' stroke-opacity='.24' stroke-width='1.5'/%3E%3Cline x1='370' y1='95' x2='360' y2='130' stroke='%2523f59e0b' stroke-opacity='.18' stroke-width='1'/%3E%3Cline x1='370' y1='95' x2='380' y2='130' stroke='%2523f59e0b' stroke-opacity='.18' stroke-width='1'/%3E%3Cpath d='M355 130 Q370 140 385 130' stroke='%2523f59e0b' stroke-opacity='.28' stroke-width='1.2' fill='%2523f59e0b' fill-opacity='.10'/%3E%3Cline x1='450' y1='95' x2='440' y2='130' stroke='%2523f59e0b' stroke-opacity='.18' stroke-width='1'/%3E%3Cline x1='450' y1='95' x2='460' y2='130' stroke='%2523f59e0b' stroke-opacity='.18' stroke-width='1'/%3E%3Cpath d='M435 130 Q450 140 465 130' stroke='%2523f59e0b' stroke-opacity='.28' stroke-width='1.2' fill='%2523f59e0b' fill-opacity='.10'/%3E%3Cline x1='0' y1='190' x2='520' y2='190' stroke='%25238aa297' stroke-opacity='.15' stroke-width='1'/%3E%3C/svg%3E") repeat-x bottom/520px 220px;
+  -webkit-mask-image:linear-gradient(to top,#000 55%,transparent);mask-image:linear-gradient(to top,#000 55%,transparent)}
+html[data-theme="kimiyagar"]::after{
+  inset:0 0 -160px 0;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='160' viewBox='0 0 240 160'%3E%3Ccircle cx='30' cy='30' r='2' fill='%25232dd4bf' fill-opacity='.65'/%3E%3Ccircle cx='65' cy='110' r='3' stroke='%25232dd4bf' stroke-opacity='.45' stroke-width='1' fill='%25232dd4bf' fill-opacity='.20'/%3E%3Ccircle cx='105' cy='60' r='1.5' fill='%2523f59e0b' fill-opacity='.60'/%3E%3Ccircle cx='140' cy='135' r='2.5' stroke='%2523f59e0b' stroke-opacity='.40' stroke-width='1' fill='%2523f59e0b' fill-opacity='.18'/%3E%3Ccircle cx='180' cy='45' r='3.2' stroke='%25232dd4bf' stroke-opacity='.50' stroke-width='1' fill='%25232dd4bf' fill-opacity='.25'/%3E%3Ccircle cx='215' cy='95' r='1.8' fill='%25232dd4bf' fill-opacity='.70'/%3E%3Ccircle cx='85' cy='15' r='1.2' fill='%2523f59e0b' fill-opacity='.50'/%3E%3Ccircle cx='160' cy='85' r='2' fill='%25232dd4bf' fill-opacity='.60'/%3E%3Ccircle cx='230' cy='140' r='2.2' stroke='%25232dd4bf' stroke-opacity='.40' stroke-width='1' fill='none'/%3E%3C/svg%3E") repeat 0 0/240px 160px;
+  animation:worldAlchemy 9s linear infinite;will-change:transform}
+@keyframes worldAlchemy{to{transform:translate3d(8px,-160px,0)}}
+html[data-theme="kimiyagar"] :is(.frog-hero,.world-card){
+  border-color:color-mix(in srgb,var(--color-accent) 36%,var(--color-border));
+  box-shadow:0 0 16px -4px rgba(45,212,191,.15),var(--shadow-1)}
+
+/* ── رصدخانه: celestial observatory, rotating astrolabe and constellation map ── */
+html[data-theme="rasadkhane"] body{
+  background-image:
+    radial-gradient(65% 42% at 94% -6%,rgba(234,179,8,.22) 0,transparent 70%),
+    radial-gradient(60% 44% at 10% 104%,rgba(56,189,248,.15) 0,transparent 70%);
+  background-attachment:fixed}
+html[data-theme="rasadkhane"]::before{
+  inset:-110px auto auto -110px;width:440px;height:440px;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='440' height='440' viewBox='0 0 440 440'%3E%3Cpath d='M200 15 L220 2 L240 15 Z' fill='%2523eab308' fill-opacity='.30'/%3E%3Ccircle cx='220' cy='220' r='212' stroke='%2523eab308' stroke-opacity='.35' stroke-width='2' fill='none'/%3E%3Ccircle cx='220' cy='220' r='204' stroke='%2523eab308' stroke-opacity='.25' stroke-width='6' stroke-dasharray='2 3' fill='none'/%3E%3Ccircle cx='220' cy='220' r='198' stroke='%2523eab308' stroke-opacity='.28' stroke-width='1' fill='none'/%3E%3Ccircle cx='220' cy='220' r='160' stroke='%2523eab308' stroke-opacity='.18' stroke-width='1' fill='none'/%3E%3Ccircle cx='220' cy='220' r='115' stroke='%2523eab308' stroke-opacity='.18' stroke-width='1' fill='none'/%3E%3Ccircle cx='220' cy='220' r='65' stroke='%2523eab308' stroke-opacity='.20' stroke-width='1' fill='none'/%3E%3Ccircle cx='220' cy='182' r='110' stroke='%2523facc15' stroke-opacity='.28' stroke-width='1.4' stroke-dasharray='5 3' fill='none'/%3E%3Cline x1='10' y1='220' x2='430' y2='220' stroke='%2523eab308' stroke-opacity='.20' stroke-width='1' stroke-dasharray='8 4'/%3E%3Cline x1='220' y1='10' x2='220' y2='430' stroke='%2523eab308' stroke-opacity='.20' stroke-width='1' stroke-dasharray='8 4'/%3E%3Cline x1='72' y1='72' x2='368' y2='368' stroke='%2523eab308' stroke-opacity='.15' stroke-width='1'/%3E%3Cline x1='72' y1='368' x2='368' y2='72' stroke='%2523eab308' stroke-opacity='.15' stroke-width='1'/%3E%3Cpath d='M20 220 L212 216 V224 Z M420 220 L228 216 V224 Z' fill='%2523facc15' fill-opacity='.35'/%3E%3Ccircle cx='220' cy='220' r='16' fill='%2523111827' stroke='%2523facc15' stroke-opacity='.45' stroke-width='2'/%3E%3Ccircle cx='220' cy='220' r='5' fill='%2523eab308' fill-opacity='.80'/%3E%3Cpath d='M220 72 Q230 85 240 75' stroke='%2523facc15' stroke-opacity='.35' stroke-width='1.2' fill='none'/%3E%3Cpath d='M140 140 Q130 150 135 160' stroke='%2523facc15' stroke-opacity='.35' stroke-width='1.2' fill='none'/%3E%3Cpath d='M300 140 Q310 150 305 160' stroke='%2523facc15' stroke-opacity='.35' stroke-width='1.2' fill='none'/%3E%3C/svg%3E") no-repeat center/contain;
+  animation:worldAstrolabe 120s linear infinite;will-change:transform;transform-origin:220px 220px}
+@keyframes worldAstrolabe{to{transform:rotate(360deg)}}
+html[data-theme="rasadkhane"]::after{
+  inset:0;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='360' height='360' viewBox='0 0 360 360'%3E%3Cpolyline points='40,50 75,45 110,60 140,80 145,115 195,110 190,80 140,80' stroke='%252338bdf8' stroke-opacity='.18' stroke-width='0.8' stroke-dasharray='3 3' fill='none'/%3E%3Ccircle cx='40' cy='50' r='2.2' fill='%2523fde047' fill-opacity='.85'/%3E%3Ccircle cx='75' cy='45' r='1.8' fill='%252338bdf8' fill-opacity='.80'/%3E%3Ccircle cx='110' cy='60' r='2' fill='%2523fde047' fill-opacity='.85'/%3E%3Ccircle cx='140' cy='80' r='2.5' fill='%2523fde047' fill-opacity='.90'/%3E%3Ccircle cx='145' cy='115' r='2' fill='%252338bdf8' fill-opacity='.80'/%3E%3Ccircle cx='195' cy='110' r='2.2' fill='%2523fde047' fill-opacity='.85'/%3E%3Ccircle cx='190' cy='80' r='2' fill='%252338bdf8' fill-opacity='.80'/%3E%3Cpolyline points='240,40 270,65 295,45 325,75 350,55' stroke='%252338bdf8' stroke-opacity='.18' stroke-width='0.8' stroke-dasharray='3 3' fill='none'/%3E%3Ccircle cx='240' cy='40' r='2' fill='%2523fde047' fill-opacity='.85'/%3E%3Ccircle cx='270' cy='65' r='2.2' fill='%252338bdf8' fill-opacity='.85'/%3E%3Ccircle cx='295' cy='45' r='1.8' fill='%2523fde047' fill-opacity='.80'/%3E%3Ccircle cx='325' cy='75' r='2.4' fill='%2523fde047' fill-opacity='.90'/%3E%3Ccircle cx='350' cy='55' r='2' fill='%252338bdf8' fill-opacity='.80'/%3E%3Cpolyline points='260,220 280,250 300,280 250,260 310,240' stroke='%252338bdf8' stroke-opacity='.16' stroke-width='0.8' stroke-dasharray='3 3' fill='none'/%3E%3Ccircle cx='260' cy='220' r='2.5' fill='%2523fde047' fill-opacity='.90'/%3E%3Ccircle cx='280' cy='250' r='1.8' fill='%252338bdf8' fill-opacity='.75'/%3E%3Ccircle cx='300' cy='280' r='2.2' fill='%2523fde047' fill-opacity='.85'/%3E%3Ccircle cx='250' cy='260' r='1.8' fill='%252338bdf8' fill-opacity='.75'/%3E%3Ccircle cx='310' cy='240' r='2' fill='%2523fde047' fill-opacity='.80'/%3E%3Ccircle cx='50' cy='230' r='1.2' fill='%2523fde047' fill-opacity='.60'/%3E%3Ccircle cx='130' cy='290' r='1.4' fill='%252338bdf8' fill-opacity='.65'/%3E%3Ccircle cx='85' cy='320' r='1.2' fill='%2523fde047' fill-opacity='.60'/%3E%3C/svg%3E") repeat 0 0/360px 360px;
+  animation:worldConstellation 6s ease-in-out infinite alternate;will-change:opacity}
+@keyframes worldConstellation{from{opacity:.35}to{opacity:.9}}
+html[data-theme="rasadkhane"] :is(.frog-hero,.progress-card,.world-card){
+  border-color:color-mix(in srgb,var(--color-accent) 42%,var(--color-border));
+  box-shadow:0 0 20px -5px rgba(234,179,8,.20),var(--shadow-1)}
+
+/* ── سیمرغ: Mount Qaf aurora, sweeping mythical primary plumes, drifting embers ── */
+html[data-theme="simorgh"] body{
+  background-image:
+    radial-gradient(65% 40% at 50% -8%,rgba(251,146,60,.25) 0,transparent 70%),
+    radial-gradient(55% 42% at 92% 42%,rgba(168,85,247,.22) 0,transparent 70%),
+    radial-gradient(60% 46% at 12% 104%,rgba(20,184,166,.18) 0,transparent 70%);
+  background-attachment:fixed}
+html[data-theme="simorgh"]::before{
+  inset:0;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='600' height='600' viewBox='0 0 600 600'%3E%3Cpath d='M0 0 Q120 40 220 140 T320 320 Q240 250 160 200 T0 120 Z' fill='%2523fb923c' fill-opacity='.08' stroke='%2523fb923c' stroke-opacity='.24' stroke-width='1.3'/%3E%3Cpath d='M600 0 Q480 50 380 160 T280 340 Q360 260 440 200 T600 130 Z' fill='%2523a855f7' fill-opacity='.07' stroke='%2523a855f7' stroke-opacity='.22' stroke-width='1.3'/%3E%3Cpath d='M300 0 Q300 100 320 180 Q300 150 280 180 Q300 100 300 0 Z' fill='%2523fdba74' fill-opacity='.12' stroke='%2523fdba74' stroke-opacity='.25' stroke-width='1'/%3E%3Cpath d='M100 60 Q160 120 190 200 M140 90 Q190 140 220 220 M460 70 Q410 130 380 210 M500 100 Q450 150 420 230' stroke='%2523fb923c' stroke-opacity='.18' stroke-width='1' fill='none'/%3E%3Cpath d='M0 600 L80 520 L140 550 L220 480 L290 530 L380 460 L450 515 L530 475 L600 540 V600 H0 Z' fill='%2523120d1d' fill-opacity='.40'/%3E%3Cpath d='M220 480 L228 505 M380 460 L388 495 M530 475 L538 500' stroke='%252314b8a6' stroke-opacity='.30' stroke-width='1.5' fill='none'/%3E%3C/svg%3E") no-repeat top center/cover}
+html[data-theme="simorgh"]::after{
+  inset:0;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='280' height='280' viewBox='0 0 280 280'%3E%3Ccircle cx='40' cy='60' r='2' fill='%2523fb923c' fill-opacity='.80'/%3E%3Ccircle cx='110' cy='30' r='1.4' fill='%2523fdba74' fill-opacity='.90'/%3E%3Ccircle cx='180' cy='90' r='2.5' fill='%2523fb923c' fill-opacity='.75'/%3E%3Ccircle cx='240' cy='45' r='1.6' fill='%2523a855f7' fill-opacity='.70'/%3E%3Ccircle cx='80' cy='150' r='2.2' fill='%2523fdba74' fill-opacity='.85'/%3E%3Ccircle cx='150' cy='200' r='1.5' fill='%2523fb923c' fill-opacity='.75'/%3E%3Ccircle cx='215' cy='170' r='2.8' fill='%2523fb923c' fill-opacity='.70'/%3E%3Ccircle cx='60' cy='240' r='1.6' fill='%2523fdba74' fill-opacity='.80'/%3E%3Ccircle cx='255' cy='245' r='2' fill='%2523a855f7' fill-opacity='.65'/%3E%3Cpath d='M130 110 Q140 100 148 108 Q142 114 130 110 Z' fill='%2523fdba74' fill-opacity='.45'/%3E%3Cpath d='M200 220 Q212 210 220 218 Q214 226 200 220 Z' fill='%2523fb923c' fill-opacity='.40'/%3E%3Cpath d='M90 85 Q90 90 95 90 Q90 90 90 95 Q90 90 85 90 Z' fill='%2523fdba74' fill-opacity='.80'/%3E%3C/svg%3E") repeat 0 0/280px 280px;
+  animation:worldSimorghEmbers 7s ease-in-out infinite alternate;will-change:transform,opacity}
+@keyframes worldSimorghEmbers{from{opacity:.3;transform:translate3d(0,0,0)}to{opacity:.85;transform:translate3d(-10px,-18px,0)}}
+html[data-theme="simorgh"] :is(.frog-hero,.progress-card,.world-card){
+  border-color:color-mix(in srgb,var(--color-accent) 45%,var(--glass-edge));
+  box-shadow:0 12px 36px -10px rgba(18,13,29,.7),0 0 20px -4px rgba(251,146,60,.22)}
+
 /* ── Calm ── */
 @media (prefers-reduced-motion:reduce){
   html[data-theme="shabgard"]::after{display:none}
-  html[data-theme="fazanavard"]::after,html[data-theme="daryanavard"]::before{animation:none}
+  html[data-theme="fazanavard"]::after,html[data-theme="daryanavard"]::before,
+  html[data-theme="negarkhane"]::after,html[data-theme="qollenavard"]::after,
+  html[data-theme="kimiyagar"]::after,html[data-theme="rasadkhane"]::before,
+  html[data-theme="rasadkhane"]::after,html[data-theme="simorgh"]::after{animation:none}
 }
 html[data-motion="reduced"][data-theme="shabgard"]::after{display:none}
 html[data-motion="reduced"][data-theme="fazanavard"]::after,
-html[data-motion="reduced"][data-theme="daryanavard"]::before{animation:none}
+html[data-motion="reduced"][data-theme="daryanavard"]::before,
+html[data-motion="reduced"][data-theme="negarkhane"]::after,
+html[data-motion="reduced"][data-theme="qollenavard"]::after,
+html[data-motion="reduced"][data-theme="kimiyagar"]::after,
+html[data-motion="reduced"][data-theme="rasadkhane"]::before,
+html[data-motion="reduced"][data-theme="rasadkhane"]::after,
+html[data-motion="reduced"][data-theme="simorgh"]::after{animation:none}
 html.tab-hidden::before,html.tab-hidden::after{animation-play-state:paused!important}
 
 /* ═══ The world card on Today ═══
@@ -138,9 +246,68 @@ html.tab-hidden::before,html.tab-hidden::after{animation-play-state:paused!impor
   color:var(--color-text-primary);font-size:18px;line-height:1;cursor:pointer}
 .wc-step:active{transform:scale(.94)}
 
+/* نگارخانه */
+.wc-miniature{width:100%;max-width:220px;justify-self:center;overflow:visible}
+.wc-arch{stroke:var(--color-border-strong);stroke-width:1.5;fill:var(--color-surface-elevated)}
+.wc-mini-mountains{fill:var(--color-accent-soft);stroke:var(--color-accent);stroke-width:1.2;animation:wcGrow var(--duration-slow) var(--ease-out);transform-origin:100px 98px}
+.wc-mini-tree{fill:none;stroke:var(--color-accent);stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;animation:wcGrow var(--duration-slow) var(--ease-out);transform-origin:100px 88px}
+.wc-mini-cloud{fill:none;stroke:var(--color-accent-text);stroke-width:1.2;stroke-linecap:round;animation:wcGrow var(--duration-slow) var(--ease-out);transform-origin:60px 30px}
+.wc-mini-bird{fill:var(--color-accent-text);animation:wcGrow var(--duration-slow) var(--ease-out);transform-origin:156px 39px}
+.wc-mini-sun{fill:var(--color-accent);stroke:var(--color-accent);animation:wcGrow var(--duration-slow) var(--ease-out);transform-origin:100px 20px}
+
+/* قله‌نورد */
+.wc-summit{width:100%;max-width:240px;justify-self:center;overflow:visible}
+.wc-summit-bg{stroke:var(--color-border-strong);stroke-width:1.5;stroke-dasharray:3 3;fill:none}
+.wc-summit-done{stroke:var(--color-accent);stroke-width:2.2;stroke-linecap:round;fill:none;transition:stroke-dasharray var(--duration-slow) var(--ease-out)}
+.wc-camp-dot{fill:var(--color-surface);stroke:var(--color-border-strong);stroke-width:1.5;transition:fill var(--duration-fast)}
+.wc-camp-dot.is-active{fill:var(--color-accent);stroke:var(--color-accent-text)}
+.wc-climber{fill:var(--color-accent-strong);stroke:var(--color-accent-strong);stroke-width:1.2;stroke-linecap:round;animation:wcClimb 1.2s ease-in-out infinite alternate}
+@keyframes wcClimb{to{transform:translateY(-2px)}}
+.wc-summit-flag .wc-flag{fill:var(--color-accent);stroke:var(--color-accent-text);stroke-width:1}
+.wc-summit-flag .wc-sun-flare{fill:var(--tape)}
+
+/* کیمیاگر */
+.wc-elixir{width:100%;max-width:180px;justify-self:center;overflow:visible}
+.wc-flask-stand{stroke:var(--color-border-strong);stroke-width:2;stroke-linecap:round;fill:none}
+.wc-flask-glass{stroke:var(--color-border-strong);stroke-width:2;fill:none}
+.wc-flask-neck{stroke:var(--color-border-strong);stroke-width:2;fill:none}
+.wc-flask-liquid{fill:var(--color-accent-soft);stroke:var(--color-accent);stroke-width:1.5;transition:all var(--duration-slow) var(--ease-out)}
+.wc-flask-liquid.is-gold{fill:var(--tape);stroke:var(--color-accent)}
+.wc-bubble{fill:var(--color-accent);animation:wcBubble 1.6s ease-in-out infinite alternate}
+@keyframes wcBubble{to{transform:translateY(-4px)}}
+.wc-vapor{stroke:var(--color-accent-text);stroke-width:1.4;stroke-linecap:round;fill:none;animation:wcVapor 2s ease-in-out infinite alternate}
+@keyframes wcVapor{to{opacity:.4;transform:translateY(-3px)}}
+.wc-element circle{fill:var(--color-surface);stroke:var(--color-border-strong);stroke-width:1.4;transition:all var(--duration-fast)}
+.wc-element.is-active circle{fill:var(--color-accent-soft);stroke:var(--color-accent)}
+.wc-element text{fill:var(--color-text-secondary);font-family:var(--font-ui)}
+.wc-element.is-active text{fill:var(--color-accent-text);font-weight:700}
+
+/* رصدخانه */
+.wc-constellation{width:100%;max-width:240px;justify-self:center;overflow:visible}
+.wc-const-line{stroke:var(--color-border-strong);stroke-width:1;stroke-dasharray:2 3;fill:none}
+.wc-const-line.is-active{stroke:var(--color-accent);stroke-width:1.8;stroke-dasharray:none}
+.wc-const-star{fill:var(--color-border-strong);transition:fill var(--duration-fast)}
+.wc-const-star.is-active{fill:var(--color-accent)}
+.wc-const-today{stroke:var(--color-accent);stroke-dasharray:2 2;stroke-width:1.2;fill:none;animation:wcRotate 20s linear infinite;transform-origin:center}
+@keyframes wcRotate{to{transform:rotate(360deg)}}
+.wc-const-flare{stroke:var(--color-accent);stroke-width:1;stroke-linecap:round;opacity:.7}
+.wc-const-label{fill:var(--color-text-secondary);font-size:10px;font-family:var(--font-ui)}
+.wc-star-node.is-active .wc-const-label{fill:var(--color-text-primary);font-weight:700}
+
+/* سیمرغ */
+.wc-simorgh{width:100%;max-width:240px;justify-self:center;overflow:visible}
+.wc-plume{stroke:var(--color-border-strong);stroke-width:2;stroke-linecap:round;transition:stroke var(--duration-fast)}
+.wc-plume.is-active{stroke:var(--color-accent);stroke-width:2.2}
+.wc-simorgh-core{fill:var(--color-surface);stroke:var(--color-border-strong);stroke-width:1.5}
+.wc-simorgh-count{font-family:var(--font-personality);font-size:18px;font-weight:700;fill:var(--color-accent-text)}
+.wc-simorgh-label{font-size:9.5px;fill:var(--color-text-secondary);font-family:var(--font-ui)}
+
 @media (prefers-reduced-motion:reduce){
-  .wc-shape,.wc-plant>*,.wc-plant.stage-4 .wc-bloom{animation:none}
-  .wc-ship,.wc-orbit-fg,.wc-btn,.wc-step{transition:none}
+  .wc-shape,.wc-plant>*,.wc-plant.stage-4 .wc-bloom,
+  .wc-mini-mountains,.wc-mini-tree,.wc-mini-cloud,.wc-mini-bird,.wc-mini-sun,
+  .wc-climber,.wc-bubble,.wc-vapor,.wc-const-today{animation:none}
+  .wc-ship,.wc-orbit-fg,.wc-btn,.wc-step,.wc-summit-done,.wc-flask-liquid{transition:none}
 }
-html[data-motion="reduced"] .wc-shape,html[data-motion="reduced"] .wc-plant>*,
-html[data-motion="reduced"] .wc-plant.stage-4 .wc-bloom{animation:none}
+html[data-motion="reduced"] :is(.wc-shape,.wc-plant>*,.wc-plant.stage-4 .wc-bloom,
+  .wc-mini-mountains,.wc-mini-tree,.wc-mini-cloud,.wc-mini-bird,.wc-mini-sun,
+  .wc-climber,.wc-bubble,.wc-vapor,.wc-const-today){animation:none}

@@ -416,3 +416,46 @@ test('the boot script\'s lock table matches the rewards in js/achievements.js', 
     assert.deepEqual(boot[t.key], [reqs[0].achievement.id, reqs[0].tier], t.key);
   }
 });
+
+test('the boot script\'s QA unlock flag matches js/theme.js QA_UNLOCK_ALL_THEMES', async () => {
+  const { QA_UNLOCK_ALL_THEMES } = await import('../js/theme.js');
+  const m = /var QA_UNLOCK = (true|false);/.exec(HTML);
+  assert.ok(m, 'index.html boot script has no QA_UNLOCK declaration');
+  assert.equal(m[1] === 'true', QA_UNLOCK_ALL_THEMES,
+    'index.html QA_UNLOCK does not match js/theme.js QA_UNLOCK_ALL_THEMES');
+});
+
+test('all world themes have complete atmospheric and reduced-motion rules in css/worlds.css', () => {
+  const WORLDS_CSS = read('css/worlds.css');
+  const GLASS_CSS = read('css/glass.css');
+  const worldThemes = THEMES.filter(t => t.family === 'world');
+
+  assert.equal(worldThemes.length, 10, 'expected 10 world themes');
+
+  for (const w of worldThemes) {
+    assert.ok(
+      WORLDS_CSS.includes(`html[data-theme="${w.key}"]::before`) &&
+      WORLDS_CSS.includes(`html[data-theme="${w.key}"]::after`),
+      `css/worlds.css missing ::before/::after for ${w.key}`
+    );
+  }
+
+  const newWorlds = ['negarkhane', 'qollenavard', 'kimiyagar', 'rasadkhane', 'simorgh'];
+  for (const key of newWorlds) {
+    assert.ok(
+      WORLDS_CSS.includes(`html[data-theme="${key}"] body`),
+      `css/worlds.css missing atmospheric body styling for ${key}`
+    );
+  }
+
+  // Simorgh also requires glass rules
+  assert.ok(
+    GLASS_CSS.includes('html[data-theme="simorgh"]'),
+    'css/glass.css missing glass rules for simorgh'
+  );
+
+  const cardClasses = ['.wc-miniature', '.wc-summit', '.wc-elixir', '.wc-constellation', '.wc-simorgh'];
+  for (const cls of cardClasses) {
+    assert.ok(WORLDS_CSS.includes(cls), `css/worlds.css missing card styles for ${cls}`);
+  }
+});

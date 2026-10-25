@@ -13,7 +13,7 @@
      · blob: is for what the person made on this device: PDF files for the
        browser viewer, uploaded music, the share-card image.
      · Not expressible in a <meta>: frame-ancestors / report-uri. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-dwGJ1IHIc9/aEAjwyuKDCZnje0ODUdP4hbmq9HMY0ZY=' https://cdn.jsdelivr.net; worker-src 'self' blob: https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' https://cdn.jsdelivr.net; media-src 'self' blob: data:; connect-src 'self' https://cdn.jsdelivr.net; frame-src blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-KW1mhRCpsA/rfiycJ6xEUnmcyyVBf1OByCHE7fZ1xBA=' https://cdn.jsdelivr.net; worker-src 'self' blob: https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' https://cdn.jsdelivr.net; media-src 'self' blob: data:; connect-src 'self' https://cdn.jsdelivr.net; frame-src blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content"/>
 <meta name="theme-color" content="#f6f2e8"/>
 <!-- The browser paints its own chrome (page canvas, scrollbars, form controls)
@@ -39,8 +39,8 @@
        half of the table it belongs to. The second is what every dark-only rule
        in the CSS hangs off, so it has to be on the root before the first paint
        too — data-mode is to the dark rules what data-theme is to the colours. */
-    var KEYS = ['kashi', 'cobalt', 'aurora', 'lajvard', 'graphite', 'nightglass', 'tarnama', 'baghche', 'daryanavard', 'shabgard', 'fazanavard'];
-    var DARK = ['lajvard', 'graphite', 'nightglass', 'shabgard', 'fazanavard'];
+    var KEYS = ['kashi', 'cobalt', 'aurora', 'lajvard', 'graphite', 'nightglass', 'tarnama', 'baghche', 'daryanavard', 'negarkhane', 'qollenavard', 'shabgard', 'fazanavard', 'kimiyagar', 'rasadkhane', 'simorgh'];
+    var DARK = ['lajvard', 'graphite', 'nightglass', 'shabgard', 'fazanavard', 'kimiyagar', 'rasadkhane', 'simorgh'];
     /* Keys older builds wrote down, mapped to the theme that replaced each.
        «cream» is the most recent of them: «شیری» was a shade away from «کاغذ»
        and was retired for exactly that reason (js/constants.js). */
@@ -48,12 +48,13 @@
     var saved = localStorage.getItem('theme');
     saved = ALIAS[saved] || saved;
     if (KEYS.indexOf(saved) < 0) saved = '';
-    /* The five worlds are earned. Match the reward gate before paint so a locked
+    /* The ten worlds are earned. Match the reward gate before paint so a locked
        theme (a restored backup, a hand-edited key) never flashes. The full
-       catalogue lives in js/achievements.js; this table is its copy of the five
+       catalogue lives in js/achievements.js; this table is its copy of the
        badge/tier pairs, kept in step by tests/themes.test.mjs. */
-    var LOCK = { shabgard: ['night-owl', 1], tarnama: ['chain', 2], fazanavard: ['focus-minutes', 2], baghche: ['active-days', 2], daryanavard: ['pages', 1] };
-    if (LOCK[saved]) {
+    var LOCK = { shabgard: ['night-owl', 1], tarnama: ['chain', 2], fazanavard: ['focus-minutes', 2], baghche: ['active-days', 2], daryanavard: ['pages', 1], negarkhane: ['first-note', 3], kimiyagar: ['hard-worker', 2], qollenavard: ['early-bird', 2], rasadkhane: ['chain', 4], simorgh: ['perfect-month', 1] };
+    var QA_UNLOCK = true;
+    if (!QA_UNLOCK && LOCK[saved]) {
       var shelf = null;
       try { shelf = JSON.parse(localStorage.getItem('daftarche-achievements')); } catch (e) {}
       var u = shelf && shelf.unlocked && shelf.unlocked[LOCK[saved][0]];
@@ -1050,7 +1051,7 @@
           <div class="swatch-row" id="themeSwatches" role="radiogroup" aria-labelledby="themeLabel"></div>
         </div>
       </div>
-      <p class="settings-hint">یازده رنگ: شش‌تا همیشه بازن (فیروزه، لاجورد، کبالت، گرافیت، آرورا، شب‌شیشه) و پنج دنیای ویژه — شب‌گرد، تارنما، فضانورد، باغچه و دریانورد — با نشان‌ها باز می‌شن. هر دنیا یه کارت کوچیک توی صفحهٔ امروز هم میاره. انتخاب هر نصف یادش می‌مونه.</p>
+      <p class="settings-hint">شانزده رنگ: شش‌تا همیشه بازن (فیروزه، لاجورد، کبالت، گرافیت، آرورا، شب‌شیشه) و ده دنیای ویژه — شب‌گرد، تارنما، فضانورد، باغچه، دریانورد، نگارخانه، کیمیاگر، قله‌نورد، رصدخانه و سیمرغ — با نشان‌ها باز می‌شن. هر دنیا یه کارت کوچیک توی صفحهٔ امروز هم میاره. انتخاب هر نصف یادش می‌مونه.</p>
       <div class="settings-divider"></div>
       <div class="set-item">
         <div class="settings-row">

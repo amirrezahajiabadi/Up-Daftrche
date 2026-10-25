@@ -353,6 +353,91 @@
   --pal-daryanavard-glass:rgba(251,254,255,.78);
   --pal-daryanavard-on-accent:#ffffff;
 
+  /* «نگارخانه» — the miniature atelier: warm Samarkand paper, lapis ink and saffron golden tape. */
+  --pal-negarkhane-bg:#f5ede0;
+  --pal-negarkhane-surface:#fdf9f2;
+  --pal-negarkhane-elev:#ffffff;
+  --pal-negarkhane-text:#162238;
+  --pal-negarkhane-text2:#3f4c63;
+  --pal-negarkhane-muted:#525d73;
+  --pal-negarkhane-border:rgba(22,34,56,.10);
+  --pal-negarkhane-border-strong:rgba(22,34,56,.22);
+  --pal-negarkhane-accent:#1d4e89;
+  --pal-negarkhane-accent-strong:#153965;
+  --pal-negarkhane-accent-soft:rgba(29,78,137,.12);
+  --pal-negarkhane-accent-text:#153965;
+  --pal-negarkhane-tape:rgba(200,138,43,.45);
+  --pal-negarkhane-glass:rgba(253,249,242,.80);
+  --pal-negarkhane-on-accent:#ffffff;
+
+  /* «قله‌نورد» — cold dawn over the Alborz: ice-blue page, snow cards, alpine blue accent and sunrise orange tape. */
+  --pal-qollenavard-bg:#edf4f9;
+  --pal-qollenavard-surface:#ffffff;
+  --pal-qollenavard-elev:#ffffff;
+  --pal-qollenavard-text:#0f1d2e;
+  --pal-qollenavard-text2:#38485c;
+  --pal-qollenavard-muted:#4d5e73;
+  --pal-qollenavard-border:rgba(15,29,46,.10);
+  --pal-qollenavard-border-strong:rgba(15,29,46,.22);
+  --pal-qollenavard-accent:#0369a1;
+  --pal-qollenavard-accent-strong:#075985;
+  --pal-qollenavard-accent-soft:rgba(3,105,161,.12);
+  --pal-qollenavard-accent-text:#075985;
+  --pal-qollenavard-tape:rgba(234,88,12,.45);
+  --pal-qollenavard-glass:rgba(255,255,255,.82);
+  --pal-qollenavard-on-accent:#ffffff;
+
+  /* «کیمیاگر» — the alchemist's lab: dark charcoal-green base, jade cards, glowing emerald accent and amber tape. */
+  --pal-kimiyagar-bg:#0d1513;
+  --pal-kimiyagar-surface:#15221f;
+  --pal-kimiyagar-elev:#1e2e2a;
+  --pal-kimiyagar-text:#eaf4f0;
+  --pal-kimiyagar-text2:#b8cdc4;
+  --pal-kimiyagar-muted:#8aa297;
+  --pal-kimiyagar-border:rgba(45,212,191,.12);
+  --pal-kimiyagar-border-strong:rgba(45,212,191,.24);
+  --pal-kimiyagar-accent:#2dd4bf;
+  --pal-kimiyagar-accent-strong:#5eead4;
+  --pal-kimiyagar-accent-soft:rgba(45,212,191,.16);
+  --pal-kimiyagar-accent-text:#5eead4;
+  --pal-kimiyagar-tape:rgba(245,158,11,.30);
+  --pal-kimiyagar-glass:rgba(21,34,31,.74);
+  --pal-kimiyagar-on-accent:#04231e;
+
+  /* «رصدخانه» — the Maragheh observatory: midnight navy base, velvet panels, brass gold accent and celestial turquoise tape. */
+  --pal-rasadkhane-bg:#090d16;
+  --pal-rasadkhane-surface:#111827;
+  --pal-rasadkhane-elev:#1b2438;
+  --pal-rasadkhane-text:#f3f4f6;
+  --pal-rasadkhane-text2:#cbd5e1;
+  --pal-rasadkhane-muted:#94a3b8;
+  --pal-rasadkhane-border:rgba(234,179,8,.12);
+  --pal-rasadkhane-border-strong:rgba(234,179,8,.24);
+  --pal-rasadkhane-accent:#eab308;
+  --pal-rasadkhane-accent-strong:#facc15;
+  --pal-rasadkhane-accent-soft:rgba(234,179,8,.16);
+  --pal-rasadkhane-accent-text:#fde047;
+  --pal-rasadkhane-tape:rgba(56,189,248,.30);
+  --pal-rasadkhane-glass:rgba(17,24,39,.74);
+  --pal-rasadkhane-on-accent:#181202;
+
+  /* «سیمرغ» — Mount Qaf at twilight: mystical deep purple base, ruby-violet cards, glowing coral-gold accent and ethereal violet tape. */
+  --pal-simorgh-bg:#120d1d;
+  --pal-simorgh-surface:#1c142d;
+  --pal-simorgh-elev:#281d3f;
+  --pal-simorgh-text:#f5effe;
+  --pal-simorgh-text2:#d0c3e6;
+  --pal-simorgh-muted:#9d8eb8;
+  --pal-simorgh-border:rgba(251,146,60,.14);
+  --pal-simorgh-border-strong:rgba(251,146,60,.28);
+  --pal-simorgh-accent:#fb923c;
+  --pal-simorgh-accent-strong:#fdba74;
+  --pal-simorgh-accent-soft:rgba(251,146,60,.16);
+  --pal-simorgh-accent-text:#fdba74;
+  --pal-simorgh-tape:rgba(168,85,247,.32);
+  --pal-simorgh-glass:rgba(28,20,45,.74);
+  --pal-simorgh-on-accent:#261005;
+
   /* day — the birthday palette, and the only one here that no theme points at.
      It is written in the palette table for the same reason as the other eight:
      a colour is written down once. What makes it different is who chose it —
@@ -552,6 +637,71 @@
   --card-tape:var(--pal-daryanavard-tape);
   --pick-dot-bg:var(--pal-daryanavard-bg);
   --pick-dot-ring:var(--pal-daryanavard-accent);
+}
+[data-palette="negarkhane"]{
+  --card-bg:var(--pal-negarkhane-bg);
+  --card-surface:var(--pal-negarkhane-surface);
+  --card-text:var(--pal-negarkhane-text);
+  --card-muted:var(--pal-negarkhane-muted);
+  --card-accent:var(--pal-negarkhane-accent);
+  --card-accent-soft:var(--pal-negarkhane-accent-soft);
+  --card-border:var(--pal-negarkhane-border-strong);
+  --card-grid:var(--pal-negarkhane-border);
+  --card-tape:var(--pal-negarkhane-tape);
+  --pick-dot-bg:var(--pal-negarkhane-bg);
+  --pick-dot-ring:var(--pal-negarkhane-accent);
+}
+[data-palette="qollenavard"]{
+  --card-bg:var(--pal-qollenavard-bg);
+  --card-surface:var(--pal-qollenavard-surface);
+  --card-text:var(--pal-qollenavard-text);
+  --card-muted:var(--pal-qollenavard-muted);
+  --card-accent:var(--pal-qollenavard-accent);
+  --card-accent-soft:var(--pal-qollenavard-accent-soft);
+  --card-border:var(--pal-qollenavard-border-strong);
+  --card-grid:var(--pal-qollenavard-border);
+  --card-tape:var(--pal-qollenavard-tape);
+  --pick-dot-bg:var(--pal-qollenavard-bg);
+  --pick-dot-ring:var(--pal-qollenavard-accent);
+}
+[data-palette="kimiyagar"]{
+  --card-bg:var(--pal-kimiyagar-bg);
+  --card-surface:var(--pal-kimiyagar-surface);
+  --card-text:var(--pal-kimiyagar-text);
+  --card-muted:var(--pal-kimiyagar-muted);
+  --card-accent:var(--pal-kimiyagar-accent);
+  --card-accent-soft:var(--pal-kimiyagar-accent-soft);
+  --card-border:var(--pal-kimiyagar-border-strong);
+  --card-grid:var(--pal-kimiyagar-border);
+  --card-tape:var(--pal-kimiyagar-tape);
+  --pick-dot-bg:var(--pal-kimiyagar-bg);
+  --pick-dot-ring:var(--pal-kimiyagar-accent);
+}
+[data-palette="rasadkhane"]{
+  --card-bg:var(--pal-rasadkhane-bg);
+  --card-surface:var(--pal-rasadkhane-surface);
+  --card-text:var(--pal-rasadkhane-text);
+  --card-muted:var(--pal-rasadkhane-muted);
+  --card-accent:var(--pal-rasadkhane-accent);
+  --card-accent-soft:var(--pal-rasadkhane-accent-soft);
+  --card-border:var(--pal-rasadkhane-border-strong);
+  --card-grid:var(--pal-rasadkhane-border);
+  --card-tape:var(--pal-rasadkhane-tape);
+  --pick-dot-bg:var(--pal-rasadkhane-bg);
+  --pick-dot-ring:var(--pal-rasadkhane-accent);
+}
+[data-palette="simorgh"]{
+  --card-bg:var(--pal-simorgh-bg);
+  --card-surface:var(--pal-simorgh-surface);
+  --card-text:var(--pal-simorgh-text);
+  --card-muted:var(--pal-simorgh-muted);
+  --card-accent:var(--pal-simorgh-accent);
+  --card-accent-soft:var(--pal-simorgh-accent-soft);
+  --card-border:var(--pal-simorgh-border-strong);
+  --card-grid:var(--pal-simorgh-border);
+  --card-tape:var(--pal-simorgh-tape);
+  --pick-dot-bg:var(--pal-simorgh-bg);
+  --pick-dot-ring:var(--pal-simorgh-accent);
 }
 
 /* ═══ Themes ═══
@@ -822,6 +972,106 @@ html[data-theme="daryanavard"]{
   --color-focus:var(--pal-daryanavard-accent);
   --tape:var(--pal-daryanavard-tape);
   --glass:var(--pal-daryanavard-glass);
+}
+
+html[data-theme="negarkhane"]{
+  color-scheme:light;
+  --color-bg:var(--pal-negarkhane-bg);
+  --color-surface:var(--pal-negarkhane-surface);
+  --color-surface-elevated:var(--pal-negarkhane-elev);
+  --color-text-primary:var(--pal-negarkhane-text);
+  --color-text-secondary:var(--pal-negarkhane-text2);
+  --color-text-muted:var(--pal-negarkhane-muted);
+  --color-text-on-accent:var(--pal-negarkhane-on-accent);
+  --color-border:var(--pal-negarkhane-border);
+  --color-border-strong:var(--pal-negarkhane-border-strong);
+  --color-accent:var(--pal-negarkhane-accent);
+  --color-accent-strong:var(--pal-negarkhane-accent-strong);
+  --color-accent-soft:var(--pal-negarkhane-accent-soft);
+  --color-accent-text:var(--pal-negarkhane-accent-text);
+  --color-focus:var(--pal-negarkhane-accent);
+  --tape:var(--pal-negarkhane-tape);
+  --glass:var(--pal-negarkhane-glass);
+}
+
+html[data-theme="qollenavard"]{
+  color-scheme:light;
+  --color-bg:var(--pal-qollenavard-bg);
+  --color-surface:var(--pal-qollenavard-surface);
+  --color-surface-elevated:var(--pal-qollenavard-elev);
+  --color-text-primary:var(--pal-qollenavard-text);
+  --color-text-secondary:var(--pal-qollenavard-text2);
+  --color-text-muted:var(--pal-qollenavard-muted);
+  --color-text-on-accent:var(--pal-qollenavard-on-accent);
+  --color-border:var(--pal-qollenavard-border);
+  --color-border-strong:var(--pal-qollenavard-border-strong);
+  --color-accent:var(--pal-qollenavard-accent);
+  --color-accent-strong:var(--pal-qollenavard-accent-strong);
+  --color-accent-soft:var(--pal-qollenavard-accent-soft);
+  --color-accent-text:var(--pal-qollenavard-accent-text);
+  --color-focus:var(--pal-qollenavard-accent);
+  --tape:var(--pal-qollenavard-tape);
+  --glass:var(--pal-qollenavard-glass);
+}
+
+html[data-theme="kimiyagar"]{
+  color-scheme:dark;
+  --color-bg:var(--pal-kimiyagar-bg);
+  --color-surface:var(--pal-kimiyagar-surface);
+  --color-surface-elevated:var(--pal-kimiyagar-elev);
+  --color-text-primary:var(--pal-kimiyagar-text);
+  --color-text-secondary:var(--pal-kimiyagar-text2);
+  --color-text-muted:var(--pal-kimiyagar-muted);
+  --color-text-on-accent:var(--pal-kimiyagar-on-accent);
+  --color-border:var(--pal-kimiyagar-border);
+  --color-border-strong:var(--pal-kimiyagar-border-strong);
+  --color-accent:var(--pal-kimiyagar-accent);
+  --color-accent-strong:var(--pal-kimiyagar-accent-strong);
+  --color-accent-soft:var(--pal-kimiyagar-accent-soft);
+  --color-accent-text:var(--pal-kimiyagar-accent-text);
+  --color-focus:var(--pal-kimiyagar-accent);
+  --tape:var(--pal-kimiyagar-tape);
+  --glass:var(--pal-kimiyagar-glass);
+}
+
+html[data-theme="rasadkhane"]{
+  color-scheme:dark;
+  --color-bg:var(--pal-rasadkhane-bg);
+  --color-surface:var(--pal-rasadkhane-surface);
+  --color-surface-elevated:var(--pal-rasadkhane-elev);
+  --color-text-primary:var(--pal-rasadkhane-text);
+  --color-text-secondary:var(--pal-rasadkhane-text2);
+  --color-text-muted:var(--pal-rasadkhane-muted);
+  --color-text-on-accent:var(--pal-rasadkhane-on-accent);
+  --color-border:var(--pal-rasadkhane-border);
+  --color-border-strong:var(--pal-rasadkhane-border-strong);
+  --color-accent:var(--pal-rasadkhane-accent);
+  --color-accent-strong:var(--pal-rasadkhane-accent-strong);
+  --color-accent-soft:var(--pal-rasadkhane-accent-soft);
+  --color-accent-text:var(--pal-rasadkhane-accent-text);
+  --color-focus:var(--pal-rasadkhane-accent);
+  --tape:var(--pal-rasadkhane-tape);
+  --glass:var(--pal-rasadkhane-glass);
+}
+
+html[data-theme="simorgh"]{
+  color-scheme:dark;
+  --color-bg:var(--pal-simorgh-bg);
+  --color-surface:var(--pal-simorgh-surface);
+  --color-surface-elevated:var(--pal-simorgh-elev);
+  --color-text-primary:var(--pal-simorgh-text);
+  --color-text-secondary:var(--pal-simorgh-text2);
+  --color-text-muted:var(--pal-simorgh-muted);
+  --color-text-on-accent:var(--pal-simorgh-on-accent);
+  --color-border:var(--pal-simorgh-border);
+  --color-border-strong:var(--pal-simorgh-border-strong);
+  --color-accent:var(--pal-simorgh-accent);
+  --color-accent-strong:var(--pal-simorgh-accent-strong);
+  --color-accent-soft:var(--pal-simorgh-accent-soft);
+  --color-accent-text:var(--pal-simorgh-accent-text);
+  --color-focus:var(--pal-simorgh-accent);
+  --tape:var(--pal-simorgh-tape);
+  --glass:var(--pal-simorgh-glass);
 }
 
 /* ═══ The day ═══

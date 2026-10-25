@@ -61,13 +61,18 @@ export const THEMES = [
   { key: 'lajvard',    label: 'لاجورد',   mode: 'dark',  palette: 'lajvard',    family: 'tile'  },
   { key: 'graphite',   label: 'گرافیت',   mode: 'dark',  palette: 'graphite',   family: 'clean' },
   { key: 'nightglass', label: 'شب‌شیشه',  mode: 'dark',  palette: 'nightglass', family: 'glass' },
-  /* The five worlds: each is earned (js/achievements.js REWARDS) and each brings
+  /* The ten worlds: each is earned (js/achievements.js REWARDS) and each brings
      a small feature of its own to Today (js/worlds.js). */
   { key: 'tarnama',     label: 'تارنما',    mode: 'light', palette: 'tarnama',     family: 'world' },
   { key: 'baghche',     label: 'باغچه',     mode: 'light', palette: 'baghche',     family: 'world' },
   { key: 'daryanavard', label: 'دریانورد',  mode: 'light', palette: 'daryanavard', family: 'world' },
+  { key: 'negarkhane',  label: 'نگارخانه',  mode: 'light', palette: 'negarkhane',  family: 'world' },
+  { key: 'qollenavard', label: 'قله‌نورد',  mode: 'light', palette: 'qollenavard', family: 'world' },
   { key: 'shabgard',    label: 'شب‌گرد',    mode: 'dark',  palette: 'shabgard',    family: 'world' },
   { key: 'fazanavard',  label: 'فضانورد',   mode: 'dark',  palette: 'fazanavard',  family: 'world' },
+  { key: 'kimiyagar',   label: 'کیمیاگر',   mode: 'dark',  palette: 'kimiyagar',   family: 'world' },
+  { key: 'rasadkhane',  label: 'رصدخانه',   mode: 'dark',  palette: 'rasadkhane',  family: 'world' },
+  { key: 'simorgh',     label: 'سیمرغ',    mode: 'dark',  palette: 'simorgh',     family: 'world' },
 ];
 
 export const THEME_KEYS = THEMES.map(t => t.key);
