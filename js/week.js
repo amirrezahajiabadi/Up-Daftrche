@@ -58,8 +58,11 @@ function renderMoods() {
     else delete b.dataset.sub;
   });
   if (cur) {
+    /* The day's word is set in the page's ink, not in the mood's own hue: five
+       mood hues on paper measured 1.7:1 against the ground, which is unreadable
+       as text. The colour of a mood is the face, and the face is the control. */
     const m = MOODS[cur - 1];
-    $('#moodLabel').innerHTML = `حال امروزت: <strong style="color:${m.color}">${m.label}</strong>`;
+    $('#moodLabel').innerHTML = `حال امروزت: <strong>${m.label}</strong>`;
   } else {
     $('#moodLabel').textContent = '';
   }

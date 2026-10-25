@@ -69,12 +69,18 @@ function renderHeader() {
     summary.textContent = 'برنامه‌ات برای امروز خالیه؛ هر کاری خواستی اضافه کن.';
     return;
   }
+  /* The finding, not a counter: how much is left, how much is finished, and —
+     when the day has inherited something — how much of it is already late. That
+     last part is the one fact a person opening the page needs, and it used to be
+     invisible here while the list showed it only inside a red chip. */
+  const late = pending.filter(t => t.dueDate && dueDiff(t.dueDate) < 0).length;
   const parts = [];
   if (n) {
     const casual = pending.some(t => t.p !== 'high' && !(t.dueDate && dueDiff(t.dueDate) < 0));
     parts.push(`${faNum(n)} ${casual ? 'کار برای امروز' : 'کار مهم'}`);
   }
   if (m) parts.push(`${faNum(m)} انجام شده`);
+  if (late) parts.push(`${faNum(late)} از دیروز مانده`);
   summary.textContent = parts.join(' · ');
 }
 
@@ -92,17 +98,18 @@ function frogExpr() {
   return todayDone().length > 0 ? 'celebrating' : 'thinking';
 }
 
+/* The recommendation's metadata, as one readable line: «اولویت زیاد · امروز ·
+   ۱ ساعت و ۳۰ دقیقه». It used to be three tinted pills, which put three small
+   boxes of colour inside the card that is already the most decorated thing on
+   the page. Same information, set as a sentence — the card's only colour is
+   now the character and the one action. */
 function recChips(task) {
+  const items = [`اولویت ${P_LABEL[task.p || 'mid']}`];
   const dl = task.dueDate ? dueLabel(task.dueDate) : null;
-  const chips = [`<span class="frog-chip" style="--fc:${PRI_COLORS[task.p || 'mid']}">اولویت ${P_LABEL[task.p || 'mid']}</span>`];
-  if (dl) {
-    const fc = dl.cls === 'late' ? 'var(--color-danger)' : dl.cls === 'today' ? 'var(--color-accent)' : 'var(--color-success)';
-    const txt = dl.ltr ? `<span dir="ltr">${dl.text}</span>` : dl.text;
-    chips.push(`<span class="frog-chip" style="--fc:${fc}">${txt}</span>`);
-  }
+  if (dl) items.push(dl.ltr ? `<span dir="ltr">${dl.text}</span>` : dl.text);
   const dlbl = formatDuration(task.durationMin);
-  if (dlbl) chips.push(`<span class="frog-chip" style="--fc:var(--color-accent)">${dlbl}</span>`);
-  return chips.join('');
+  if (dlbl) items.push(dlbl);
+  return items.join('<span class="frog-meta-sep" aria-hidden="true">·</span>');
 }
 
 function currentRec() {
@@ -186,10 +193,11 @@ function renderFrogInner(force) {
     wrap.innerHTML = `
       <div class="frog-hero sheet-paper frog-empty frog-empty-${kind}">
         <span class="frog-emoji" aria-hidden="true">${qorqoriMarkup(expr)}</span>
-        <span class="frog-kicker">الان چی کار کنیم؟</span>
-        <h2 class="frog-empty-title"></h2>
-        <p class="frog-none"></p>
-        ${nothing ? '<button class="frog-add" type="button" id="frogAddBtn">+ افزودن کار</button>' : ''}
+        <div class="frog-info">
+          <h2 class="frog-empty-title"></h2>
+          <p class="frog-none"></p>
+          ${nothing ? '<button class="frog-add" type="button" id="frogAddBtn">افزودن کار</button>' : ''}
+        </div>
       </div>`;
     wrap.querySelector('.frog-empty-title').textContent = title;
     wrap.querySelector('.frog-none').textContent = msg;
@@ -199,24 +207,20 @@ function renderFrogInner(force) {
      The task title outranks the reason; the reason stays secondary. */
   wrap.innerHTML = `
     <div class="frog-hero sheet-paper">
-      <div class="frog-main-row">
-        <span class="frog-emoji" aria-hidden="true">${qorqoriMarkup(frogExpr())}</span>
-        <div class="frog-info">
-          <span class="frog-kicker">الان چی کار کنیم؟</span>
-          <h2 class="frog-name"></h2>
-          <div class="frog-meta">${recChips(frog)}</div>
-        </div>
+      <span class="frog-emoji" aria-hidden="true">${qorqoriMarkup(frogExpr())}</span>
+      <div class="frog-info">
+        <h2 class="frog-name"></h2>
+        <p class="frog-meta">${recChips(frog)}</p>
+        ${rec.reason ? '<p class="rec-reason"></p>' : ''}
       </div>
       <div class="frog-actions">
         <button class="frog-start" type="button">شروع کار</button>
         <button class="frog-next" type="button">یکی دیگه</button>
-        ${(rec.reason || alts.length) ? `<button class="frog-toggle" type="button" aria-expanded="false">جزئیات ${LIB_ICONS.chevDown}</button>` : ''}
+        ${alts.length ? `<button class="frog-toggle" type="button" aria-expanded="false">گزینه‌های دیگه ${LIB_ICONS.chevDown}</button>` : ''}
       </div>
       <div class="frog-details" hidden>
-        ${rec.reason ? `<p class="rec-reason"></p>` : ''}
         ${alts.length ? `
         <div class="rec-alts">
-          <span class="rec-alts-label">گزینه‌های دیگه</span>
           <ul>${alts.map(a => `<li><button type="button" class="rec-alt" data-id="${a.id}"></button></li>`).join('')}</ul>
         </div>` : ''}
       </div>
@@ -236,7 +240,7 @@ function renderFrogInner(force) {
       const isHidden = detailsEl.hidden;
       detailsEl.hidden = !isHidden;
       toggleBtn.setAttribute('aria-expanded', String(isHidden));
-      toggleBtn.innerHTML = isHidden ? `بستن جزئیات ${LIB_ICONS.chevUp}` : `جزئیات ${LIB_ICONS.chevDown}`;
+      toggleBtn.innerHTML = isHidden ? `بستن ${LIB_ICONS.chevUp}` : `گزینه‌های دیگه ${LIB_ICONS.chevDown}`;
     });
   }
 }
@@ -282,10 +286,10 @@ function todayRow(t) {
   li.innerHTML = `
     <button class="t-check" type="button" aria-label="تغییر وضعیت تکمیل">${ICONS.check}</button>
     <span class="t-dot" style="--pr:${PRI_COLORS[t.p || 'mid']}"></span>
-    <span class="t-title"></span>
-    ${spanChip}
-    ${dueChip}
-    ${durChip}
+    <div class="t-body">
+      <span class="t-title"></span>
+      ${(spanChip || dueChip || durChip) ? `<span class="t-meta">${spanChip}${dueChip}${durChip}</span>` : ''}
+    </div>
     <button class="t-del" type="button" aria-label="حذف">${ICONS.trash}</button>`;
   li.querySelector('.t-title').textContent = t.text;
   return li;
