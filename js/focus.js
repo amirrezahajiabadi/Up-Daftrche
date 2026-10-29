@@ -800,19 +800,21 @@ function checkExpiry() {
 }
 
 /* Display refresh only — timestamps stay the source of truth */
-setInterval(() => {
-  const session = getActiveSession();
-  if (!session) return;
-  if (session.status === 'active' && remainingSec(session) <= 0) { checkExpiry(); return; }
-  if ($('#page-focus')?.classList.contains('active')) syncRunningUI();
-  else updateFocusPill();
-}, 1000);
+if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+  setInterval(() => {
+    const session = getActiveSession();
+    if (!session) return;
+    if (session.status === 'active' && remainingSec(session) <= 0) { checkExpiry(); return; }
+    if ($('#page-focus')?.classList.contains('active')) syncRunningUI();
+    else updateFocusPill();
+  }, 1000);
 
-/* A hidden tab throttles its interval to about once a minute (and a sleeping
-   phone stops it altogether), so the expiry check is run again on return. */
-document.addEventListener('visibilitychange', () => {
-  if (document.visibilityState === 'visible') checkExpiry();
-});
+  /* A hidden tab throttles its interval to about once a minute (and a sleeping
+     phone stops it altogether), so the expiry check is run again on return. */
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') checkExpiry();
+  });
+}
 
 /* ═══ Public page API ═══ */
 

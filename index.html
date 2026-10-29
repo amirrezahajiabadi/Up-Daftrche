@@ -13,9 +13,9 @@
      · blob: is for what the person made on this device: PDF files for the
        browser viewer, uploaded music, the share-card image.
      · Not expressible in a <meta>: frame-ancestors / report-uri. -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-KW1mhRCpsA/rfiycJ6xEUnmcyyVBf1OByCHE7fZ1xBA=' https://cdn.jsdelivr.net; worker-src 'self' blob: https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' https://cdn.jsdelivr.net; media-src 'self' blob: data:; connect-src 'self' https://cdn.jsdelivr.net; frame-src blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'"/>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'sha256-Pt0bdZftZNQ/cG580gD+I/tWgImLQwOORjHM7XDVeqg=' https://cdn.jsdelivr.net; worker-src 'self' blob: https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' https://cdn.jsdelivr.net; media-src 'self' blob: data:; connect-src 'self' https://cdn.jsdelivr.net; frame-src blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'none'"/>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content"/>
-<meta name="theme-color" content="#f6f2e8"/>
+<meta name="theme-color" content="#f4f0e6"/>
 <!-- The browser paints its own chrome (page canvas, scrollbars, form controls)
      from color-scheme. Declaring both keeps the dark theme from flashing a
      white canvas before the first stylesheet lands. -->
@@ -33,13 +33,13 @@
     /* The theme keys, written out again rather than imported: this runs before
        any module has been fetched, and a theme that arrives one frame late is a
        flash of the wrong colour. They must match js/constants.js — and the light
-       default is «فیروزه», the tile-and-ivory identity, which is also what :root in
+       default is «دفترچه», the writing-paper identity, which is also what :root in
        css/base.css points at.
        Two attributes are written, not one: the theme the reader chose, and the
        half of the table it belongs to. The second is what every dark-only rule
        in the CSS hangs off, so it has to be on the root before the first paint
        too — data-mode is to the dark rules what data-theme is to the colours. */
-    var KEYS = ['kashi', 'cobalt', 'aurora', 'lajvard', 'graphite', 'nightglass', 'tarnama', 'baghche', 'daryanavard', 'negarkhane', 'qollenavard', 'shabgard', 'fazanavard', 'kimiyagar', 'rasadkhane', 'simorgh'];
+    var KEYS = ['daftarche', 'kashi', 'cobalt', 'aurora', 'lajvard', 'graphite', 'nightglass', 'tarnama', 'baghche', 'daryanavard', 'negarkhane', 'qollenavard', 'shabgard', 'fazanavard', 'kimiyagar', 'rasadkhane', 'simorgh'];
     var DARK = ['lajvard', 'graphite', 'nightglass', 'shabgard', 'fazanavard', 'kimiyagar', 'rasadkhane', 'simorgh'];
     /* Keys older builds wrote down, mapped to the theme that replaced each.
        «cream» is the most recent of them: «شیری» was a shade away from «کاغذ»
@@ -53,14 +53,14 @@
        catalogue lives in js/achievements.js; this table is its copy of the
        badge/tier pairs, kept in step by tests/themes.test.mjs. */
     var LOCK = { shabgard: ['night-owl', 1], tarnama: ['chain', 2], fazanavard: ['focus-minutes', 2], baghche: ['active-days', 2], daryanavard: ['pages', 1], negarkhane: ['first-note', 3], kimiyagar: ['hard-worker', 2], qollenavard: ['early-bird', 2], rasadkhane: ['chain', 4], simorgh: ['perfect-month', 1] };
-    var QA_UNLOCK = true;
+    var QA_UNLOCK = false;
     if (!QA_UNLOCK && LOCK[saved]) {
       var shelf = null;
       try { shelf = JSON.parse(localStorage.getItem('daftarche-achievements')); } catch (e) {}
       var u = shelf && shelf.unlocked && shelf.unlocked[LOCK[saved][0]];
-      if (!u || !(Number(u.tier) >= LOCK[saved][1])) saved = DARK.indexOf(saved) < 0 ? 'kashi' : 'lajvard';
+      if (!u || !(Number(u.tier) >= LOCK[saved][1])) saved = DARK.indexOf(saved) < 0 ? 'daftarche' : 'lajvard';
     }
-    if (!saved) saved = matchMedia('(prefers-color-scheme:dark)').matches ? 'lajvard' : 'kashi';
+    if (!saved) saved = matchMedia('(prefers-color-scheme:dark)').matches ? 'lajvard' : 'daftarche';
     document.documentElement.dataset.theme = saved;
     document.documentElement.dataset.mode = DARK.indexOf(saved) < 0 ? 'light' : 'dark';
   } catch (e) { /* private mode / storage disabled: the light default stands */ }
@@ -1247,7 +1247,7 @@
             <div class="swatch-row" id="themeSwatches" role="radiogroup" aria-label="انتخاب تم و دنیا"></div>
           </div>
         </div>
-        <p class="settings-hint">شانزده رنگ: شش تم همیشه باز (فیروزه، کبالت، آرورا در روشن / لاجورد، گرافیت، شب‌شیشه در تیره) و ده دنیای ویژه که با نشان‌ها باز می‌شوند و هر کدام کارت تعاملی به صفحهٔ امروز می‌آورند.</p>
+        <p class="settings-hint">هفده تم: هفت تم پایه همیشه باز (دفترچه، فیروزه، کبالت، آرورا در روشن / لاجورد، گرافیت، شب‌شیشه در تیره) و ده دنیای ویژه که با نشان‌ها باز می‌شوند و هر کدام کارت تعاملی به صفحهٔ امروز می‌آورند.</p>
       </div>
     </div>
   </main>

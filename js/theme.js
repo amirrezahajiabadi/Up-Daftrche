@@ -22,7 +22,7 @@
    the profile can mark itself without the page and the boot code importing each
    other. */
 
-import { $ } from './utils.js';
+import { $, faNum } from './utils.js';
 import { loadTheme, saveTheme, loadThemeModes, saveThemeModes, loadAchv, loadThemeAuto, saveThemeAuto } from './store.js';
 import {
   THEMES, THEME_MODES, DEFAULT_THEME, NIGHT_THEME,
@@ -54,7 +54,7 @@ export const currentMode = () => (root().dataset.mode === 'dark' ? 'dark' : 'lig
 export const currentTheme = () =>
   normalizeTheme(root().dataset.theme) || (systemPrefersDark() ? NIGHT_THEME : DEFAULT_THEME);
 
-export let QA_UNLOCK_ALL_THEMES = true; // TODO: Set to false before final release
+export let QA_UNLOCK_ALL_THEMES = false;
 export const setQaUnlockAllThemes = val => { QA_UNLOCK_ALL_THEMES = Boolean(val); };
 
 /* A theme with a reward contract is unavailable until the achievement engine
@@ -80,7 +80,7 @@ function rememberedModes() {
   const clean = {};
   THEME_MODES.forEach(m => {
     const k = normalizeTheme(saved[m]);
-    if (k && modeOf(k) === m) clean[m] = k;
+    if (k && modeOf(k) === m && isThemeUnlocked(k)) clean[m] = k;
   });
   return clean;
 }
@@ -127,6 +127,12 @@ export function markThemePicker() {
   swatchControl.setMode(mode);
   swatchControl.mark(theme);
   syncThemeButtons();
+  const countEl = $('#settingsThemeCount');
+  if (countEl) {
+    const unlocked = unlockedThemesCount();
+    countEl.textContent = faNum(unlocked);
+    countEl.setAttribute('aria-label', `${faNum(unlocked)} تم باز شده از ${faNum(totalThemesCount())}`);
+  }
 }
 
 /* One write: the two attributes are the whole state. `remember` is false only
@@ -224,11 +230,33 @@ export function initTheme() {
     isLocked: key => !isThemeUnlocked(key),
   });
 
+  // Sanitize stored theme & remembered modes if they contain locked worlds
+  const modes = loadThemeModes();
+  if (modes && typeof modes === 'object') {
+    let modesChanged = false;
+    const cleanModes = { ...modes };
+    THEME_MODES.forEach(m => {
+      if (cleanModes[m] && !isThemeUnlocked(cleanModes[m])) {
+        cleanModes[m] = m === 'dark' ? NIGHT_THEME : DEFAULT_THEME;
+        modesChanged = true;
+      }
+    });
+    if (modesChanged) saveThemeModes(cleanModes);
+  }
+
+  const stored = loadTheme();
+  if (stored && !isThemeUnlocked(stored)) {
+    const fallback = modeOf(stored) === 'dark' ? NIGHT_THEME : DEFAULT_THEME;
+    saveTheme(fallback);
+    rememberMode(modeOf(fallback), fallback);
+  }
+
   if (isAutoTheme()) {
     const mode = systemPrefersDark() ? 'dark' : 'light';
     applyTheme(themeForMode(mode), { remember: true });
   } else {
-    applyTheme(loadTheme() || currentTheme(), { remember: false });
+    const active = loadTheme() || currentTheme();
+    applyTheme(allowedTheme(active), { remember: false });
   }
 
   try {

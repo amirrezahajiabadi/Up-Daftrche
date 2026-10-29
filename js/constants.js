@@ -55,6 +55,7 @@ export const STORAGE_KEYS = {
    and into the card panel, so they must match the blocks in css/base.css in name
    and in order. */
 export const THEMES = [
+  { key: 'daftarche',  label: 'دفترچه',   mode: 'light', palette: 'daftarche',  family: 'tile'  },
   { key: 'kashi',      label: 'فیروزه',   mode: 'light', palette: 'kashi',      family: 'tile'  },
   { key: 'cobalt',     label: 'کبالت',    mode: 'light', palette: 'cobalt',     family: 'clean' },
   { key: 'aurora',     label: 'آرورا',    mode: 'light', palette: 'aurora',     family: 'glass' },
@@ -77,7 +78,7 @@ export const THEMES = [
 
 export const THEME_KEYS = THEMES.map(t => t.key);
 export const THEME_MODES = ['light', 'dark'];
-export const DEFAULT_THEME = 'kashi';
+export const DEFAULT_THEME = 'daftarche';
 
 /* ─── Navigation map ───
    Two lists, one source. The four homes the bottom bar moves between, and the

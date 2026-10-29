@@ -118,46 +118,53 @@ test('each world theme is a reward of one badge tier, and not earned by default'
   assert.equal(A.hasReward(A.emptyState(), 'unknown-reward'), false);
 });
 
-test('only the world themes are gated; the six everyday themes are always open', () => {
-  for (const k of ['kashi', 'cobalt', 'aurora', 'lajvard', 'graphite', 'nightglass']) assert.equal(T.isThemeUnlocked(k), true, k);
+test('only the world themes are gated; the seven everyday themes are always open', () => {
+  // In production, QA bypass must be false by default
+  assert.equal(T.QA_UNLOCK_ALL_THEMES, false, 'QA_UNLOCK_ALL_THEMES should be false by default');
 
-  /* 1. In QA bypass mode, all worlds report unlocked */
-  T.setQaUnlockAllThemes(true);
-  for (const k of Object.keys(WORLDS)) assert.equal(T.isThemeUnlocked(k), true, k);
+  // 1. The seven base themes are always unlocked
+  for (const k of ['daftarche', 'kashi', 'cobalt', 'aurora', 'lajvard', 'graphite', 'nightglass']) {
+    assert.equal(T.isThemeUnlocked(k), true, k);
+  }
 
-  /* 2. When QA bypass is off, strict gating applies to all worlds */
-  T.setQaUnlockAllThemes(false);
+  // 2. By default (no achievements), all 10 world themes are locked
+  for (const k of Object.keys(WORLDS)) {
+    assert.equal(T.isThemeUnlocked(k), false, k);
+  }
+
+  S.saveThemeModes({ light: 'tarnama', dark: 'shabgard' });
+  assert.equal(T.applyTheme('shabgard'), false);
+  assert.equal(T.themeForMode('light'), 'daftarche');
+  assert.equal(T.themeForMode('dark'), 'lajvard');
+
   try {
-    for (const k of Object.keys(WORLDS)) assert.equal(T.isThemeUnlocked(k), false, k);
-    S.saveThemeModes({ light: 'tarnama', dark: 'shabgard' });
-    assert.equal(T.applyTheme('shabgard'), false);
-    assert.equal(T.themeForMode('light'), 'kashi');
+    // 3. Verify each of the 10 worlds unlocks only with its specific badge and tier
+    for (const [key, [badge, tier]] of Object.entries(WORLDS)) {
+      // Prior to earning
+      S.saveAchv(A.emptyState());
+      assert.equal(T.isThemeUnlocked(key), false, `${key} should be locked initially`);
 
-    /* Earning tier 2 of chain unlocks tarnama, but keeps tier 4 (rasadkhane) and other worlds locked */
-    S.saveAchv(A.normalizeState({ unlocked: { chain: { tier: 2, at: '2026-09-02' } } }));
-    assert.equal(T.isThemeUnlocked('tarnama'), true);
-    assert.equal(T.themeForMode('light'), 'tarnama');
-    assert.equal(T.isThemeUnlocked('rasadkhane'), false);
-    assert.equal(T.isThemeUnlocked('shabgard'), false);
+      // One tier below requirement
+      if (tier > 1) {
+        S.saveAchv(A.normalizeState({ unlocked: { [badge]: { tier: tier - 1, at: '2026-09-02' } } }));
+        assert.equal(T.isThemeUnlocked(key), false, `${key} should remain locked at tier ${tier - 1}`);
+      }
 
-    /* Advancing chain to tier 4 unlocks rasadkhane */
-    S.saveAchv(A.normalizeState({ unlocked: { chain: { tier: 4, at: '2026-09-03' } } }));
-    assert.equal(T.isThemeUnlocked('rasadkhane'), true);
+      // Exact tier requirement earned
+      S.saveAchv(A.normalizeState({ unlocked: { [badge]: { tier, at: '2026-09-03' } } }));
+      assert.equal(T.isThemeUnlocked(key), true, `${key} should unlock at tier ${tier}`);
+    }
 
-    /* Verify each new world unlocks with its specific badge and tier */
-    S.saveAchv(A.normalizeState({ unlocked: { 'first-note': { tier: 3, at: '2026-09-04' } } }));
-    assert.equal(T.isThemeUnlocked('negarkhane'), true);
-
-    S.saveAchv(A.normalizeState({ unlocked: { 'hard-worker': { tier: 2, at: '2026-09-05' } } }));
-    assert.equal(T.isThemeUnlocked('kimiyagar'), true);
-
-    S.saveAchv(A.normalizeState({ unlocked: { 'early-bird': { tier: 2, at: '2026-09-06' } } }));
-    assert.equal(T.isThemeUnlocked('qollenavard'), true);
-
-    S.saveAchv(A.normalizeState({ unlocked: { 'perfect-month': { tier: 1, at: '2026-09-07' } } }));
-    assert.equal(T.isThemeUnlocked('simorgh'), true);
-  } finally {
+    // 4. Test QA bypass toggle
+    S.saveAchv(A.emptyState());
+    assert.equal(T.unlockedThemesCount(), 7);
     T.setQaUnlockAllThemes(true);
+    assert.equal(T.unlockedThemesCount(), 17);
+    for (const k of Object.keys(WORLDS)) assert.equal(T.isThemeUnlocked(k), true, k);
+    T.setQaUnlockAllThemes(false);
+    assert.equal(T.unlockedThemesCount(), 7);
+  } finally {
+    T.setQaUnlockAllThemes(false);
   }
 });
 

@@ -17,7 +17,9 @@ const BELL_SVG = ICONS.bell;
 /* Notification artwork resolved against the document so the icon and badge
    stay correct when the app is served from a subpath, not only from a domain
    root. */
-const NOTIFY_ICON = new URL('assets/icons/icon-192.png', document.baseURI).href;
+const NOTIFY_ICON = typeof document !== 'undefined'
+  ? new URL('assets/icons/icon-192.png', document.baseURI).href
+  : 'assets/icons/icon-192.png';
 
 /* Persistence + reactivity are owned by the pages that render the list; the
    module only flips fields and asks for a save/refresh via these hooks. */

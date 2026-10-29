@@ -11,3 +11,6 @@ class MemoryStorage {
 }
 export const ls = new MemoryStorage();
 globalThis.localStorage = ls;
+if (typeof globalThis.self === 'undefined') {
+  globalThis.self = globalThis;
+}

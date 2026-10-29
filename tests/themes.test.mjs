@@ -21,6 +21,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
+import './_env.mjs';
 
 import {
   THEMES, THEME_KEYS, THEME_MODES, DEFAULT_THEME, NIGHT_THEME,
@@ -502,6 +503,272 @@ test('settings page dual tabs and themes panel structure', async () => {
 
   const T = await import('../js/theme.js');
   assert.equal(typeof T.unlockedThemesCount, 'function', 'unlockedThemesCount export missing');
-  assert.equal(T.totalThemesCount(), 16, 'totalThemesCount should be 16');
-  assert.equal(T.unlockedThemesCount(), 16, 'unlockedThemesCount should be 16 in test mode');
+  assert.equal(T.totalThemesCount(), 17, 'totalThemesCount should be 17');
+  assert.equal(T.unlockedThemesCount(), 7, 'unlockedThemesCount should be 7 by default for a new user');
+});
+
+test('all 10 world themes are locked by default in production and fall back safely', async () => {
+  const T = await import('../js/theme.js');
+  const S = await import('../js/store.js');
+  const A = await import('../js/achievements.js');
+
+  assert.equal(T.QA_UNLOCK_ALL_THEMES, false, 'QA bypass must be disabled in production');
+
+  const baseThemes = ['daftarche', 'kashi', 'cobalt', 'aurora', 'lajvard', 'graphite', 'nightglass'];
+  const worldThemes = [
+    'daryanavard', 'shabgard', 'tarnama', 'baghche', 'fazanavard',
+    'qollenavard', 'kimiyagar', 'negarkhane', 'rasadkhane', 'simorgh',
+  ];
+
+  for (const key of baseThemes) {
+    assert.equal(T.isThemeUnlocked(key), true, `base theme ${key} should be unlocked`);
+  }
+
+  for (const key of worldThemes) {
+    assert.equal(T.isThemeUnlocked(key), false, `world theme ${key} should be locked by default`);
+  }
+
+  assert.equal(T.unlockedThemesCount(), 7);
+  assert.equal(T.totalThemesCount(), 17);
+
+  // Applying locked theme with remember:true must fail
+  for (const key of worldThemes) {
+    assert.equal(T.applyTheme(key, { remember: true }), false, `applyTheme(${key}) should fail when locked`);
+  }
+
+  // Fallback of dark world themes must be lajvard, light world themes must be kashi
+  const darkWorlds = ['shabgard', 'fazanavard', 'kimiyagar', 'rasadkhane', 'simorgh'];
+  const lightWorlds = ['daryanavard', 'tarnama', 'baghche', 'qollenavard', 'negarkhane'];
+
+  for (const key of darkWorlds) {
+    assert.equal(modeOf(key), 'dark');
+  }
+  for (const key of lightWorlds) {
+    assert.equal(modeOf(key), 'light');
+  }
+
+  // Test automatic recovery: if a user had a locked theme saved, initTheme safely falls back
+  const origDoc = globalThis.document;
+  const origWin = globalThis.window;
+  try {
+    globalThis.document = {
+      documentElement: { dataset: {} },
+      querySelector: () => null,
+      querySelectorAll: () => [],
+    };
+    globalThis.window = {
+      dispatchEvent: () => true,
+    };
+    S.saveTheme('shabgard');
+    S.saveThemeModes({ dark: 'shabgard', light: 'tarnama' });
+    T.initTheme();
+    assert.equal(S.loadTheme(), 'lajvard', 'saved locked theme should be sanitized to lajvard');
+    assert.equal(S.loadThemeModes()?.dark, 'lajvard', 'remembered dark mode should be sanitized to lajvard');
+    // Test light locked theme recovery as well
+    S.saveTheme('tarnama');
+    T.initTheme();
+    assert.equal(S.loadTheme(), 'daftarche', 'saved light locked theme should be sanitized to daftarche');
+    assert.equal(globalThis.document.documentElement.dataset.theme, 'daftarche');
+    assert.equal(globalThis.document.documentElement.dataset.mode, 'light');
+  } finally {
+    globalThis.document = origDoc;
+    globalThis.window = origWin;
+  }
+});
+
+test('index.html inline boot script safely resolves and falls back across all 10 worlds and modes', () => {
+  const inlineScript = /<script>([\s\S]*?)<\/script>/.exec(HTML)[1];
+  assert.ok(inlineScript, 'inline boot script missing in index.html');
+
+  function runBootScript({ storage = {}, prefersDark = false } = {}) {
+    const store = new Map(Object.entries(storage));
+    const doc = { documentElement: { dataset: {} } };
+    const fn = new Function('localStorage', 'document', 'matchMedia', inlineScript);
+    fn(
+      { getItem: k => store.get(k) ?? null, setItem: (k, v) => store.set(k, String(v)) },
+      doc,
+      query => ({ matches: prefersDark && query.includes('dark') })
+    );
+    return doc.documentElement.dataset;
+  }
+
+  const darkWorlds = ['shabgard', 'fazanavard', 'kimiyagar', 'rasadkhane', 'simorgh'];
+  const lightWorlds = ['daryanavard', 'tarnama', 'baghche', 'qollenavard', 'negarkhane'];
+
+  // All 10 world themes without achievements must fall back to their mode default
+  for (const w of darkWorlds) {
+    const res = runBootScript({ storage: { theme: w } });
+    assert.deepEqual(res, { theme: 'lajvard', mode: 'dark' }, `locked dark world ${w} should fall back to lajvard`);
+  }
+
+  for (const w of lightWorlds) {
+    const res = runBootScript({ storage: { theme: w } });
+    assert.deepEqual(res, { theme: 'daftarche', mode: 'light' }, `locked light world ${w} should fall back to kashi`);
+  }
+
+  // Base themes must pass through untouched
+  for (const b of ['daftarche', 'kashi', 'cobalt', 'aurora']) {
+    const res = runBootScript({ storage: { theme: b } });
+    assert.deepEqual(res, { theme: b, mode: 'light' });
+  }
+  for (const b of ['lajvard', 'graphite', 'nightglass']) {
+    const res = runBootScript({ storage: { theme: b } });
+    assert.deepEqual(res, { theme: b, mode: 'dark' });
+  }
+
+  // Unlocked world theme must apply if earned
+  const achvEarned = JSON.stringify({
+    unlocked: {
+      'night-owl': { tier: 1 },
+      chain: { tier: 2 },
+    },
+  });
+  const resShabgard = runBootScript({
+    storage: { theme: 'shabgard', 'daftarche-achievements': achvEarned },
+  });
+  assert.deepEqual(resShabgard, { theme: 'shabgard', mode: 'dark' });
+
+  const resTarnama = runBootScript({
+    storage: { theme: 'tarnama', 'daftarche-achievements': achvEarned },
+  });
+  assert.deepEqual(resTarnama, { theme: 'tarnama', mode: 'light' });
+
+  // If achievement tier is insufficient, must fall back
+  const achvInsufficient = JSON.stringify({
+    unlocked: {
+      chain: { tier: 1 }, // tarnama requires tier 2
+    },
+  });
+  const resTarnamaLocked = runBootScript({
+    storage: { theme: 'tarnama', 'daftarche-achievements': achvInsufficient },
+  });
+  assert.deepEqual(resTarnamaLocked, { theme: 'daftarche', mode: 'light' });
+
+  // Missing theme falls back to matchMedia
+  assert.deepEqual(runBootScript({ storage: {}, prefersDark: true }), { theme: 'lajvard', mode: 'dark' });
+  assert.deepEqual(runBootScript({ storage: {}, prefersDark: false }), { theme: 'daftarche', mode: 'light' });
+});
+
+test('theme swatches render lock state, lockedText, lock icons, and live counter updates', async () => {
+  if (typeof self === 'undefined') globalThis.self = globalThis;
+  if (typeof document === 'undefined') {
+    globalThis.document = {
+      baseURI: 'http://localhost/',
+      documentElement: { dataset: {} },
+      querySelector: () => null,
+      querySelectorAll: () => [],
+      addEventListener: () => {},
+    };
+    globalThis.window = globalThis;
+  }
+  await import('../js/version.js');
+  const { swatchRow } = await import('../js/chipgroup.js');
+  const A = await import('../js/achievements.js');
+  const S = await import('../js/store.js');
+  const T = await import('../js/theme.js');
+  const { faNum } = await import('../js/utils.js');
+
+  // 1. Build swatches using real theme configuration
+  const items = THEMES.map((theme, idx) => {
+    const reward = A.rewardFor('theme', theme.key);
+    const condition = reward ? A.rewardRequirements(reward.id).map(({ achievement }) =>
+      `نشان «${achievement.title}»`).join(' یا ') : '';
+    let groupTitle = '';
+    let groupSub = '';
+    if (idx === 0) {
+      groupTitle = 'تم‌های پایه';
+    } else if (theme.family === 'world' && THEMES[idx - 1]?.family !== 'world') {
+      groupTitle = 'دنیاهای ویژه (با نشان‌ها باز می‌شوند)';
+      groupSub = 'هر دنیا یک کارت تعاملی به صفحهٔ امروز اضافه می‌کند';
+    }
+    return {
+      ...theme, rewardId: reward?.id,
+      locked: !T.isThemeUnlocked(theme.key),
+      lockText: reward?.lockedText,
+      lockCondition: condition ? `شرط باز شدن: ${condition}` : '',
+      groupTitle, groupSub,
+    };
+  });
+
+  const host = {
+    dataset: {},
+    innerHTML: '',
+    querySelectorAll() { return []; },
+    addEventListener() {},
+  };
+
+  swatchRow(host, items, {
+    group: 'theme',
+    onPick: () => {},
+    isLocked: key => !T.isThemeUnlocked(key),
+  });
+
+  const html = host.innerHTML;
+  assert.ok(html.length > 0, 'swatchRow should generate HTML');
+
+  // Verify all 10 world swatches have lock icons and lockText in their generated template
+  const worldThemes = THEMES.filter(t => t.family === 'world');
+  for (const wt of worldThemes) {
+    const reward = A.rewardFor('theme', wt.key);
+    assert.ok(html.includes(`data-key="${wt.key}"`), `missing swatch button for ${wt.key}`);
+    assert.ok(html.includes(reward.lockedText), `missing lockedText "${reward.lockedText}" for ${wt.key}`);
+    assert.ok(html.includes('swatch-lock-icon'), `swatch for ${wt.key} must carry swatch-lock-icon`);
+  }
+
+  // Base themes must not have lock icons
+  const baseThemes = THEMES.filter(t => t.family !== 'world');
+  for (const bt of baseThemes) {
+    assert.ok(html.includes(`data-key="${bt.key}"`), `missing swatch button for ${bt.key}`);
+    const btnStart = html.indexOf(`data-key="${bt.key}"`);
+    const btnEnd = html.indexOf('</button>', btnStart);
+    const btnHtml = html.slice(btnStart, btnEnd);
+    assert.ok(!btnHtml.includes('swatch-lock-icon'), `base theme ${bt.key} should not have lock icon`);
+    assert.ok(!btnHtml.includes('swatch-lock'), `base theme ${bt.key} should not have swatch-lock text`);
+  }
+
+  // 2. Test #settingsThemeCount synchronization
+  const countEl = {
+    textContent: '',
+    attrs: {},
+    setAttribute(k, v) { this.attrs[k] = v; },
+    getAttribute(k) { return this.attrs[k]; },
+  };
+
+  const origDoc = globalThis.document;
+  try {
+    globalThis.document = {
+      baseURI: 'http://localhost/',
+      documentElement: { dataset: {} },
+      querySelector: sel => (sel === '#settingsThemeCount' ? countEl : null),
+      querySelectorAll: () => [],
+      addEventListener: () => {},
+    };
+
+    // Initial state: empty achievements -> 7 themes unlocked
+    S.saveAchv(A.emptyState());
+    T.markThemePicker();
+    assert.equal(countEl.textContent, faNum(7));
+    assert.equal(countEl.attrs['aria-label'], `${faNum(7)} تم باز شده از ${faNum(17)}`);
+
+    // Unlock chain tier 2 (tarnama unlocked) -> 8 themes unlocked
+    S.saveAchv(A.normalizeState({ unlocked: { chain: { tier: 2, at: '2026-09-02' } } }));
+    T.markThemePicker();
+    assert.equal(countEl.textContent, faNum(8));
+    assert.equal(countEl.attrs['aria-label'], `${faNum(8)} تم باز شده از ${faNum(17)}`);
+
+    // Unlock pages tier 1 (daryanavard) + night-owl tier 1 (shabgard) -> 10 themes unlocked
+    S.saveAchv(A.normalizeState({
+      unlocked: {
+        chain: { tier: 2, at: '2026-09-02' },
+        pages: { tier: 1, at: '2026-09-03' },
+        'night-owl': { tier: 1, at: '2026-09-04' },
+      },
+    }));
+    T.markThemePicker();
+    assert.equal(countEl.textContent, faNum(10));
+    assert.equal(countEl.attrs['aria-label'], `${faNum(10)} تم باز شده از ${faNum(17)}`);
+  } finally {
+    globalThis.document = origDoc;
+    S.saveAchv(A.emptyState());
+  }
 });

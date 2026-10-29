@@ -35,23 +35,23 @@
 
 :root{
   /* ── Semantic Colors (Light) ──
-     The default theme, and the same values the palette table holds as «روشن» —
+     The default theme, and the same values the palette table holds as «دفترچه» —
      these point at them, so the interface and anything showing that palette
      (the theme picker's dot) can never disagree about what light is. */
-  --color-bg:var(--pal-kashi-bg);
-  --color-surface:var(--pal-kashi-surface);
-  --color-surface-elevated:var(--pal-kashi-elev);
-  --color-text-primary:var(--pal-kashi-text);
-  --color-text-secondary:var(--pal-kashi-text2);
-  --color-text-muted:var(--pal-kashi-muted);
-  --color-text-on-accent:var(--pal-kashi-on-accent);
-  --color-border:var(--pal-kashi-border);
-  --color-border-strong:var(--pal-kashi-border-strong);
-  --color-accent:var(--pal-kashi-accent);
-  --color-accent-soft:var(--pal-kashi-accent-soft);
-  --color-accent-strong:var(--pal-kashi-accent-strong);
-  --color-accent-text:var(--pal-kashi-accent-text);
-  --color-focus:var(--pal-kashi-accent);
+  --color-bg:var(--pal-daftarche-bg);
+  --color-surface:var(--pal-daftarche-surface);
+  --color-surface-elevated:var(--pal-daftarche-elev);
+  --color-text-primary:var(--pal-daftarche-text);
+  --color-text-secondary:var(--pal-daftarche-text2);
+  --color-text-muted:var(--pal-daftarche-muted);
+  --color-text-on-accent:var(--pal-daftarche-on-accent);
+  --color-border:var(--pal-daftarche-border);
+  --color-border-strong:var(--pal-daftarche-border-strong);
+  --color-accent:var(--pal-daftarche-accent);
+  --color-accent-soft:var(--pal-daftarche-accent-soft);
+  --color-accent-strong:var(--pal-daftarche-accent-strong);
+  --color-accent-text:var(--pal-daftarche-accent-text);
+  --color-focus:var(--pal-daftarche-accent);
 
   /* Meaning is not a fashion: success, warning and danger are the same three
      colours across the three daylight themes, and re-tuned once for the dark
@@ -88,8 +88,8 @@
   --border:var(--color-border);
 
   /* ── Organic identity layers (not global character palettes) ── */
-  --tape:var(--pal-kashi-tape);
-  --glass:var(--pal-kashi-glass);
+  --tape:var(--pal-daftarche-tape);
+  --glass:var(--pal-daftarche-glass);
   --glass-hover:var(--state-glass-hover);
 
   /* ── Spacing Scale: 4 / 8 / 12 / 16 / 24 / 32 / 48 ── */
@@ -166,6 +166,23 @@
      and the frosted tint the floating dock is cut from. Colours meaning success,
      warning or danger are deliberately not here — they are shared by mode. */
 
+  /* «دفترچه» — quiet writing paper, forest ink, and a restrained clay accent. */
+  --pal-daftarche-bg:#f4f0e6;
+  --pal-daftarche-surface:#fbf8f0;
+  --pal-daftarche-elev:#fffdf8;
+  --pal-daftarche-text:#292d29;
+  --pal-daftarche-text2:#444c45;
+  --pal-daftarche-muted:#5e665f;
+  --pal-daftarche-border:rgba(41,45,41,.12);
+  --pal-daftarche-border-strong:rgba(41,45,41,.24);
+  --pal-daftarche-accent:#245548;
+  --pal-daftarche-accent-strong:#183d32;
+  --pal-daftarche-accent-soft:rgba(36,85,72,.11);
+  --pal-daftarche-accent-text:#183d32;
+  --pal-daftarche-tape:rgba(200,117,77,.30);
+  --pal-daftarche-glass:rgba(251,248,240,.84);
+  --pal-daftarche-on-accent:#ffffff;
+
   /* «فیروزه» — the tile family: warm ivory paper under lapis ink, a turquoise accent and a saffron strip of tape. The default. */
   --pal-kashi-bg:#f6f2e8;
   --pal-kashi-surface:#fffdf7;
@@ -183,22 +200,22 @@
   --pal-kashi-glass:rgba(255,253,247,.78);
   --pal-kashi-on-accent:#ffffff;
 
-  /* «لاجورد» — the same tile family after dark: lapis night, ivory ink, turquoise that glows. */
-  --pal-lajvard-bg:#0c1424;
-  --pal-lajvard-surface:#152033;
-  --pal-lajvard-elev:#1d2b43;
-  --pal-lajvard-text:#f1ede2;
-  --pal-lajvard-text2:#c5cbd8;
-  --pal-lajvard-muted:#98a2b8;
-  --pal-lajvard-border:rgba(220,235,255,.10);
-  --pal-lajvard-border-strong:rgba(220,235,255,.22);
-  --pal-lajvard-accent:#3cc4cc;
-  --pal-lajvard-accent-strong:#6fd8de;
-  --pal-lajvard-accent-soft:rgba(60,196,204,.16);
-  --pal-lajvard-accent-text:#6fd8de;
-  --pal-lajvard-tape:rgba(230,185,77,.28);
-  --pal-lajvard-glass:rgba(21,32,51,.74);
-  --pal-lajvard-on-accent:#07202a;
+  /* «لاجورد» — mineral blue, deep ink, and aged brass rather than neon cyan. */
+  --pal-lajvard-bg:#101b2b;
+  --pal-lajvard-surface:#192a40;
+  --pal-lajvard-elev:#24384f;
+  --pal-lajvard-text:#f0eee7;
+  --pal-lajvard-text2:#cbd2d8;
+  --pal-lajvard-muted:#aeb9c4;
+  --pal-lajvard-border:rgba(198,169,120,.14);
+  --pal-lajvard-border-strong:rgba(198,169,120,.28);
+  --pal-lajvard-accent:#b38b58;
+  --pal-lajvard-accent-strong:#c9a875;
+  --pal-lajvard-accent-soft:rgba(179,139,88,.16);
+  --pal-lajvard-accent-text:#d8bb8a;
+  --pal-lajvard-tape:rgba(179,139,88,.24);
+  --pal-lajvard-glass:rgba(25,42,64,.82);
+  --pal-lajvard-on-accent:#171c21;
 
   /* «کبالت» — the clean family: cool grey page, white cards, one cobalt accent. */
   --pal-cobalt-bg:#f2f3f6;
@@ -217,22 +234,22 @@
   --pal-cobalt-glass:rgba(255,255,255,.80);
   --pal-cobalt-on-accent:#ffffff;
 
-  /* «گرافیت» — the clean family after dark: graphite surfaces, a soft periwinkle accent. */
-  --pal-graphite-bg:#0f1115;
-  --pal-graphite-surface:#181b21;
-  --pal-graphite-elev:#222630;
-  --pal-graphite-text:#eef0f5;
-  --pal-graphite-text2:#bfc5d2;
-  --pal-graphite-muted:#8f97a8;
-  --pal-graphite-border:rgba(255,255,255,.08);
-  --pal-graphite-border-strong:rgba(255,255,255,.18);
-  --pal-graphite-accent:#7c93ff;
-  --pal-graphite-accent-strong:#a3b3ff;
-  --pal-graphite-accent-soft:rgba(124,147,255,.16);
-  --pal-graphite-accent-text:#a3b3ff;
-  --pal-graphite-tape:rgba(124,147,255,.25);
-  --pal-graphite-glass:rgba(24,27,33,.74);
-  --pal-graphite-on-accent:#0b1030;
+  /* «گرافیت» — warm mineral charcoal, pencil grey, and muted earth. */
+  --pal-graphite-bg:#191a18;
+  --pal-graphite-surface:#242622;
+  --pal-graphite-elev:#30312b;
+  --pal-graphite-text:#f0eee7;
+  --pal-graphite-text2:#cbc9bf;
+  --pal-graphite-muted:#aaa99f;
+  --pal-graphite-border:rgba(220,211,190,.10);
+  --pal-graphite-border-strong:rgba(220,211,190,.22);
+  --pal-graphite-accent:#c49a72;
+  --pal-graphite-accent-strong:#d7b48f;
+  --pal-graphite-accent-soft:rgba(196,154,114,.16);
+  --pal-graphite-accent-text:#dfc19e;
+  --pal-graphite-tape:rgba(196,154,114,.23);
+  --pal-graphite-glass:rgba(36,38,34,.82);
+  --pal-graphite-on-accent:#211a14;
 
   /* «آرورا» — the glass family: lilac-white base under a drifting aurora (see css/glass.css). Values here are the solid fallback every contrast floor is measured on. */
   --pal-aurora-bg:#e9e6f5;
@@ -411,12 +428,12 @@
   --pal-rasadkhane-text:#f3f4f6;
   --pal-rasadkhane-text2:#cbd5e1;
   --pal-rasadkhane-muted:#94a3b8;
-  --pal-rasadkhane-border:rgba(234,179,8,.12);
-  --pal-rasadkhane-border-strong:rgba(234,179,8,.24);
-  --pal-rasadkhane-accent:#eab308;
-  --pal-rasadkhane-accent-strong:#facc15;
-  --pal-rasadkhane-accent-soft:rgba(234,179,8,.16);
-  --pal-rasadkhane-accent-text:#fde047;
+  --pal-rasadkhane-border:rgba(118,185,200,.13);
+  --pal-rasadkhane-border-strong:rgba(118,185,200,.25);
+  --pal-rasadkhane-accent:#76b9c8;
+  --pal-rasadkhane-accent-strong:#9dd8e1;
+  --pal-rasadkhane-accent-soft:rgba(118,185,200,.16);
+  --pal-rasadkhane-accent-text:#a9e0e7;
   --pal-rasadkhane-tape:rgba(56,189,248,.30);
   --pal-rasadkhane-glass:rgba(17,24,39,.74);
   --pal-rasadkhane-on-accent:#181202;
@@ -494,6 +511,19 @@
 /* ── From palette to the card's vocabulary ──
    A chip that wears data-palette="…" is showing the palette it would print
    with: the dot is the palette's paper, ringed in its accent. */
+[data-palette="daftarche"]{
+  --card-bg:var(--pal-daftarche-bg);
+  --card-surface:var(--pal-daftarche-surface);
+  --card-text:var(--pal-daftarche-text);
+  --card-muted:var(--pal-daftarche-muted);
+  --card-accent:var(--pal-daftarche-accent);
+  --card-accent-soft:var(--pal-daftarche-accent-soft);
+  --card-border:var(--pal-daftarche-border-strong);
+  --card-grid:var(--pal-daftarche-border);
+  --card-tape:var(--pal-daftarche-tape);
+  --pick-dot-bg:var(--pal-daftarche-bg);
+  --pick-dot-ring:var(--pal-daftarche-accent);
+}
 [data-palette="kashi"]{
   --card-bg:var(--pal-kashi-bg);
   --card-surface:var(--pal-kashi-surface);
@@ -754,6 +784,26 @@ html[data-mode="dark"]{
    and these blocks only say which colour goes in which slot. `--glass` is the
    tint the floating dock is frosted from — it used to be a hardcoded cream that
    silently ignored every theme but one. */
+html[data-theme="daftarche"]{
+  color-scheme:light;
+  --color-bg:var(--pal-daftarche-bg);
+  --color-surface:var(--pal-daftarche-surface);
+  --color-surface-elevated:var(--pal-daftarche-elev);
+  --color-text-primary:var(--pal-daftarche-text);
+  --color-text-secondary:var(--pal-daftarche-text2);
+  --color-text-muted:var(--pal-daftarche-muted);
+  --color-text-on-accent:var(--pal-daftarche-on-accent);
+  --color-border:var(--pal-daftarche-border);
+  --color-border-strong:var(--pal-daftarche-border-strong);
+  --color-accent:var(--pal-daftarche-accent);
+  --color-accent-strong:var(--pal-daftarche-accent-strong);
+  --color-accent-soft:var(--pal-daftarche-accent-soft);
+  --color-accent-text:var(--pal-daftarche-accent-text);
+  --color-focus:var(--pal-daftarche-accent);
+  --tape:var(--pal-daftarche-tape);
+  --glass:var(--pal-daftarche-glass);
+}
+
 html[data-theme="kashi"]{
   color-scheme:light;
   --color-bg:var(--pal-kashi-bg);
@@ -1141,6 +1191,13 @@ html[data-day="birthday"][data-mode="dark"]{
    the in-list jumps that are meant to be followed by the eye), so the two never
    animate at the same time. */
 body{font-family:var(--font-ui);background:var(--bg);color:var(--text);min-height:100vh;min-height:100dvh;overflow-x:hidden;transition:background var(--duration-slow),color var(--duration-slow);-webkit-tap-highlight-color:transparent;line-height:1.6}
+
+/* The default notebook theme uses barely visible page ruling only in open canvas areas. */
+html[data-theme="daftarche"] body{
+  background-color:var(--color-bg);
+  background-image:repeating-linear-gradient(to bottom,transparent 0,transparent 31px,rgba(36,85,72,.025) 32px,transparent 33px);
+  background-attachment:fixed;
+}
 button{touch-action:manipulation;font-family:inherit}
 
 /* Touch ergonomics: pointer-driven only.
