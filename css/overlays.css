@@ -606,7 +606,17 @@ body.focus-immersive .focus-sound-toggle{display:inline-flex}
    than 700px. Nothing here changes what the view looks like on a tall phone
    or a desktop: those keep every dimension they had. */
 body.focus-immersive #page-focus.page{padding-block:0;min-height:0}
-body.focus-immersive .app-focus{min-height:100dvh;padding:max(12px,env(safe-area-inset-top)) 0 14px}
+/* The rail is hidden while a session runs, but the page went on reserving the
+   296px strip the rail sits in (css/base.css), so the timer column centred
+   inside that leftover gutter and the whole view sat off to one side of the
+   screen. Only the desktop breakpoint reserves the strip, so the phone's own
+   gutter is left alone and the column stays square to the screen at any size. */
+@media (min-width:1024px){
+  body.focus-immersive #page-focus.page{padding-inline:0}
+}
+/* Equal top and bottom padding: the column is centred between them, so an
+   uneven pair would sit the timer a pixel or two off the middle of the screen. */
+body.focus-immersive .app-focus{min-height:100dvh;padding:max(12px,env(safe-area-inset-top)) 0 12px}
 /* The measure, not the media query, is what decides whether the ring fits: a
    wildcard so the block also covers the pages that render it outside
    .focus-page-card. */

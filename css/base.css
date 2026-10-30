@@ -1694,7 +1694,13 @@ body.reader-immersive::before{display:none!important}
    the character's head was the part that got cropped. A single small button
    brings them back on demand. */
 body.focus-immersive:not(.focus-sound-open) .vibe-card{display:none}
-body.focus-immersive .app-focus{min-height:100vh;justify-content:flex-start;padding:max(16px,env(safe-area-inset-top)) 0 16px}
+/* The immersive view is one screen with nothing above the timer and nothing
+   below it, so the column belongs in the middle of it rather than pinned to
+   the top edge. Centring is safe here because the box is a min-height and not
+   a fixed one: a column that ever grows past the viewport grows the box with
+   it and still starts at its own top, so no part of it is clipped above the
+   reach of the scroll. */
+body.focus-immersive .app-focus{min-height:100vh;justify-content:center;padding:max(16px,env(safe-area-inset-top)) 0 16px}
 body.has-focus-pill .page{padding-bottom:calc(var(--nav-height) + 72px)}
 
 .focus-page-card .focus-task{font-size:14px;color:var(--muted);font-weight:400;line-height:1.7}
